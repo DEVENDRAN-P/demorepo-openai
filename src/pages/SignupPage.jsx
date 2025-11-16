@@ -155,19 +155,21 @@ function SignupPage() {
 
     try {
       // Sign up using authService
-      await signup(formData.email, formData.password, {
+      const result = await signup(formData.email, formData.password, {
         name: formData.name,
         shopName: formData.shopName,
         gstin: formData.gstin,
       });
       
+      console.log('✅ Signup successful:', result.user.email);
+      
       // User is now authenticated after signup
       setSuccessMessage('Account created successfully! Redirecting to dashboard...');
       
-      // Redirect immediately - AuthContext will handle state update via onAuthStateChanged listener
+      // Wait a moment for auth state to propagate, then redirect
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 1500);
+      }, 2000);
 
     } catch (err) {
       let errorMessage = 'Failed to create account. Please try again.';
