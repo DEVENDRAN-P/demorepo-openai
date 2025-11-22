@@ -1,20 +1,25 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
+// Firebase configuration - CONFIGURED ✅
 const firebaseConfig = {
-  apiKey: "AIzaSyCmU9yKvzZWfXcQfYBknYaPaZFKoae0-KA",
-  authDomain: "userauth-bb93a.firebaseapp.com",
-  projectId: "userauth-bb93a",
-  storageBucket: "userauth-bb93a.firebasestorage.app",
-  messagingSenderId: "306198446238",
-  appId: "1:306198446238:web:7fae37c67d6b1d01c2fb8f",
-  measurementId: "G-CHYPGZ47R3"
+  apiKey: "AIzaSyDxBhimDN0NQKUZrgfniRqg9qrhqOsEgW0",
+  authDomain: "gst-buddy-c1db9.firebaseapp.com",
+  projectId: "gst-buddy-c1db9",
+  storageBucket: "gst-buddy-c1db9.firebasestorage.app",
+  messagingSenderId: "555739119308",
+  appId: "1:555739119308:web:a3631408ce988550c04c69",
+  measurementId: "G-C62H1W3P81"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase Authentication
 export const auth = getAuth(app);
+
+// Initialize Cloud Firestore Database
 export const db = getFirestore(app);
 
 export default app;
