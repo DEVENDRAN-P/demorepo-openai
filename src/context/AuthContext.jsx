@@ -13,20 +13,10 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      console.warn('Auth loading timeout - setting loading to false');
-      setLoading(false);
-    }, 10000); // 10 second timeout
-
     // Real-time listener for authentication state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-        clearTimeout(loadingTimeout); // Clear timeout once auth state is determined
-        
         if (firebaseUser) {
-          console.log('🔍 Firebase user detected:', firebaseUser.email);
-          
           // Try to use cached user data from localStorage first
           const cachedUser = localStorage.getItem('user');
           if (cachedUser) {
@@ -34,7 +24,6 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             setIsAuthenticated(true);
             setLoading(false);
-            console.log('✅ Using cached user data');
             
             // Update from Firestore in background (non-blocking)
             getDoc(doc(db, 'users', firebaseUser.uid)).then((userDoc) => {
@@ -48,16 +37,13 @@ export const AuthProvider = ({ children }) => {
                 };
                 setUser(freshData);
                 localStorage.setItem('user', JSON.stringify(freshData));
-                console.log('✅ Updated from Firestore');
               }
             }).catch((err) => console.warn('Background sync failed:', err));
           } else {
             // No cache, fetch from Firestore
-            console.log('🔍 Fetching user from Firestore...');
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
             
             if (userDoc.exists()) {
-              console.log('✅ Found user in Firestore');
               const userData = {
                 id: firebaseUser.uid,
                 uid: firebaseUser.uid,
@@ -69,28 +55,11 @@ export const AuthProvider = ({ children }) => {
               setIsAuthenticated(true);
               localStorage.setItem('user', JSON.stringify(userData));
               localStorage.setItem('userToken', firebaseUser.uid);
-            } else {
-              // Document doesn't exist yet - create minimal user data from Firebase Auth
-              console.warn('⚠️ User document not in Firestore, using auth data');
-              const userData = {
-                id: firebaseUser.uid,
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName || '',
-                emailVerified: firebaseUser.emailVerified,
-                createdAt: new Date().toISOString(),
-              };
-              setUser(userData);
-              setIsAuthenticated(true);
-              localStorage.setItem('user', JSON.stringify(userData));
-              localStorage.setItem('userToken', firebaseUser.uid);
-              console.log('✅ User authenticated from Firebase Auth');
             }
             setLoading(false);
           }
         } else {
           // User is logged out
-          console.log('👋 User logged out');
           setUser(null);
           setIsAuthenticated(false);
           localStorage.removeItem('user');
@@ -98,18 +67,14 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (err) {
-        console.error('❌ Error in auth state change:', err);
+        console.error('Error in auth state change:', err);
         setError(err.message);
-        // Still set loading to false even on error
         setLoading(false);
       }
     });
 
-    // Cleanup subscription and timeout
-    return () => {
-      unsubscribe();
-      clearTimeout(loadingTimeout);
-    };
+    // Cleanup subscription
+    return () => unsubscribe();
   }, []);
 
   const logout = async () => {

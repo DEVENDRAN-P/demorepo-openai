@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCmU9yKvzZWfXcQfYBknYaPaZFKoae0-KA",
@@ -13,18 +12,9 @@ const firebaseConfig = {
   measurementId: "G-CHYPGZ47R3"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 export default app;
-
-// DEBUGGING INFO
-if (typeof window !== 'undefined') {
-  console.log('🔥 Firebase Config Status:');
-  console.log('   Project ID:', firebaseConfig.projectId);
-  console.log('   Auth Domain:', firebaseConfig.authDomain);
-  console.log('   API Key Valid:', firebaseConfig.apiKey && firebaseConfig.apiKey.length > 20);
-  console.log('   ⚠️ If values above look generic, update firebase.js with real credentials');
-  console.log('   📖 See FIREBASE_SETUP.md for complete setup guide');
-}

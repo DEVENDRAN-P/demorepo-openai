@@ -22,7 +22,6 @@ export const signup = async (email, password, userData) => {
     // Create user with Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
-    console.log('✅ Firebase user created:', firebaseUser.uid);
 
     // Update user profile with display name
     if (userData.name) {
@@ -32,33 +31,26 @@ export const signup = async (email, password, userData) => {
     }
 
     // Store user data in Firestore
-    try {
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        uid: firebaseUser.uid,
-        name: userData.name || '',
-        email: firebaseUser.email,
-        shopName: userData.shopName || '',
-        gstin: userData.gstin || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        emailVerified: firebaseUser.emailVerified,
-        lastLogin: new Date().toISOString(),
-      });
-      console.log('✅ Firestore user document created');
-    } catch (firestoreErr) {
-      console.warn('⚠️ Firestore error (continuing):', firestoreErr);
-      // Continue even if Firestore fails - user can still login
-    }
+    await setDoc(doc(db, 'users', firebaseUser.uid), {
+      uid: firebaseUser.uid,
+      name: userData.name || '',
+      email: firebaseUser.email,
+      shopName: userData.shopName || '',
+      gstin: userData.gstin || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      emailVerified: firebaseUser.emailVerified,
+      lastLogin: new Date().toISOString(),
+    });
 
     // Send email verification asynchronously (non-blocking)
+    // This doesn't block the signup flow anymore
     sendEmailVerification(firebaseUser).catch((err) => {
       console.warn('Email verification failed:', err);
     });
 
-    console.log('✅ Signup successful for:', email);
     return userCredential;
   } catch (error) {
-    console.error('❌ Signup error:', error);
     throw error;
   }
 };
