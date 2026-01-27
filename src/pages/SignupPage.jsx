@@ -32,7 +32,7 @@ function SignupPage() {
 
   const calculatePasswordStrength = (password) => {
     if (!password) return '';
-    
+
     let strength = 0;
     if (password.length >= 8) strength++;
     if (password.match(/[a-z]+/)) strength++;
@@ -48,7 +48,7 @@ function SignupPage() {
   };
 
   const getStrengthColor = (strength) => {
-    switch(strength) {
+    switch (strength) {
       case 'Weak': return 'bg-red-500';
       case 'Fair': return 'bg-orange-500';
       case 'Good': return 'bg-yellow-500';
@@ -59,7 +59,7 @@ function SignupPage() {
   };
 
   const getStrengthTextColor = (strength) => {
-    switch(strength) {
+    switch (strength) {
       case 'Weak': return 'text-red-500';
       case 'Fair': return 'text-orange-500';
       case 'Good': return 'text-yellow-600';
@@ -70,7 +70,7 @@ function SignupPage() {
   };
 
   const getStrengthPercentage = (strength) => {
-    switch(strength) {
+    switch (strength) {
       case 'Weak': return 20;
       case 'Fair': return 40;
       case 'Good': return 60;
@@ -87,7 +87,7 @@ function SignupPage() {
       [name]: value,
     }));
     setError('');
-    
+
     // Real-time validation for specific fields
     if (name === 'password') {
       setPasswordStrength(calculatePasswordStrength(value));
@@ -154,26 +154,30 @@ function SignupPage() {
     setLoading(true);
 
     try {
+      console.log('📝 Creating account for:', formData.email);
+
       // Sign up using authService
       const result = await signup(formData.email, formData.password, {
         name: formData.name,
         shopName: formData.shopName,
         gstin: formData.gstin,
       });
-      
-      console.log('✅ Signup successful:', result.user.email);
-      
+
+      console.log('✅ Account created successfully!');
+      console.log('   User ID:', result.user.uid);
+      console.log('   Email:', result.user.email);
+
       // User is now authenticated after signup
       setSuccessMessage('Account created successfully! Redirecting to dashboard...');
-      
+
       // Wait a moment for auth state to propagate, then redirect
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 2000);
+      }, 1500);
 
     } catch (err) {
       let errorMessage = 'Failed to create account. Please try again.';
-      
+
       if (err.code === 'auth/email-already-in-use') {
         errorMessage = 'Email already registered. Please login or use a different email.';
       } else if (err.code === 'auth/weak-password') {
@@ -183,7 +187,7 @@ function SignupPage() {
       } else if (err.code === 'auth/operation-not-allowed') {
         errorMessage = 'Account creation is currently disabled. Please try again later.';
       }
-      
+
       setError(errorMessage);
       console.error('Signup error:', err);
     } finally {
@@ -192,23 +196,99 @@ function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-white opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-white opacity-10 rounded-full translate-x-1/2 translate-y-1/2 animate-pulse"></div>
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem',
+      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated floating background orbs */}
+      <div style={{
+        position: 'absolute',
+        top: '-100px',
+        left: '-100px',
+        width: '600px',
+        height: '600px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+        animation: 'float 20s ease-in-out infinite',
+        zIndex: 0
+      }}></div>
+      <div style={{
+        position: 'absolute',
+        bottom: '-150px',
+        right: '-150px',
+        width: '700px',
+        height: '700px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle at center, rgba(30, 60, 114, 0.15) 0%, transparent 70%)',
+        animation: 'float 25s ease-in-out infinite reverse',
+        zIndex: 0
+      }}></div>
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        right: '10%',
+        width: '400px',
+        height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle at center, rgba(42, 82, 152, 0.1) 0%, transparent 70%)',
+        animation: 'float 30s ease-in-out infinite',
+        zIndex: 0
+      }}></div>
 
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto relative z-10 animate-slide-in-up">
+      {/* Signup Card */}
+      <div style={{
+        background: 'white',
+        borderRadius: '24px',
+        padding: '3rem',
+        width: '100%',
+        maxWidth: '550px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 25px 70px rgba(30, 60, 114, 0.2)',
+        position: 'relative',
+        zIndex: 10,
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.6)'
+      }}>
         {/* Header */}
-        <div className="text-center mb-8 animate-slide-in-down">
-          <div className="inline-block mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-3xl">🚀</span>
-            </div>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '80px',
+            height: '80px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
+            boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
+            marginBottom: '1.5rem'
+          }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <line x1="20" y1="8" x2="20" y2="14" />
+              <line x1="23" y1="11" x2="17" y2="11" />
+            </svg>
           </div>
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-2">
-            {t('app_name')}
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: '700',
+            color: '#1e3c72',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.02em'
+          }}>
+            Create Account
           </h1>
-          <p className="text-gray-600 text-sm">Create your account to get started</p>
+          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>
+            Join AI IN BUSINESS today
+          </p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4 animate-fade-in">
@@ -223,9 +303,20 @@ function SignupPage() {
               value={formData.name}
               onChange={handleChange}
               placeholder="John Doe"
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 ${
-                fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-              }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                }`}
+              onFocus={(e) => {
+                if (!fieldErrors.name) {
+                  e.target.style.borderColor = '#1e3c72';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                }
+              }}
+              onBlur={(e) => {
+                if (!fieldErrors.name) {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
             />
             {fieldErrors.name && (
               <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
@@ -245,9 +336,20 @@ function SignupPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 ${
-                fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-              }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                }`}
+              onFocus={(e) => {
+                if (!fieldErrors.email) {
+                  e.target.style.borderColor = '#1e3c72';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                }
+              }}
+              onBlur={(e) => {
+                if (!fieldErrors.email) {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
             />
             {fieldErrors.email && (
               <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
@@ -267,7 +369,15 @@ function SignupPage() {
               value={formData.shopName}
               onChange={handleChange}
               placeholder="My Shop Name"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 bg-gray-50 hover:bg-white"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg outline-none transition transform focus:scale-105 bg-gray-50 hover:bg-white"
+              onFocus={(e) => {
+                e.target.style.borderColor = '#1e3c72';
+                e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d1d5db';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
@@ -283,9 +393,20 @@ function SignupPage() {
               onChange={handleChange}
               placeholder="27AAHCT5055K1Z0"
               maxLength="15"
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 ${
-                fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-              }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                }`}
+              onFocus={(e) => {
+                if (!fieldErrors.gstin) {
+                  e.target.style.borderColor = '#1e3c72';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                }
+              }}
+              onBlur={(e) => {
+                if (!fieldErrors.gstin) {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
             />
             {fieldErrors.gstin && (
               <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
@@ -307,9 +428,20 @@ function SignupPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 pr-12 ${
-                  fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+                className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 pr-12 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                  }`}
+                onFocus={(e) => {
+                  if (!fieldErrors.password) {
+                    e.target.style.borderColor = '#1e3c72';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!fieldErrors.password) {
+                    e.target.style.borderColor = '#d1d5db';
+                    e.target.style.boxShadow = 'none';
+                  }
+                }}
               />
               <button
                 type="button"
@@ -324,7 +456,7 @@ function SignupPage() {
                 <span>⚠️</span> {fieldErrors.password}
               </p>
             )}
-            
+
             {/* Password Strength Indicator */}
             {formData.password && (
               <div className="mt-3 animate-fade-in">
@@ -335,7 +467,7 @@ function SignupPage() {
                   </span>
                 </div>
                 <div className="strength-meter">
-                  <div 
+                  <div
                     className={`strength-meter-fill ${getStrengthColor(passwordStrength)}`}
                     style={{ width: `${getStrengthPercentage(passwordStrength)}%` }}
                   ></div>
@@ -358,9 +490,20 @@ function SignupPage() {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="••••••••"
-              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-600 outline-none transition transform focus:scale-105 ${
-                fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-              }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                }`}
+              onFocus={(e) => {
+                if (!fieldErrors.confirmPassword) {
+                  e.target.style.borderColor = '#1e3c72';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                }
+              }}
+              onBlur={(e) => {
+                if (!fieldErrors.confirmPassword) {
+                  e.target.style.borderColor = '#d1d5db';
+                  e.target.style.boxShadow = 'none';
+                }
+              }}
             />
             {fieldErrors.confirmPassword && (
               <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
@@ -398,43 +541,132 @@ function SignupPage() {
           <button
             type="submit"
             disabled={loading || Object.keys(fieldErrors).length > 0}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl transition transform hover:scale-105 hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden"
+            style={{
+              width: '100%',
+              padding: '1.1rem',
+              borderRadius: '12px',
+              border: 'none',
+              background: (loading || Object.keys(fieldErrors).length > 0)
+                ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)'
+                : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
+              color: 'white',
+              fontSize: '1.05rem',
+              fontWeight: 'bold',
+              cursor: (loading || Object.keys(fieldErrors).length > 0) ? 'not-allowed' : 'pointer',
+              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.35)',
+              transition: 'all 0.3s ease',
+              opacity: (loading || Object.keys(fieldErrors).length > 0) ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.6rem'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && Object.keys(fieldErrors).length === 0) {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.45)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.35)';
+            }}
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {loading ? (
-                <>
-                  <span className="animate-spin inline-block">⏳</span>
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  <span>✓</span> Create Account
-                </>
-              )}
-            </span>
+            {loading ? (
+              <>
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  border: '2px solid white',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }}></div>
+                <span>Creating account...</span>
+              </>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Create Account</span>
+              </>
+            )}
           </button>
         </form>
 
         {/* Divider */}
-        <div className="mt-8 flex items-center gap-3">
-          <div className="flex-1 border-t-2 border-gray-300"></div>
-          <span className="text-gray-500 text-xs font-semibold">OR</span>
-          <div className="flex-1 border-t-2 border-gray-300"></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '2rem 0' }}>
+          <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
+          <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '600' }}>OR</span>
+          <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
         </div>
 
         {/* Login Link */}
-        <p className="text-center text-gray-600 mt-6 text-sm animate-fade-in">
+        <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.95rem', marginTop: '1.5rem' }}>
           Already have an account?{' '}
-          <Link to="/login" className="text-purple-600 font-bold hover:text-pink-500 transition inline-flex items-center gap-1">
-            Login here <span>→</span>
+          <Link to="/login" style={{
+            color: '#3b82f6',
+            fontWeight: 'bold',
+            textDecoration: 'none',
+            transition: 'color 0.3s'
+          }}
+            onMouseEnter={(e) => e.target.style.color = '#2563eb'}
+            onMouseLeave={(e) => e.target.style.color = '#3b82f6'}>
+            Sign In →
           </Link>
         </p>
 
         {/* Terms Info */}
-        <p className="text-xs text-gray-500 text-center mt-4">
-          By signing up, you agree to our Terms of Service and Privacy Policy
-        </p>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          marginTop: '1.5rem',
+          padding: '0.75rem 1.25rem',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          fontSize: '0.8rem',
+          color: '#64748b',
+          fontWeight: '500',
+          textAlign: 'center'
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          Secured with Firebase
+        </div>
       </div>
+
+      {/* Add floating animation */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .strength-meter {
+          width: 100%;
+          height: 6px;
+          background: #e2e8f0;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .strength-meter-fill {
+          height: 100%;
+          transition: width 0.3s ease;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }

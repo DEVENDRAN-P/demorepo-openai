@@ -60,11 +60,11 @@ function Dashboard({ user, setUser }) {
   useEffect(() => {
     // Load real user data
     const bills = JSON.parse(localStorage.getItem('bills') || '[]');
-    
+
     // Calculate stats
     const totalGST = bills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
     const costSavings = calculateCostSavings(bills);
-    
+
     setStats({
       totalBills: bills.length,
       pendingFiling: bills.filter(b => !b.filed).length,
@@ -76,7 +76,7 @@ function Dashboard({ user, setUser }) {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
+
     const filings = [];
     for (let i = 0; i < 3; i++) {
       const month = (currentMonth - i + 12) % 12;
@@ -120,7 +120,7 @@ function Dashboard({ user, setUser }) {
       const updatedBills = JSON.parse(localStorage.getItem('bills') || '[]');
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
-      
+
       setStats({
         totalBills: updatedBills.length,
         pendingFiling: updatedBills.filter(b => !b.filed).length,
@@ -134,7 +134,7 @@ function Dashboard({ user, setUser }) {
       const updatedBills = event.detail?.bills || JSON.parse(localStorage.getItem('bills') || '[]');
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
-      
+
       setStats({
         totalBills: updatedBills.length,
         pendingFiling: updatedBills.filter(b => !b.filed).length,
@@ -145,7 +145,7 @@ function Dashboard({ user, setUser }) {
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('billUpdated', handleBillUpdated);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('billUpdated', handleBillUpdated);
@@ -172,7 +172,7 @@ function Dashboard({ user, setUser }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       <div className="container section">
         {/* Welcome Hero */}
@@ -380,8 +380,8 @@ function Dashboard({ user, setUser }) {
                   {filingStatus.map((item, idx) => (
                     <div key={idx} className="status-card">
                       <div className="status-card-icon" style={{
-                        background: item.status === 'filed' ? 'var(--success-light)' : 
-                                   item.status === 'pending' ? 'var(--warning-light)' : 'var(--neutral-100)',
+                        background: item.status === 'filed' ? 'var(--success-light)' :
+                          item.status === 'pending' ? 'var(--warning-light)' : 'var(--neutral-100)',
                       }}>
                         {getStatusIcon(item.status)}
                       </div>
@@ -508,7 +508,7 @@ function Dashboard({ user, setUser }) {
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--neutral-900)', marginBottom: '1.5rem', textAlign: 'center' }}>
               Monthly Comparison
             </h3>
-            
+
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',

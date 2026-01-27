@@ -15,7 +15,7 @@ function GSTForms({ user, setUser }) {
     const savedBills = JSON.parse(localStorage.getItem('bills') || '[]');
     setBills(savedBills);
     setHasData(savedBills.length > 0);
-    
+
     if (savedBills.length > 0) {
       generateGSTR1(savedBills);
       generateGSTR3B(savedBills);
@@ -212,7 +212,7 @@ function GSTForms({ user, setUser }) {
   if (!hasData) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-        <Navbar user={user} setUser={setUser} />
+        <Navbar user={user} />
         <div className="container section">
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📋</span>
@@ -233,7 +233,7 @@ function GSTForms({ user, setUser }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       <div className="container section">
         <div className="card" style={{ marginBottom: '1.5rem' }}>
@@ -257,7 +257,7 @@ function GSTForms({ user, setUser }) {
               onClick={() => setFormType('GSTR-1')}
               className={formType === 'GSTR-1' ? 'btn btn-primary' : 'btn btn-secondary'}
             >
-             {t('GSTR-1')}
+              {t('GSTR-1')}
             </button>
             <button
               onClick={() => setFormType('GSTR-3B')}
@@ -339,8 +339,8 @@ function GSTForms({ user, setUser }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#166534', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
-                      {t('Inward Supplies')}  
-                        </p>
+                      {t('Inward Supplies')}
+                    </p>
                     <p style={{ fontSize: '1.5rem', fontWeight: 800, color: '#166534' }}>
                       ₹{gstr3bData.inwardSupplies.toLocaleString()}
                     </p>

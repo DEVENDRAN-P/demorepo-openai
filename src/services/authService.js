@@ -1,14 +1,14 @@
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   sendEmailVerification,
   sendPasswordResetEmail,
   updateProfile,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { setDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+  onAuthStateChanged,
+} from "firebase/auth";
+import { setDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { auth, db } from "../config/firebase";
 
 /**
  * Sign up a new user with email and password
@@ -20,9 +20,13 @@ import { auth, db } from '../config/firebase';
 export const signup = async (email, password, userData) => {
   try {
     // Create user with Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
     const firebaseUser = userCredential.user;
-    console.log('✅ Firebase user created:', firebaseUser.uid);
+    console.log("✅ Firebase user created:", firebaseUser.uid);
 
     // Update user profile with display name
     if (userData.name) {
@@ -33,32 +37,32 @@ export const signup = async (email, password, userData) => {
 
     // Store user data in Firestore
     try {
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
+      await setDoc(doc(db, "users", firebaseUser.uid), {
         uid: firebaseUser.uid,
-        name: userData.name || '',
+        name: userData.name || "",
         email: firebaseUser.email,
-        shopName: userData.shopName || '',
-        gstin: userData.gstin || '',
+        shopName: userData.shopName || "",
+        gstin: userData.gstin || "",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         emailVerified: firebaseUser.emailVerified,
         lastLogin: new Date().toISOString(),
       });
-      console.log('✅ Firestore user document created');
+      console.log("✅ Firestore user document created");
     } catch (firestoreErr) {
-      console.warn('⚠️ Firestore error (continuing):', firestoreErr);
+      console.warn("⚠️ Firestore error (continuing):", firestoreErr);
       // Continue even if Firestore fails - user can still login
     }
 
     // Send email verification asynchronously (non-blocking)
     sendEmailVerification(firebaseUser).catch((err) => {
-      console.warn('Email verification failed:', err);
+      console.warn("Email verification failed:", err);
     });
 
-    console.log('✅ Signup successful for:', email);
+    console.log("✅ Signup successful for:", email);
     return userCredential;
   } catch (error) {
-    console.error('❌ Signup error:', error);
+    console.error("❌ Signup error:", error);
     throw error;
   }
 };
@@ -71,19 +75,33 @@ export const signup = async (email, password, userData) => {
  */
 export const login = async (email, password) => {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("🔐 Login attempt for:", email);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
     const firebaseUser = userCredential.user;
+    console.log("✅ Firebase authentication successful");
+    console.log("   User ID:", firebaseUser.uid);
+    console.log("   Email:", firebaseUser.email);
+    console.log("   Email Verified:", firebaseUser.emailVerified);
 
     // Update last login time in Firestore asynchronously (non-blocking)
     // This doesn't delay the login response
-    updateDoc(doc(db, 'users', firebaseUser.uid), {
+    updateDoc(doc(db, "users", firebaseUser.uid), {
       lastLogin: new Date().toISOString(),
-    }).catch((err) => {
-      console.warn('Failed to update lastLogin:', err);
-    });
+    })
+      .then(() => {
+        console.log("✅ Updated lastLogin in Firestore");
+      })
+      .catch((err) => {
+        console.warn("⚠️ Failed to update lastLogin:", err.message);
+      });
 
     return userCredential;
   } catch (error) {
+    console.error("❌ Login failed:", error.code, error.message);
     throw error;
   }
 };
@@ -137,7 +155,7 @@ export const getCurrentUserData = async () => {
     const user = auth.currentUser;
     if (!user) return null;
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDoc = await getDoc(doc(db, "users", user.uid));
     if (userDoc.exists()) {
       return {
         id: user.uid,
@@ -169,7 +187,7 @@ export const listenToAuthStateChange = (callback) => {
           loading: false,
         });
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
         callback({
           user: null,
           isAuthenticated: false,
@@ -195,10 +213,10 @@ export const listenToAuthStateChange = (callback) => {
 export const updateUserProfile = async (updates) => {
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error('No user logged in');
+    if (!user) throw new Error("No user logged in");
 
     // Update Firestore document
-    await updateDoc(doc(db, 'users', user.uid), {
+    await updateDoc(doc(db, "users", user.uid), {
       ...updates,
       updatedAt: new Date().toISOString(),
     });

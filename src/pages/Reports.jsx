@@ -12,7 +12,7 @@ function Reports({ user, setUser }) {
 
   useEffect(() => {
     const bills = JSON.parse(localStorage.getItem('bills') || '[]');
-    
+
     if (bills.length === 0) {
       setHasData(false);
       return;
@@ -26,7 +26,7 @@ function Reports({ user, setUser }) {
       const date = new Date(bill.invoiceDate);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-      
+
       if (!monthlyMap[monthKey]) {
         monthlyMap[monthKey] = { month: monthName, paid: 0, collected: 0 };
       }
@@ -69,7 +69,7 @@ function Reports({ user, setUser }) {
   if (!hasData) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-        <Navbar user={user} setUser={setUser} />
+        <Navbar user={user} />
         <div className="container section">
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📊</span>
@@ -90,7 +90,7 @@ function Reports({ user, setUser }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       <div className="container section">
         <div className="card" style={{ marginBottom: '2rem' }}>

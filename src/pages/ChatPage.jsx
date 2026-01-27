@@ -5,7 +5,7 @@ import AIAssistant from '../components/AIAssistant';
 function ChatPage({ user, setUser }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       <div className="container section">
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -17,7 +17,7 @@ function ChatPage({ user, setUser }) {
               Get instant answers to your GST compliance questions
             </p>
           </div>
-          
+
           <AIAssistant />
         </div>
       </div>

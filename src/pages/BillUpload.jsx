@@ -174,7 +174,7 @@ function BillUpload({ user, setUser }) {
 
       // Revoke previous preview URL if set
       if (currentPreviewUrl && currentPreviewUrl !== previewUrl) {
-        try { URL.revokeObjectURL(currentPreviewUrl); } catch (e) {}
+        try { URL.revokeObjectURL(currentPreviewUrl); } catch (e) { }
       }
       setCurrentPreviewUrl(previewUrl || null);
 
@@ -214,7 +214,7 @@ function BillUpload({ user, setUser }) {
         streamRef.current = null;
       }
       if (videoRef.current) {
-        try { videoRef.current.pause(); videoRef.current.srcObject = null; } catch (e) {}
+        try { videoRef.current.pause(); videoRef.current.srcObject = null; } catch (e) { }
       }
     } catch (e) {
       // ignore
@@ -250,17 +250,17 @@ function BillUpload({ user, setUser }) {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, width, height);
-      
+
       // Apply image enhancement for better OCR on camera photos
       const imageData = ctx.getImageData(0, 0, width, height);
       const data = imageData.data;
-      
+
       // Increase contrast (1.3x) and brightness (+15) for better text clarity
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
-        
+
         const contrast = 1.3;
         const brightness = 15;
         data[i] = Math.min(255, Math.max(0, (r - 128) * contrast + 128 + brightness));
@@ -281,7 +281,7 @@ function BillUpload({ user, setUser }) {
         setCameraCapturedAt(new Date().toISOString());
         // Instead of auto-closing and processing, show confirm/retake UI in the modal
         // Pause the live video so user can confirm
-        try { if (videoRef.current) { videoRef.current.pause(); } } catch (e) {}
+        try { if (videoRef.current) { videoRef.current.pause(); } } catch (e) { }
         setModalCapturedBlob(fileFromBlob);
         setModalCapturedPreview(previewUrl);
         // do NOT call processCapturedFile here; wait for user to Accept
@@ -306,7 +306,7 @@ function BillUpload({ user, setUser }) {
 
   const retakeCapture = async () => {
     // revoke preview
-    try { if (modalCapturedPreview) URL.revokeObjectURL(modalCapturedPreview); } catch (e) {}
+    try { if (modalCapturedPreview) URL.revokeObjectURL(modalCapturedPreview); } catch (e) { }
     setModalCapturedBlob(null);
     setModalCapturedPreview(null);
     // restart camera
@@ -507,8 +507,8 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
       gstin: (data.gstin || '27XXXXX0000X0Z0').trim().substring(0, 15),
       invoiceNumber: (data.invoiceNumber || `INV-${Date.now()}`).trim(),
       invoiceDate: data.invoiceDate || new Date().toISOString().split('T')[0],
-  amount: Number(data.amount) || 0,
-  taxPercent: computePercent(Number(data.taxPercent) || 0, data),
+      amount: Number(data.amount) || 0,
+      taxPercent: computePercent(Number(data.taxPercent) || 0, data),
       taxAmount: Number(data.taxAmount) || 0,
       totalAmount: Number(data.totalAmount) || 0,
       expenseType: data.expenseType || 'Others',
@@ -627,7 +627,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
         // Step 1: OCR extraction
         setNotification({ message: 'Scanning image with OCR...', type: 'info' });
         ocrText = await extractTextWithOCR(activeFile);
-        
+
         console.log('OCR Extracted Text:', ocrText); // Debug log
 
         // Allow shorter OCR text for camera photos (min 10 chars instead of 20)
@@ -639,7 +639,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
         // Step 2: AI parsing
         setNotification({ message: 'AI is analyzing invoice data...', type: 'info' });
         const extractedInfo = await extractDataWithAI(ocrText);
-        
+
         processExtractedData(extractedInfo);
       } else if (activeFile.type === 'application/pdf') {
         setNotification({ message: 'PDF extraction not yet implemented. Please upload an image.', type: 'warning' });
@@ -656,21 +656,21 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     console.error('Extraction error:', error);
     setLoading(false);
     setExtractionProgress(0);
-    setNotification({ 
-      message: error.message || 'Extraction failed. Please try with a clearer image or enter details manually.', 
-      type: 'error' 
+    setNotification({
+      message: error.message || 'Extraction failed. Please try with a clearer image or enter details manually.',
+      type: 'error'
     });
   };
 
   const handleFieldChange = (field, value) => {
     setExtractedData(prev => {
       const updated = { ...prev, [field]: value };
-      
+
       if (field === 'amount' || field === 'taxPercent') {
         updated.taxAmount = Math.round(Number(updated.amount) * (Number(updated.taxPercent) / 100));
         updated.totalAmount = Number(updated.amount) + updated.taxAmount;
       }
-      
+
       return updated;
     });
   };
@@ -686,15 +686,15 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
       filed: false,
       userId: user?.id,
     };
-    
+
     savedBills.push(newBill);
     localStorage.setItem('bills', JSON.stringify(savedBills));
-    
+
     // Dispatch custom event for bill upload (triggers dashboard update)
     window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));
-    
+
     setNotification({ message: 'Bill saved successfully! Redirecting to GST Forms...', type: 'success' });
-    
+
     setTimeout(() => {
       window.location.href = '/gst-forms';
     }, 1500);
@@ -715,7 +715,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = i18n.language === 'hi' ? 'hi-IN' : i18n.language === 'ta' ? 'ta-IN' : 'en-IN';
@@ -731,7 +731,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
       setNotification({ message: 'Processing voice input with AI...', type: 'info' });
       setLoading(true); // Show loading indicator during AI processing
       setExtractionProgress(20);
-      
+
       try {
         const extractedInfo = await extractDataFromVoice(transcript);
         console.log('Final extracted info from voice:', extractedInfo);
@@ -759,7 +759,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     try {
       console.log('Starting voice extraction for text:', voiceText);
       setNotification({ message: 'Analyzing voice with AI...', type: 'info' });
-      
+
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -822,7 +822,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
       const data = await response.json();
       console.log('Raw API response:', data);
-      
+
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
         console.error('No content in API response');
@@ -833,7 +833,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
       // Try to extract JSON from various formats
       let extracted = null;
-      
+
       // Try markdown code blocks first
       let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
       if (jsonMatch) {
@@ -870,18 +870,17 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       {notification && (
         <div className="notification" style={{
-          background: notification.type === 'success' ? 'var(--success-light)' : 
-                     notification.type === 'error' ? 'var(--error-light)' :
-                     notification.type === 'warning' ? 'var(--warning-light)' : 'var(--info-light)',
-          borderLeft: `4px solid ${
-            notification.type === 'success' ? 'var(--success)' : 
-            notification.type === 'error' ? 'var(--error)' :
-            notification.type === 'warning' ? 'var(--warning)' : 'var(--info)'
-          }`,
+          background: notification.type === 'success' ? 'var(--success-light)' :
+            notification.type === 'error' ? 'var(--error-light)' :
+              notification.type === 'warning' ? 'var(--warning-light)' : 'var(--info-light)',
+          borderLeft: `4px solid ${notification.type === 'success' ? 'var(--success)' :
+              notification.type === 'error' ? 'var(--error)' :
+                notification.type === 'warning' ? 'var(--warning)' : 'var(--info)'
+            }`,
         }}>
           <div className="notification-content">
             <p className="notification-message">{notification.message}</p>
@@ -922,13 +921,13 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               >
                 <IconMicrophone recording={isRecording} />
                 <span style={{ fontWeight: 600 }}>
-                        {isRecording ? 'Listening...' : t('Speak Invoice Details')}
+                  {isRecording ? 'Listening...' : t('Speak Invoice Details')}
                 </span>
               </button>
               {voiceTranscript && (
-                <p style={{ 
-                  marginTop: '0.5rem', 
-                  fontSize: '0.875rem', 
+                <p style={{
+                  marginTop: '0.5rem',
+                  fontSize: '0.875rem',
                   color: 'var(--neutral-600)',
                   fontStyle: 'italic',
                   textAlign: 'center',
@@ -1005,9 +1004,9 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               </div>
             )}
 
-            <div style={{ 
-              textAlign: 'center', 
-              color: 'var(--neutral-500)', 
+            <div style={{
+              textAlign: 'center',
+              color: 'var(--neutral-500)',
               fontSize: '0.875rem',
               marginBottom: '1.5rem',
               fontWeight: 500,
@@ -1027,33 +1026,33 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               position: 'relative',
               overflow: 'hidden',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-600)'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--primary-400)'}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary-600)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--primary-400)'}
             >
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleFileUpload} 
-                style={{ display: 'none' }} 
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
               />
-              
+
               {preview ? (
                 <div style={{ position: 'relative' }}>
-                  <img 
-                    src={preview} 
-                    alt="Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      maxHeight: '400px', 
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '400px',
                       borderRadius: 'var(--radius-lg)',
                       boxShadow: 'var(--shadow-md)',
                       display: 'block'
-                    }} 
+                    }}
                   />
 
                   {(file?.isCameraCapture || cameraCapturedAt) && (
                     <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '6px 10px', borderRadius: '999px', fontSize: '0.75rem', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12v.01"/></svg>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19 12v.01" /></svg>
                       <span>Camera</span>
                       <span style={{ opacity: 0.9, marginLeft: '6px', fontSize: '0.7rem' }}>{new Date(file?.cameraCapturedAt || cameraCapturedAt).toLocaleString()}</span>
                     </div>
@@ -1067,13 +1066,13 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                 <div>
                   <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📸</span>
                   <p style={{ fontWeight: 600, color: 'var(--neutral-700)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>
-                    {file ? file.name : t('upload_invoice_image') }
+                    {file ? file.name : t('upload_invoice_image')}
                   </p>
                   <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>
                     {t('Supports PNG, JPG, WEBP (Max 10MB)')}
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--primary-600)', marginTop: '0.75rem', fontWeight: 600 }}>
-                  {t('🤖 AI + OCR will extract invoice details automatically')}
+                    {t('🤖 AI + OCR will extract invoice details automatically')}
                   </p>
                 </div>
               )}
@@ -1081,10 +1080,10 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
             {loading && extractionProgress > 0 && (
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ 
-                  width: '100%', 
-                  height: '8px', 
-                  background: 'var(--neutral-200)', 
+                <div style={{
+                  width: '100%',
+                  height: '8px',
+                  background: 'var(--neutral-200)',
                   borderRadius: '9999px',
                   overflow: 'hidden',
                 }}>
@@ -1096,17 +1095,17 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                   }}></div>
                 </div>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--neutral-600)', marginTop: '0.5rem', textAlign: 'center' }}>
-                  {extractionProgress < 50 ? 'Scanning image...' : 
-                   extractionProgress < 85 ? 'AI is analyzing...' : 
-                   'Almost done...'}
+                  {extractionProgress < 50 ? 'Scanning image...' :
+                    extractionProgress < 85 ? 'AI is analyzing...' :
+                      'Almost done...'}
                 </p>
               </div>
             )}
 
-            <button 
-              onClick={handleExtract} 
-              disabled={!file || loading} 
-              className="btn btn-primary btn-lg" 
+            <button
+              onClick={handleExtract}
+              disabled={!file || loading}
+              className="btn btn-primary btn-lg"
               style={{ width: '100%', marginTop: '1.5rem' }}
             >
               {loading ? (
@@ -1124,7 +1123,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
             <p style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', textAlign: 'center', marginTop: '1rem' }}>
               {t('By uploading, you agree to our Terms of Service and Privacy Policy.')}
-              </p>
+            </p>
           </div>
 
           {/* Extracted Data Section */}
@@ -1151,54 +1150,54 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
                 <div>
                   <label>{t('supplier_name')}</label>
-                  <input 
-                    type="text" 
-                    value={extractedData.supplierName} 
+                  <input
+                    type="text"
+                    value={extractedData.supplierName}
                     onChange={(e) => handleFieldChange('supplierName', e.target.value)}
                   />
                 </div>
                 <div>
                   <label>GSTIN</label>
-                  <input 
-                    type="text" 
-                    value={extractedData.gstin} 
+                  <input
+                    type="text"
+                    value={extractedData.gstin}
                     onChange={(e) => handleFieldChange('gstin', e.target.value)}
                     maxLength={15}
                   />
                 </div>
                 <div>
                   <label>Invoice Number</label>
-                  <input 
-                    type="text" 
-                    value={extractedData.invoiceNumber} 
+                  <input
+                    type="text"
+                    value={extractedData.invoiceNumber}
                     onChange={(e) => handleFieldChange('invoiceNumber', e.target.value)}
                   />
                 </div>
                 <div>
                   <label>{t('date')}</label>
-                  <input 
-                    type="date" 
-                    value={extractedData.invoiceDate} 
+                  <input
+                    type="date"
+                    value={extractedData.invoiceDate}
                     onChange={(e) => handleFieldChange('invoiceDate', e.target.value)}
                   />
                 </div>
                 <div>
                   <label>{t('amount')} (Taxable)</label>
-                  <input 
-                    type="number" 
-                    value={extractedData.amount} 
+                  <input
+                    type="number"
+                    value={extractedData.amount}
                     onChange={(e) => handleFieldChange('amount', e.target.value)}
                   />
                 </div>
-                
+
                 <div>
                   <label>{t('tax_percent')}</label>
-                  <input 
-                    type="text" 
-                    value={extractedData.taxPercent} 
+                  <input
+                    type="text"
+                    value={extractedData.taxPercent}
                     onChange={(e) => {
                       const input = e.target.value.trim();
-                      
+
                       // Check if input contains multiple values (comma, plus, or space separated)
                       if (input.includes(',') || input.includes('+') || /\d+\s+\d+/.test(input)) {
                         // Extract all numbers from the input
@@ -1243,26 +1242,26 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                 </div>
                 <div>
                   <label>Tax Amount</label>
-                  <input 
-                    type="number" 
-                    value={extractedData.taxAmount} 
+                  <input
+                    type="number"
+                    value={extractedData.taxAmount}
                     readOnly
                     style={{ background: 'var(--neutral-100)' }}
                   />
                 </div>
                 <div>
                   <label>Total Amount</label>
-                  <input 
-                    type="number" 
-                    value={extractedData.totalAmount} 
+                  <input
+                    type="number"
+                    value={extractedData.totalAmount}
                     readOnly
                     style={{ background: 'var(--neutral-100)', fontWeight: 700 }}
                   />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label>{t('expense_type')}</label>
-                  <select 
-                    value={extractedData.expenseType} 
+                  <select
+                    value={extractedData.expenseType}
                     onChange={(e) => handleFieldChange('expenseType', e.target.value)}
                   >
                     <option value="Raw Material">Raw Material</option>

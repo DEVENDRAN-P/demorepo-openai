@@ -28,7 +28,7 @@ function Profile({ user, setUser }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} setUser={setUser} />
+      <Navbar user={user} />
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="card">

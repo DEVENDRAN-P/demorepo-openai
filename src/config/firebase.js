@@ -1,35 +1,118 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getAnalytics, isSupported } from "firebase/analytics";
+import { getStorage } from "firebase/storage";
 
-// Firebase configuration - CONFIGURED ✅
+// ========================================
+// FIREBASE CONFIGURATION - PRODUCTION READY
+// ========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDxBhimDN0NQKUZrgfniRqg9qrhqOsEgW0",
-  authDomain: "gst-buddy-c1db9.firebaseapp.com",
-  projectId: "gst-buddy-c1db9",
-  storageBucket: "gst-buddy-c1db9.firebasestorage.app",
-  messagingSenderId: "555739119308",
-  appId: "1:555739119308:web:a3631408ce988550c04c69",
-  measurementId: "G-C62H1W3P81"
+  apiKey: "AIzaSyAGGaj2BhlcxdJXV5FY9aNwJFwKXkL2Za0",
+  authDomain: "finalopenai-fc9c5.firebaseapp.com",
+  projectId: "finalopenai-fc9c5",
+  storageBucket: "finalopenai-fc9c5.firebasestorage.app",
+  messagingSenderId: "597968912139",
+  appId: "1:597968912139:web:8bb776619a3292f587ec0e",
+  measurementId: "G-VY1Q4M03VH",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// ========================================
+// INITIALIZE FIREBASE APP
+// ========================================
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+  console.log("✅ Firebase App initialized successfully");
+} catch (error) {
+  console.error("❌ Firebase initialization error:", error);
+  throw new Error(
+    "Failed to initialize Firebase. Please check your configuration.",
+  );
+}
 
-// Initialize Firebase Authentication
+// ========================================
+// INITIALIZE FIREBASE AUTHENTICATION
+// ========================================
 export const auth = getAuth(app);
 
-// Initialize Cloud Firestore Database
+// Enable auth persistence (keep users logged in)
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("✅ Firebase Auth persistence enabled");
+  })
+  .catch((error) => {
+    console.warn("⚠️ Auth persistence setup failed:", error.message);
+  });
+
+// ========================================
+// INITIALIZE CLOUD FIRESTORE DATABASE
+// ========================================
 export const db = getFirestore(app);
 
-export default app;
-
-// DEBUGGING INFO
-if (typeof window !== 'undefined') {
-  console.log('🔥 Firebase Config Status:');
-  console.log('   Project ID:', firebaseConfig.projectId);
-  console.log('   Auth Domain:', firebaseConfig.authDomain);
-  console.log('   API Key Valid:', firebaseConfig.apiKey && firebaseConfig.apiKey.length > 20);
-  console.log('   ⚠️ If values above look generic, update firebase.js with real credentials');
-  console.log('   📖 See FIREBASE_SETUP.md for complete setup guide');
+// Enable offline persistence for better performance
+if (typeof window !== "undefined") {
+  enableIndexedDbPersistence(db)
+    .then(() => {
+      console.log("✅ Firestore offline persistence enabled");
+    })
+    .catch((err) => {
+      if (err.code === "failed-precondition") {
+        console.warn(
+          "⚠️ Multiple tabs open, persistence enabled in first tab only",
+        );
+      } else if (err.code === "unimplemented") {
+        console.warn("⚠️ Browser doesn't support offline persistence");
+      }
+    });
 }
+
+// ========================================
+// INITIALIZE FIREBASE ANALYTICS
+// ========================================
+let analytics = null;
+if (typeof window !== "undefined") {
+  isSupported()
+    .then((supported) => {
+      if (supported) {
+        analytics = getAnalytics(app);
+        console.log("✅ Firebase Analytics initialized");
+      }
+    })
+    .catch((error) => {
+      console.warn("⚠️ Analytics initialization failed:", error.message);
+    });
+}
+
+export { analytics };
+
+// ========================================
+// INITIALIZE FIREBASE STORAGE
+// ========================================
+export const storage = getStorage(app);
+console.log("✅ Firebase Storage initialized");
+
+// ========================================
+// FIREBASE CONNECTION STATUS
+// ========================================
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("🔥 FIREBASE CONNECTION STATUS");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📦 Project ID:", firebaseConfig.projectId);
+  console.log("🌐 Auth Domain:", firebaseConfig.authDomain);
+  console.log(
+    "🔑 API Key:",
+    firebaseConfig.apiKey ? "✅ Configured" : "❌ Missing",
+  );
+  console.log("📊 Analytics:", analytics ? "✅ Enabled" : "⚠️ Disabled");
+  console.log("💾 Storage:", storage ? "✅ Enabled" : "❌ Disabled");
+  console.log("🔒 Auth Persistence:", "✅ Local Storage");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+}
+
+export default app;
