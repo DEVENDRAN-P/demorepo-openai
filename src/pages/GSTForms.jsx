@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 import Navbar from '../components/Navbar';
 
 function GSTForms({ user, setUser }) {
-  const { t } = useTranslation();
   const [bills, setBills] = useState([]);
   const [formType, setFormType] = useState('GSTR-1');
   const [gstr1Data, setGstr1Data] = useState([]);

@@ -14,7 +14,7 @@ const IconMicrophone = ({ recording }) => (
 );
 
 function BillUpload({ user, setUser }) {
-  const { t, i18n } = useTranslation(); // Add i18n here
+  const { i18n } = useTranslation();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [extractedData, setExtractedData] = useState(null);

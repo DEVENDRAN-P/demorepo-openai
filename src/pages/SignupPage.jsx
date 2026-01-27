@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { signup } from '../services/authService';
 
 function SignupPage() {
-  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',

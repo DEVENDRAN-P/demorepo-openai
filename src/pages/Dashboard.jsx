@@ -46,7 +46,6 @@ const IconRobot = () => (
 function Dashboard({ user, setUser }) {
   const { t } = useTranslation();
   const [filingStatus, setFilingStatus] = useState([]);
-  const [reminders, setReminders] = useState([]);
   const [stats, setStats] = useState({ totalBills: 0, pendingFiling: 0, totalGST: 0, costSavings: 0 });
 
   // Calculate cost savings from bills
