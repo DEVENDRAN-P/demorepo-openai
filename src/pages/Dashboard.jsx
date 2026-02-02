@@ -58,7 +58,8 @@ function Dashboard({ user, setUser }) {
 
   useEffect(() => {
     // Load real user data
-    const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+    const billsKey = `bills_${user?.id || 'anonymous'}`;
+    const bills = JSON.parse(localStorage.getItem(billsKey) || '[]');
 
     // Calculate stats
     const totalGST = bills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
@@ -115,7 +116,8 @@ function Dashboard({ user, setUser }) {
 
     // Listen for storage changes (bills updated in another tab or window)
     const handleStorageChange = () => {
-      const updatedBills = JSON.parse(localStorage.getItem('bills') || '[]');
+      const billsKey = `bills_${user?.id || 'anonymous'}`;
+      const updatedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 
@@ -129,7 +131,8 @@ function Dashboard({ user, setUser }) {
 
     // Listen for custom bill update event (within same window)
     const handleBillUpdated = (event) => {
-      const updatedBills = event.detail?.bills || JSON.parse(localStorage.getItem('bills') || '[]');
+      const billsKey = `bills_${user?.id || 'anonymous'}`;
+      const updatedBills = event.detail?.bills || JSON.parse(localStorage.getItem(billsKey) || '[]');
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 

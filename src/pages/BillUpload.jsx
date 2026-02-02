@@ -667,7 +667,8 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
   const handleConfirm = () => {
     if (!extractedData) return;
 
-    const savedBills = JSON.parse(localStorage.getItem('bills') || '[]');
+    const billsKey = `bills_${user?.id || 'anonymous'}`;
+    const savedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
     const newBill = {
       id: Date.now(),
       ...extractedData,
@@ -677,7 +678,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     };
 
     savedBills.push(newBill);
-    localStorage.setItem('bills', JSON.stringify(savedBills));
+    localStorage.setItem(billsKey, JSON.stringify(savedBills));
 
     // Dispatch custom event for bill upload (triggers dashboard update)
     window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));

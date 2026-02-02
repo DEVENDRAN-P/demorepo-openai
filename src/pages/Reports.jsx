@@ -11,7 +11,8 @@ function Reports({ user, setUser }) {
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+    const billsKey = `bills_${user?.id || 'anonymous'}`;
+    const bills = JSON.parse(localStorage.getItem(billsKey) || '[]');
 
     if (bills.length === 0) {
       setHasData(false);

@@ -11,7 +11,8 @@ function GSTForms({ user, setUser }) {
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const savedBills = JSON.parse(localStorage.getItem('bills') || '[]');
+    const billsKey = `bills_${user?.id || 'anonymous'}`;
+    const savedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
     setHasData(savedBills.length > 0);
 
     if (savedBills.length > 0) {
