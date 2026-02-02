@@ -65,7 +65,7 @@ function Reports({ user, setUser }) {
       credit: inputCredit,
       netPayable: netPayable,
     });
-  }, []);
+  }, [user?.id]);
 
   if (!hasData) {
     return (

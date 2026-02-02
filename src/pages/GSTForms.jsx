@@ -19,7 +19,7 @@ function GSTForms({ user, setUser }) {
       generateGSTR1(savedBills);
       generateGSTR3B(savedBills);
     }
-  }, []);
+  }, [user?.id]);
 
   const generateGSTR1 = (bills) => {
     const data = bills.map(bill => ({

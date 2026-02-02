@@ -151,7 +151,7 @@ function Dashboard({ user, setUser }) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('billUpdated', handleBillUpdated);
     };
-  }, []);
+  }, [user?.id]);
 
   const getStatusBadge = (status) => {
     const badges = {
