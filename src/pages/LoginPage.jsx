@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { login } from '../services/authService';
+import { perf } from '../services/perfService';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,9 +17,7 @@ function LoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    console.log('LoginPage - Auth State:', { isAuthenticated, userEmail: user?.email });
     if (isAuthenticated && user) {
-      console.log('✅ User authenticated, navigating to dashboard...');
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
@@ -71,6 +70,8 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    perf.clear();
+    perf.start('LOGIN_TOTAL');
 
     // Validate form
     if (!validateEmail(email)) {
@@ -81,20 +82,25 @@ function LoginPage() {
     }
 
     setLoading(true);
-    console.log('🔐 Starting login process...');
-    console.log('   Email:', email);
 
     try {
-      // Sign in with Firebase Authentication - this will trigger AuthContext update
-      const userCredential = await login(email, password);
-      console.log('✅ Firebase login successful!');
-      console.log('   User ID:', userCredential.user.uid);
-      console.log('   Email:', userCredential.user.email);
-      console.log('   Waiting for AuthContext to update...');
+      // Performance tracking: Firebase auth call
+      perf.start('FIREBASE_AUTH');
+      await login(email, password);
+      perf.end('FIREBASE_AUTH');
 
       // AuthContext's onAuthStateChanged will detect the login
       // and automatically update isAuthenticated state
       // The useEffect above will handle navigation when state updates
+
+      // Log performance after login completes
+      setTimeout(() => {
+        perf.end('LOGIN_TOTAL');
+        perf.summary('🔐 LOGIN PERFORMANCE', [
+          'FIREBASE_AUTH',
+          'LOGIN_TOTAL'
+        ]);
+      }, 500);
 
     } catch (err) {
       setLoading(false);
@@ -117,7 +123,6 @@ function LoginPage() {
       }
 
       setError(errorMessage);
-      console.error('❌ Login error:', err.code, err.message);
     }
   };
 

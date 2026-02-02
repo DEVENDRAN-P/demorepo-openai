@@ -14,7 +14,7 @@ const IconMicrophone = ({ recording }) => (
 );
 
 function BillUpload({ user, setUser }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation(); // Add i18n here
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [extractedData, setExtractedData] = useState(null);
@@ -149,14 +149,13 @@ function BillUpload({ user, setUser }) {
           canvasImg.src = c.toDataURL('image/png');
           text = await runTesseract(canvasImg);
         } catch (e) {
-          console.warn('Second OCR pass failed', e);
+          // Fallback already attempted
         }
       }
 
       if (createdObjectURL) URL.revokeObjectURL(createdObjectURL);
       return text;
     } catch (err) {
-      console.error('OCR pipeline error:', err);
       throw err;
     }
   };
@@ -186,7 +185,6 @@ function BillUpload({ user, setUser }) {
       // Auto-trigger extraction
       await handleExtract(capturedFile);
     } catch (err) {
-      console.error('Error processing captured file:', err);
       setNotification({ message: 'Failed to process camera capture', type: 'error' });
     }
   };
@@ -201,7 +199,6 @@ function BillUpload({ user, setUser }) {
         await videoRef.current.play();
       }
     } catch (err) {
-      console.error('Camera start error:', err);
       setNotification({ message: 'Unable to access camera. Please allow camera permission or try file upload.', type: 'error' });
       setShowCameraModal(false);
     }
@@ -287,7 +284,6 @@ function BillUpload({ user, setUser }) {
         // do NOT call processCapturedFile here; wait for user to Accept
       }, 'image/jpeg', 1.0);
     } catch (err) {
-      console.error('Capture error:', err);
       setNotification({ message: 'Capture failed. Please try again.', type: 'error' });
     }
   };
@@ -436,7 +432,6 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
 
       const data = await response.json();
       const content = data.choices[0]?.message?.content || '';
-      console.log('AI Raw Response:', content);
 
       let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
       if (!jsonMatch) jsonMatch = content.match(/```([\s\S]*?)```/);
@@ -448,13 +443,11 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
       setExtractionProgress(100);
       return extracted;
     } catch (err) {
-      console.error('AI extraction error:', err);
       throw err;
     }
   };
 
   const processExtractedData = (data) => {
-    console.log('Raw extracted data:', data);
     const snapRate = (r) => {
       const valid = [5, 12, 18, 28];
       if (!r || r <= 0) return 0;
@@ -628,8 +621,6 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
         setNotification({ message: 'Scanning image with OCR...', type: 'info' });
         ocrText = await extractTextWithOCR(activeFile);
 
-        console.log('OCR Extracted Text:', ocrText); // Debug log
-
         // Allow shorter OCR text for camera photos (min 10 chars instead of 20)
         const minOCRLength = file?.isCameraCapture ? 10 : 20;
         if (!ocrText || ocrText.trim().length < minOCRLength) {
@@ -647,13 +638,11 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
         return;
       }
     } catch (error) {
-      console.error('Extraction failed:', error);
       handleExtractionError(error);
     }
   };
 
   const handleExtractionError = (error) => {
-    console.error('Extraction error:', error);
     setLoading(false);
     setExtractionProgress(0);
     setNotification({
@@ -734,11 +723,9 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
 
       try {
         const extractedInfo = await extractDataFromVoice(transcript);
-        console.log('Final extracted info from voice:', extractedInfo);
         setExtractionProgress(80);
         processExtractedData(extractedInfo);
       } catch (error) {
-        console.error('Voice processing error:', error);
         handleExtractionError(error);
       }
     };
@@ -757,7 +744,6 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
 
   const extractDataFromVoice = async (voiceText) => {
     try {
-      console.log('Starting voice extraction for text:', voiceText);
       setNotification({ message: 'Analyzing voice with AI...', type: 'info' });
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -816,20 +802,15 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('API response error:', response.status, response.statusText, errorData);
         throw new Error(`API Error ${response.status}: ${response.statusText}. Details: ${errorData}`);
       }
 
       const data = await response.json();
-      console.log('Raw API response:', data);
 
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
-        console.error('No content in API response');
         throw new Error('No response from AI');
       }
-
-      console.log('AI response content:', content);
 
       // Try to extract JSON from various formats
       let extracted = null;
@@ -838,32 +819,26 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
       let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
       if (jsonMatch) {
         extracted = JSON.parse(jsonMatch[1]);
-        console.log('Parsed from markdown JSON:', extracted);
       } else {
         // Try plain code blocks
         jsonMatch = content.match(/```\s*([\s\S]*?)```/);
         if (jsonMatch) {
           extracted = JSON.parse(jsonMatch[1]);
-          console.log('Parsed from code block:', extracted);
         } else {
           // Try direct JSON
           jsonMatch = content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             extracted = JSON.parse(jsonMatch[0]);
-            console.log('Parsed from direct JSON:', extracted);
           }
         }
       }
 
       if (!extracted) {
-        console.error('Could not parse JSON from response:', content);
         throw new Error('Could not parse AI response as JSON');
       }
 
-      console.log('Successfully extracted voice data:', extracted);
       return extracted;
     } catch (error) {
-      console.error('Voice extraction error:', error);
       throw error;
     }
   };
@@ -878,8 +853,8 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
             notification.type === 'error' ? 'var(--error-light)' :
               notification.type === 'warning' ? 'var(--warning-light)' : 'var(--info-light)',
           borderLeft: `4px solid ${notification.type === 'success' ? 'var(--success)' :
-              notification.type === 'error' ? 'var(--error)' :
-                notification.type === 'warning' ? 'var(--warning)' : 'var(--info)'
+            notification.type === 'error' ? 'var(--error)' :
+              notification.type === 'warning' ? 'var(--warning)' : 'var(--info)'
             }`,
         }}>
           <div className="notification-content">
@@ -1115,7 +1090,6 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                 </>
               ) : (
                 <>
-                  <span>🤖</span>
                   <span>{t('Extract with AI + OCR')}</span>
                 </>
               )}
@@ -1198,7 +1172,6 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     onChange={(e) => {
                       const input = e.target.value.trim();
 
-                      // Check if input contains multiple values (comma, plus, or space separated)
                       if (input.includes(',') || input.includes('+') || /\d+\s+\d+/.test(input)) {
                         // Extract all numbers from the input
                         const numbers = input.match(/\d+\.?\d*/g);

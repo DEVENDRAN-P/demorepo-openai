@@ -9,9 +9,10 @@ import {
 } from "firebase/auth";
 import { setDoc, doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
+import { perf } from "./perfService";
 
 /**
- * Sign up a new user with email and password
+ * Sign up a new user with email and password - OPTIMIZED for speed
  * @param {string} email - User email
  * @param {string} password - User password
  * @param {object} userData - Additional user data (name, shopName, gstin)
@@ -19,25 +20,26 @@ import { auth, db } from "../config/firebase";
  */
 export const signup = async (email, password, userData) => {
   try {
-    // Create user with Firebase Authentication
+    // Step 1: Create user with Firebase Authentication (REQUIRED - BLOCKING)
+    perf.start("FIREBASE_CREATEUSER");
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password,
     );
+    perf.end("FIREBASE_CREATEUSER");
     const firebaseUser = userCredential.user;
-    console.log("✅ Firebase user created:", firebaseUser.uid);
 
-    // Update user profile with display name
-    if (userData.name) {
-      await updateProfile(firebaseUser, {
-        displayName: userData.name,
-      });
-    }
+    // Step 2: Run all other operations in PARALLEL (NON-BLOCKING)
+    // These don't block the return, allowing faster signup response
+    Promise.all([
+      // Update display name
+      userData.name
+        ? updateProfile(firebaseUser, { displayName: userData.name })
+        : Promise.resolve(),
 
-    // Store user data in Firestore
-    try {
-      await setDoc(doc(db, "users", firebaseUser.uid), {
+      // Store user data in Firestore (background operation)
+      setDoc(doc(db, "users", firebaseUser.uid), {
         uid: firebaseUser.uid,
         name: userData.name || "",
         email: firebaseUser.email,
@@ -47,61 +49,52 @@ export const signup = async (email, password, userData) => {
         updatedAt: new Date().toISOString(),
         emailVerified: firebaseUser.emailVerified,
         lastLogin: new Date().toISOString(),
-      });
-      console.log("✅ Firestore user document created");
-    } catch (firestoreErr) {
-      console.warn("⚠️ Firestore error (continuing):", firestoreErr);
-      // Continue even if Firestore fails - user can still login
-    }
+      }).catch((firestoreErr) => {
+        // Silently fail - user can still login
+      }),
 
-    // Send email verification asynchronously (non-blocking)
-    sendEmailVerification(firebaseUser).catch((err) => {
-      console.warn("Email verification failed:", err);
+      // Send email verification (background operation)
+      sendEmailVerification(firebaseUser).catch(() => {
+        // Silently fail
+      }),
+    ]).catch(() => {
+      // Silently catch any parallel operation errors
     });
 
-    console.log("✅ Signup successful for:", email);
     return userCredential;
   } catch (error) {
-    console.error("❌ Signup error:", error);
     throw error;
   }
 };
 
 /**
- * Sign in user with email and password
+ * Sign in user with email and password - OPTIMIZED for speed
  * @param {string} email - User email
  * @param {string} password - User password
  * @returns {object} Firebase user credential
  */
 export const login = async (email, password) => {
   try {
-    console.log("🔐 Login attempt for:", email);
+    // Step 1: Firebase Authentication (REQUIRED - BLOCKING)
+    perf.start("FIREBASE_SIGNIN");
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
       password,
     );
+    perf.end("FIREBASE_SIGNIN");
     const firebaseUser = userCredential.user;
-    console.log("✅ Firebase authentication successful");
-    console.log("   User ID:", firebaseUser.uid);
-    console.log("   Email:", firebaseUser.email);
-    console.log("   Email Verified:", firebaseUser.emailVerified);
 
-    // Update last login time in Firestore asynchronously (non-blocking)
+    // Step 2: Update lastLogin in background (NON-BLOCKING)
     // This doesn't delay the login response
     updateDoc(doc(db, "users", firebaseUser.uid), {
       lastLogin: new Date().toISOString(),
-    })
-      .then(() => {
-        console.log("✅ Updated lastLogin in Firestore");
-      })
-      .catch((err) => {
-        console.warn("⚠️ Failed to update lastLogin:", err.message);
-      });
+    }).catch(() => {
+      // Silently fail - doesn't affect login
+    });
 
     return userCredential;
   } catch (error) {
-    console.error("❌ Login failed:", error.code, error.message);
     throw error;
   }
 };

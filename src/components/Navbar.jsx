@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logout } from '../services/authService';
@@ -97,6 +97,25 @@ function Navbar({ user }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'indigo');
 
+  // Refs for click-outside detection
+  const themeRef = useRef(null);
+  const langRef = useRef(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeRef.current && !themeRef.current.contains(event.target)) {
+        setThemeOpen(false);
+      }
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setLangOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const applyTheme = (name) => {
     const def = THEMES[name] || THEMES.indigo;
     Object.entries(def).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
@@ -104,7 +123,7 @@ function Navbar({ user }) {
 
   useEffect(() => {
     applyTheme(theme);
-  }, []); // apply on mount
+  }, [theme]);
 
   const handleThemeChange = (name) => {
     setTheme(name);
@@ -285,9 +304,12 @@ function Navbar({ user }) {
             </a>
 
             {/* Theme Selector - Hidden on mobile */}
-            <div style={{ position: 'relative', display: 'none' }} className="theme-selector">
+            <div style={{ position: 'relative', display: 'none' }} className="theme-selector" ref={themeRef}>
               <button
-                onClick={() => setThemeOpen(!themeOpen)}
+                onClick={() => {
+                  setThemeOpen(!themeOpen);
+                  setLangOpen(false);
+                }}
                 className="btn btn-ghost btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 aria-label="Change theme"
@@ -350,9 +372,12 @@ function Navbar({ user }) {
             </div>
 
             {/* Language Selector */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} ref={langRef}>
               <button
-                onClick={() => setLangOpen(!langOpen)}
+                onClick={() => {
+                  setLangOpen(!langOpen);
+                  setThemeOpen(false);
+                }}
                 className="btn btn-ghost btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >

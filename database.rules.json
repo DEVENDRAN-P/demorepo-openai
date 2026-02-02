@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "profile": {
+          ".validate": "newData.hasChildren(['name', 'email']) || newData.val() === null"
+        },
+        "settings": {
+          ".validate": "newData.isObject() || newData.val() === null"
+        },
+        "stats": {
+          ".validate": "newData.isObject() || newData.val() === null"
+        },
+        "bills": {
+          "$billId": {
+            ".validate": "newData.hasChild('billNumber') || newData.val() === null"
+          }
+        },
+        "documents": {
+          "$docId": {
+            ".validate": "newData.isObject() || newData.val() === null"
+          }
+        },
+        "gstForms": {
+          "$formId": {
+            ".validate": "newData.isObject() || newData.val() === null"
+          }
+        },
+        "reports": {
+          "$reportId": {
+            ".validate": "newData.isObject() || newData.val() === null"
+          }
+        }
+      }
+    },
+    "test": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    }
+  }
+}

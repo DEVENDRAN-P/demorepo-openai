@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-function AIAssistant(user, setUser ) {
+function AIAssistant({ user }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([
     {
@@ -11,8 +11,8 @@ function AIAssistant(user, setUser ) {
         i18n.language === 'en'
           ? "Hello! I'm your AI GST Compliance Assistant powered by Groq. I can help you understand GST regulations, filing procedures, tax calculations, and compliance requirements. How may I assist you today?"
           : i18n.language === 'hi'
-          ? 'नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं आपको GST नियम, फाइलिंग प्रक्रिया, कर गणना और अनुपालन आवश्यकताओं को समझने में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?'
-          : "வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். GST விதிமுறைகள், தாக்கல் செயல்முறைகள், வரி கணக்கீடுகள் மற்றும் இணக்க தேவைகளைப் புரிந்துகொள்ள நான் உங்களுக்கு உதவ முடியும். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+            ? 'नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं आपको GST नियम, फाइलिंग प्रक्रिया, कर गणना और अनुपालन आवश्यकताओं को समझने में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?'
+            : "வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். GST விதிமுறைகள், தாக்கல் செயல்முறைகள், வரி கணக்கீடுகள் மற்றும் இணக்க தேவைகளைப் புரிந்துகொள்ள நான் உங்களுக்கு உதவ முடியும். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -32,6 +32,11 @@ function AIAssistant(user, setUser ) {
 
   const callGroqAPI = async (userMessage) => {
     try {
+      // Helper defined outside loops to satisfy no-loop-func
+      const updateStreamingMessage = (id, text) => {
+        setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text } : msg)));
+      };
+
       const systemPrompt = `You are an expert GST (Goods and Services Tax) compliance assistant for Indian businesses. 
       Provide accurate, clear, and practical information about:
       - GST rates and calculations
@@ -43,7 +48,7 @@ function AIAssistant(user, setUser ) {
       - Invoice requirements
       - GST returns
       your name is ComplianceBot
-      username is ${user?.name}
+      username is ${user?.name || ''}
        and have good knowledge about gst 
       Keep responses concise but informative. Use simple language that shopkeepers can understand.
       dont make up answers if you dont know the answer dont provide in markdown format as the end interface doesnt have mkd support`;
@@ -110,14 +115,8 @@ function AIAssistant(user, setUser ) {
               const content = parsed.choices[0]?.delta?.content || '';
               if (content) {
                 fullResponse += content;
-                // Update the streaming message
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === tempMessageId
-                      ? { ...msg, text: fullResponse }
-                      : msg
-                  )
-                );
+                // Update the streaming message without defining a function in the loop
+                updateStreamingMessage(tempMessageId, fullResponse);
               }
             } catch (e) {
               // Skip invalid JSON
@@ -129,7 +128,6 @@ function AIAssistant(user, setUser ) {
       setStreaming(false);
       return fullResponse;
     } catch (error) {
-      console.error('Groq API Error:', error);
       setStreaming(false);
       throw error;
     }
@@ -153,7 +151,6 @@ function AIAssistant(user, setUser ) {
     try {
       await callGroqAPI(userInput);
     } catch (error) {
-      console.error('Error:', error);
       const errorMessage = {
         id: Date.now() + 1,
         type: 'bot',
@@ -191,9 +188,8 @@ function AIAssistant(user, setUser ) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`message ${
-              msg.type === 'user' ? 'message-user' : 'message-bot'
-            } animate-slide-up`}
+            className={`message ${msg.type === 'user' ? 'message-user' : 'message-bot'
+              } animate-slide-up`}
           >
             <div
               className="message-avatar"

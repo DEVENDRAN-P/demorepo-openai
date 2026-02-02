@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import html2pdf from 'html2pdf.js';
 import Navbar from '../components/Navbar';
 
 function GSTForms({ user, setUser }) {
-  const [bills, setBills] = useState([]);
+  const { t } = useTranslation();
   const [formType, setFormType] = useState('GSTR-1');
   const [gstr1Data, setGstr1Data] = useState([]);
   const [gstr3bData, setGstr3bData] = useState(null);
@@ -11,7 +12,6 @@ function GSTForms({ user, setUser }) {
 
   useEffect(() => {
     const savedBills = JSON.parse(localStorage.getItem('bills') || '[]');
-    setBills(savedBills);
     setHasData(savedBills.length > 0);
 
     if (savedBills.length > 0) {

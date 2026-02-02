@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { signup } from '../services/authService';
+import { perf } from '../services/perfService';
 
 function SignupPage() {
   const [formData, setFormData] = useState({
@@ -144,6 +145,8 @@ function SignupPage() {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+    perf.clear();
+    perf.start('SIGNUP_TOTAL');
 
     if (!validateForm()) {
       return;
@@ -152,21 +155,27 @@ function SignupPage() {
     setLoading(true);
 
     try {
-      console.log('📝 Creating account for:', formData.email);
-
+      // Performance tracking: Firebase signup call
+      perf.start('FIREBASE_SIGNUP');
       // Sign up using authService
-      const result = await signup(formData.email, formData.password, {
+      await signup(formData.email, formData.password, {
         name: formData.name,
         shopName: formData.shopName,
         gstin: formData.gstin,
       });
-
-      console.log('✅ Account created successfully!');
-      console.log('   User ID:', result.user.uid);
-      console.log('   Email:', result.user.email);
+      perf.end('FIREBASE_SIGNUP');
 
       // User is now authenticated after signup
       setSuccessMessage('Account created successfully! Redirecting to dashboard...');
+
+      // Log performance after signup completes
+      setTimeout(() => {
+        perf.end('SIGNUP_TOTAL');
+        perf.summary('🔐 SIGNUP PERFORMANCE', [
+          'FIREBASE_SIGNUP',
+          'SIGNUP_TOTAL'
+        ]);
+      }, 500);
 
       // Wait a moment for auth state to propagate, then redirect
       setTimeout(() => {
@@ -187,7 +196,6 @@ function SignupPage() {
       }
 
       setError(errorMessage);
-      console.error('Signup error:', err);
     } finally {
       setLoading(false);
     }

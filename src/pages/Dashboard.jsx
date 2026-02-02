@@ -96,7 +96,7 @@ function Dashboard({ user, setUser }) {
     }
     setFilingStatus(filings);
 
-    // Generate reminders
+    // Generate reminders list (for potential future use)
     const newReminders = [];
     if (bills.filter(b => !b.filed).length > 0) {
       newReminders.push({
@@ -112,7 +112,6 @@ function Dashboard({ user, setUser }) {
         message: 'Start by uploading your first invoice to begin GST compliance tracking',
       });
     }
-    setReminders(newReminders);
 
     // Listen for storage changes (bills updated in another tab or window)
     const handleStorageChange = () => {

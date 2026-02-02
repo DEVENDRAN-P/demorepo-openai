@@ -15,82 +15,87 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      console.warn('Auth loading timeout - setting loading to false');
       setLoading(false);
-    }, 10000); // 10 second timeout
+    }, 8000); // 8 second timeout
 
     // Real-time listener for authentication state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         clearTimeout(loadingTimeout); // Clear timeout once auth state is determined
-        
+
         if (firebaseUser) {
-          console.log('🔍 Firebase user detected:', firebaseUser.email);
-          
-          // Try to use cached user data from localStorage first
+          // STRATEGY: Use cached user data immediately, then fetch fresh data in background
+
+          // Step 1: Check localStorage cache FIRST (instant load)
           const cachedUser = localStorage.getItem('user');
           if (cachedUser) {
-            const userData = JSON.parse(cachedUser);
-            setUser(userData);
-            setIsAuthenticated(true);
-            setLoading(false);
-            console.log('✅ Using cached user data');
-            
-            // Update from Firestore in background (non-blocking)
-            getDoc(doc(db, 'users', firebaseUser.uid)).then((userDoc) => {
+            try {
+              const userData = JSON.parse(cachedUser);
+              setUser(userData);
+              setIsAuthenticated(true);
+              setLoading(false); // Show UI immediately with cached data
+
+              // Step 2: Fetch fresh data from Firestore in BACKGROUND (non-blocking)
+              getDoc(doc(db, 'users', firebaseUser.uid))
+                .then((userDoc) => {
+                  if (userDoc.exists()) {
+                    const freshData = {
+                      id: firebaseUser.uid,
+                      uid: firebaseUser.uid,
+                      email: firebaseUser.email,
+                      emailVerified: firebaseUser.emailVerified,
+                      ...userDoc.data(),
+                    };
+                    setUser(freshData);
+                    localStorage.setItem('user', JSON.stringify(freshData));
+                  }
+                })
+                .catch(() => {
+                  // Fail silently - keep using cached data
+                });
+              return;
+            } catch (e) {
+              // Invalid cache, proceed to fetch
+            }
+          }
+
+          // Step 3: No cache - create minimal user from Firebase Auth (DON'T wait for Firestore)
+          const minimalUser = {
+            id: firebaseUser.uid,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName || '',
+            emailVerified: firebaseUser.emailVerified,
+            createdAt: new Date().toISOString(),
+          };
+
+          // Show minimal data IMMEDIATELY
+          setUser(minimalUser);
+          setIsAuthenticated(true);
+          setLoading(false);
+          localStorage.setItem('user', JSON.stringify(minimalUser));
+          localStorage.setItem('userToken', firebaseUser.uid);
+
+          // BACKGROUND: Fetch complete profile from Firestore (non-blocking)
+          getDoc(doc(db, 'users', firebaseUser.uid))
+            .then((userDoc) => {
               if (userDoc.exists()) {
-                const freshData = {
+                const userData = {
                   id: firebaseUser.uid,
                   uid: firebaseUser.uid,
                   email: firebaseUser.email,
                   emailVerified: firebaseUser.emailVerified,
                   ...userDoc.data(),
                 };
-                setUser(freshData);
-                localStorage.setItem('user', JSON.stringify(freshData));
-                console.log('✅ Updated from Firestore');
+                setUser(userData);
+                localStorage.setItem('user', JSON.stringify(userData));
               }
-            }).catch((err) => console.warn('Background sync failed:', err));
-          } else {
-            // No cache, fetch from Firestore
-            console.log('🔍 Fetching user from Firestore...');
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-            
-            if (userDoc.exists()) {
-              console.log('✅ Found user in Firestore');
-              const userData = {
-                id: firebaseUser.uid,
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                emailVerified: firebaseUser.emailVerified,
-                ...userDoc.data(),
-              };
-              setUser(userData);
-              setIsAuthenticated(true);
-              localStorage.setItem('user', JSON.stringify(userData));
-              localStorage.setItem('userToken', firebaseUser.uid);
-            } else {
-              // Document doesn't exist yet - create minimal user data from Firebase Auth
-              console.warn('⚠️ User document not in Firestore, using auth data');
-              const userData = {
-                id: firebaseUser.uid,
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName || '',
-                emailVerified: firebaseUser.emailVerified,
-                createdAt: new Date().toISOString(),
-              };
-              setUser(userData);
-              setIsAuthenticated(true);
-              localStorage.setItem('user', JSON.stringify(userData));
-              localStorage.setItem('userToken', firebaseUser.uid);
-              console.log('✅ User authenticated from Firebase Auth');
-            }
-            setLoading(false);
-          }
+            })
+            .catch(() => {
+              // Fail silently - keep using minimal data
+            });
         } else {
           // User is logged out
-          console.log('👋 User logged out');
           setUser(null);
           setIsAuthenticated(false);
           localStorage.removeItem('user');
@@ -98,7 +103,6 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         }
       } catch (err) {
-        console.error('❌ Error in auth state change:', err);
         setError(err.message);
         // Still set loading to false even on error
         setLoading(false);
@@ -114,7 +118,6 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      setLoading(true);
       await signOut(auth);
       setUser(null);
       setIsAuthenticated(false);
@@ -122,10 +125,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('userToken');
       setError(null);
     } catch (err) {
-      console.error('Logout error:', err);
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 

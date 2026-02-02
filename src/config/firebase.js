@@ -3,22 +3,42 @@ import {
   getAuth,
   setPersistence,
   browserLocalPersistence,
+  connectAuthEmulator,
 } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  memoryPersistenceProvider,
+  connectFirestoreEmulator,
+} from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
+import { getDatabase, connectDatabaseEmulator } from "firebase/database";
 
 // ========================================
 // FIREBASE CONFIGURATION - PRODUCTION READY
 // ========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyAGGaj2BhlcxdJXV5FY9aNwJFwKXkL2Za0",
-  authDomain: "finalopenai-fc9c5.firebaseapp.com",
-  projectId: "finalopenai-fc9c5",
-  storageBucket: "finalopenai-fc9c5.firebasestorage.app",
-  messagingSenderId: "597968912139",
-  appId: "1:597968912139:web:8bb776619a3292f587ec0e",
-  measurementId: "G-VY1Q4M03VH",
+  apiKey:
+    process.env.REACT_APP_FIREBASE_API_KEY ||
+    "AIzaSyAGGaj2BhlcxdJXV5FY9aNwJFwKXkL2Za0",
+  authDomain:
+    process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ||
+    "finalopenai-fc9c5.firebaseapp.com",
+  databaseURL:
+    process.env.REACT_APP_FIREBASE_DATABASE_URL ||
+    "https://finalopenai-fc9c5-default-rtdb.firebaseio.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "finalopenai-fc9c5",
+  storageBucket:
+    process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ||
+    "finalopenai-fc9c5.firebasestorage.app",
+  messagingSenderId:
+    process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "597968912139",
+  appId:
+    process.env.REACT_APP_FIREBASE_APP_ID ||
+    "1:597968912139:web:8bb776619a3292f587ec0e",
+  measurementId:
+    process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-VY1Q4M03VH",
 };
 
 // ========================================
@@ -27,13 +47,18 @@ const firebaseConfig = {
 let app;
 try {
   app = initializeApp(firebaseConfig);
-  console.log("✅ Firebase App initialized successfully");
 } catch (error) {
-  console.error("❌ Firebase initialization error:", error);
   throw new Error(
     "Failed to initialize Firebase. Please check your configuration.",
   );
 }
+
+// ========================================
+// CONFIGURE EMULATOR (LOCAL DEVELOPMENT)
+// ========================================
+// Uncomment the following lines to use Firebase Emulator Suite locally
+// Start emulators with: firebase emulators:start
+const useEmulator = process.env.REACT_APP_USE_EMULATOR === "true";
 
 // ========================================
 // INITIALIZE FIREBASE AUTHENTICATION
@@ -43,10 +68,10 @@ export const auth = getAuth(app);
 // Enable auth persistence (keep users logged in)
 setPersistence(auth, browserLocalPersistence)
   .then(() => {
-    console.log("✅ Firebase Auth persistence enabled");
+    // Auth persistence enabled
   })
   .catch((error) => {
-    console.warn("⚠️ Auth persistence setup failed:", error.message);
+    // Auth persistence setup failed - continue anyway
   });
 
 // ========================================
@@ -54,22 +79,9 @@ setPersistence(auth, browserLocalPersistence)
 // ========================================
 export const db = getFirestore(app);
 
-// Enable offline persistence for better performance
-if (typeof window !== "undefined") {
-  enableIndexedDbPersistence(db)
-    .then(() => {
-      console.log("✅ Firestore offline persistence enabled");
-    })
-    .catch((err) => {
-      if (err.code === "failed-precondition") {
-        console.warn(
-          "⚠️ Multiple tabs open, persistence enabled in first tab only",
-        );
-      } else if (err.code === "unimplemented") {
-        console.warn("⚠️ Browser doesn't support offline persistence");
-      }
-    });
-}
+// Note: Firestore offline persistence is now handled via FirestoreSettings.cache
+// This is configured in individual components or as needed
+// The deprecated enableIndexedDbPersistence() has been removed
 
 // ========================================
 // INITIALIZE FIREBASE ANALYTICS
@@ -80,11 +92,10 @@ if (typeof window !== "undefined") {
     .then((supported) => {
       if (supported) {
         analytics = getAnalytics(app);
-        console.log("✅ Firebase Analytics initialized");
       }
     })
     .catch((error) => {
-      console.warn("⚠️ Analytics initialization failed:", error.message);
+      // Analytics initialization not supported
     });
 }
 
@@ -94,25 +105,25 @@ export { analytics };
 // INITIALIZE FIREBASE STORAGE
 // ========================================
 export const storage = getStorage(app);
-console.log("✅ Firebase Storage initialized");
 
 // ========================================
-// FIREBASE CONNECTION STATUS
+// INITIALIZE FIREBASE REALTIME DATABASE
 // ========================================
-if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🔥 FIREBASE CONNECTION STATUS");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 Project ID:", firebaseConfig.projectId);
-  console.log("🌐 Auth Domain:", firebaseConfig.authDomain);
-  console.log(
-    "🔑 API Key:",
-    firebaseConfig.apiKey ? "✅ Configured" : "❌ Missing",
-  );
-  console.log("📊 Analytics:", analytics ? "✅ Enabled" : "⚠️ Disabled");
-  console.log("💾 Storage:", storage ? "✅ Enabled" : "❌ Disabled");
-  console.log("🔒 Auth Persistence:", "✅ Local Storage");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+export const database = getDatabase(app);
+
+// Connect to Realtime Database Emulator for local development
+if (useEmulator && typeof window !== "undefined") {
+  try {
+    // Note: connectDatabaseEmulator must be called before any database operations
+    connectDatabaseEmulator(database, "127.0.0.1", 9000);
+    console.log("✅ Connected to Realtime Database Emulator at 127.0.0.1:9000");
+  } catch (error) {
+    console.warn("⚠️  Emulator connection skipped:", error.message);
+  }
 }
+
+// ========================================
+// END FIREBASE INITIALIZATION
+// ========================================
 
 export default app;

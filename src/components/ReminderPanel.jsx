@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getPendingReminders, dismissReminder, generateReminderAlerts } from '../services/reminderService';
 
@@ -26,7 +25,6 @@ const IconSavings = () => (
 );
 
 function ReminderPanel() {
-  const { t } = useTranslation();
   const [reminders, setReminders] = useState([]);
   const [guidanceTips, setGuidanceTips] = useState([]);
   const [costSavings, setCostSavings] = useState(null);
@@ -49,9 +47,8 @@ function ReminderPanel() {
         // Fetch reminders from Firebase
         const dbReminders = await getPendingReminders(user.uid);
         const alerts = generateReminderAlerts(dbReminders);
-        
-        // Also add local reminders for fallback
-        const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+
+        // Calculate current date info for deadline calculations
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();

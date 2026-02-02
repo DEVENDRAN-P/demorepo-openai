@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Pages - Import commonly used pages directly
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import Dashboard from './pages/Dashboard';
 
 // Pages - Lazy load secondary pages for better performance
@@ -49,7 +50,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
         <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />} />
-        
+        <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
+
         <Route element={<ProtectedRoute user={user} />}>
           <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/bill-upload" element={<BillUpload user={user} />} />
@@ -70,7 +72,12 @@ function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
-        <Router>
+        <Router
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <AppRoutes />
         </Router>
       </AuthProvider>

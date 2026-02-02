@@ -2,7 +2,7 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import AIAssistant from '../components/AIAssistant';
 
-function ChatPage({ user, setUser }) {
+function ChatPage({ user }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
       <Navbar user={user} />
@@ -18,7 +18,7 @@ function ChatPage({ user, setUser }) {
             </p>
           </div>
 
-          <AIAssistant />
+          <AIAssistant user={user} />
         </div>
       </div>
     </div>
