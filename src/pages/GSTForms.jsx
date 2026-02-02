@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import html2pdf from 'html2pdf.js';
 import Navbar from '../components/Navbar';
+// eslint-disable-next-line no-unused-vars
+import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 function GSTForms({ user, setUser }) {
   const { t } = useTranslation();
@@ -11,8 +13,12 @@ function GSTForms({ user, setUser }) {
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const billsKey = `bills_${user?.id || 'anonymous'}`;
-    const savedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
+    // Migrate old storage format if needed
+    if (user?.id) {
+      migrateOldBillsKey(user.id);
+    }
+
+    const savedBills = getBills(user?.id);
     setHasData(savedBills.length > 0);
 
     if (savedBills.length > 0) {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getPendingReminders, dismissReminder, generateReminderAlerts } from '../services/reminderService';
+// eslint-disable-next-line no-unused-vars
+import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 const IconBell = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,7 +120,17 @@ function ReminderPanel() {
         setGuidanceTips(tips);
 
         // Cost Savings Calculation
-        const bills_data = JSON.parse(localStorage.getItem('bills') || '[]');
+        // Get user ID from localStorage (set during login)
+        const userStr = localStorage.getItem('user');
+        const currentUser = userStr ? JSON.parse(userStr) : null;
+        const userId = currentUser?.id;
+        
+        // Migrate old storage format if needed
+        if (userId) {
+          migrateOldBillsKey(userId);
+        }
+        
+        const bills_data = getBills(userId);
         const totalBills = bills_data.length;
         const monthsActive = Math.max(1, Math.ceil(totalBills / 10));
         const accountantFee = 3000;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Tesseract from 'tesseract.js';
+import { saveBills, getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 // Add voice icon
 const IconMicrophone = ({ recording }) => (
@@ -667,8 +668,12 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
   const handleConfirm = () => {
     if (!extractedData) return;
 
-    const billsKey = `bills_${user?.id || 'anonymous'}`;
-    const savedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
+    // Migrate old storage format if needed
+    if (user?.id) {
+      migrateOldBillsKey(user.id);
+    }
+
+    const savedBills = getBills(user?.id);
     const newBill = {
       id: Date.now(),
       ...extractedData,
@@ -678,7 +683,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     };
 
     savedBills.push(newBill);
-    localStorage.setItem(billsKey, JSON.stringify(savedBills));
+    saveBills(savedBills, user?.id);
 
     // Dispatch custom event for bill upload (triggers dashboard update)
     window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));

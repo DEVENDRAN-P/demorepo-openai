@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import ReminderPanel from '../components/ReminderPanel';
+import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 // SVG Icons - matching navbar style
 const IconUploadCloud = () => (
@@ -57,9 +58,13 @@ function Dashboard({ user, setUser }) {
   };
 
   useEffect(() => {
+    // Migrate old storage format if needed
+    if (user?.id) {
+      migrateOldBillsKey(user.id);
+    }
+
     // Load real user data
-    const billsKey = `bills_${user?.id || 'anonymous'}`;
-    const bills = JSON.parse(localStorage.getItem(billsKey) || '[]');
+    const bills = getBills(user?.id);
 
     // Calculate stats
     const totalGST = bills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
@@ -116,8 +121,7 @@ function Dashboard({ user, setUser }) {
 
     // Listen for storage changes (bills updated in another tab or window)
     const handleStorageChange = () => {
-      const billsKey = `bills_${user?.id || 'anonymous'}`;
-      const updatedBills = JSON.parse(localStorage.getItem(billsKey) || '[]');
+      const updatedBills = getBills(user?.id);
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 
@@ -131,8 +135,7 @@ function Dashboard({ user, setUser }) {
 
     // Listen for custom bill update event (within same window)
     const handleBillUpdated = (event) => {
-      const billsKey = `bills_${user?.id || 'anonymous'}`;
-      const updatedBills = event.detail?.bills || JSON.parse(localStorage.getItem(billsKey) || '[]');
+      const updatedBills = event.detail?.bills || getBills(user?.id);
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 
