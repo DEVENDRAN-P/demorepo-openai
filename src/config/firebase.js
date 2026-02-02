@@ -3,13 +3,9 @@ import {
   getAuth,
   setPersistence,
   browserLocalPersistence,
-  connectAuthEmulator,
 } from "firebase/auth";
 import {
   getFirestore,
-  initializeFirestore,
-  memoryPersistenceProvider,
-  connectFirestoreEmulator,
 } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
