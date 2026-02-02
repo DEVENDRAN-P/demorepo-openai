@@ -1,0 +1,20 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "env": {
+    "CI": "false"
+  },
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "redirects": [
+    {
+      "source": "/:path((?!static/|_next/|api/|build/).*)",
+      "destination": "/index.html",
+      "permanent": false
+    }
+  ]
+}
