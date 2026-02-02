@@ -124,12 +124,12 @@ function ReminderPanel() {
         const userStr = localStorage.getItem('user');
         const currentUser = userStr ? JSON.parse(userStr) : null;
         const userId = currentUser?.id;
-        
+
         // Migrate old storage format if needed
         if (userId) {
           migrateOldBillsKey(userId);
         }
-        
+
         const bills_data = getBills(userId);
         const totalBills = bills_data.length;
         const monthsActive = Math.max(1, Math.ceil(totalBills / 10));

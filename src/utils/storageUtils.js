@@ -4,11 +4,11 @@
  */
 
 const STORAGE_KEYS = {
-  BILLS: 'gstbuddy_bills', // Base key for bills (will be appended with user ID)
-  THEME: 'theme',
-  LANGUAGE: 'language',
-  USER: 'user',
-  USER_TOKEN: 'userToken',
+  BILLS: "gstbuddy_bills", // Base key for bills (will be appended with user ID)
+  THEME: "theme",
+  LANGUAGE: "language",
+  USER: "user",
+  USER_TOKEN: "userToken",
 };
 
 /**
@@ -18,7 +18,7 @@ const STORAGE_KEYS = {
  */
 export const getBillsStorageKey = (userId) => {
   if (!userId) {
-    console.warn('⚠️ getBillsStorageKey called without userId');
+    console.warn("⚠️ getBillsStorageKey called without userId");
     return STORAGE_KEYS.BILLS;
   }
   return `${STORAGE_KEYS.BILLS}_${userId}`;
@@ -33,10 +33,12 @@ export const saveBills = (bills, userId) => {
   try {
     const key = getBillsStorageKey(userId);
     localStorage.setItem(key, JSON.stringify(bills));
-    console.log(`✅ Bills saved to localStorage (${bills.length} bills) with key: ${key}`);
+    console.log(
+      `✅ Bills saved to localStorage (${bills.length} bills) with key: ${key}`,
+    );
     return true;
   } catch (error) {
-    console.error('❌ Error saving bills to localStorage:', error);
+    console.error("❌ Error saving bills to localStorage:", error);
     return false;
   }
 };
@@ -49,11 +51,13 @@ export const saveBills = (bills, userId) => {
 export const getBills = (userId) => {
   try {
     const key = getBillsStorageKey(userId);
-    const bills = JSON.parse(localStorage.getItem(key) || '[]');
-    console.log(`✅ Bills retrieved from localStorage (${bills.length} bills) with key: ${key}`);
+    const bills = JSON.parse(localStorage.getItem(key) || "[]");
+    console.log(
+      `✅ Bills retrieved from localStorage (${bills.length} bills) with key: ${key}`,
+    );
     return bills;
   } catch (error) {
-    console.error('❌ Error retrieving bills from localStorage:', error);
+    console.error("❌ Error retrieving bills from localStorage:", error);
     return [];
   }
 };
@@ -78,7 +82,7 @@ export const addBill = (bill, userId) => {
     console.log(`✅ New bill added:`, newBill);
     return newBill;
   } catch (error) {
-    console.error('❌ Error adding bill:', error);
+    console.error("❌ Error adding bill:", error);
     return null;
   }
 };
@@ -92,7 +96,7 @@ export const addBill = (bill, userId) => {
 export const updateBill = (billId, updates, userId) => {
   try {
     const bills = getBills(userId);
-    const index = bills.findIndex(b => b.id === billId);
+    const index = bills.findIndex((b) => b.id === billId);
     if (index === -1) {
       console.warn(`⚠️ Bill with ID ${billId} not found`);
       return null;
@@ -102,7 +106,7 @@ export const updateBill = (billId, updates, userId) => {
     console.log(`✅ Bill updated:`, bills[index]);
     return bills[index];
   } catch (error) {
-    console.error('❌ Error updating bill:', error);
+    console.error("❌ Error updating bill:", error);
     return null;
   }
 };
@@ -115,12 +119,12 @@ export const updateBill = (billId, updates, userId) => {
 export const deleteBill = (billId, userId) => {
   try {
     const bills = getBills(userId);
-    const filtered = bills.filter(b => b.id !== billId);
+    const filtered = bills.filter((b) => b.id !== billId);
     saveBills(filtered, userId);
     console.log(`✅ Bill deleted (ID: ${billId})`);
     return true;
   } catch (error) {
-    console.error('❌ Error deleting bill:', error);
+    console.error("❌ Error deleting bill:", error);
     return false;
   }
 };
@@ -136,7 +140,7 @@ export const clearBills = (userId) => {
     console.log(`✅ All bills cleared for user: ${userId}`);
     return true;
   } catch (error) {
-    console.error('❌ Error clearing bills:', error);
+    console.error("❌ Error clearing bills:", error);
     return false;
   }
 };
@@ -150,25 +154,26 @@ export const migrateOldBillsKey = (userId) => {
   try {
     const oldKey = STORAGE_KEYS.BILLS;
     const newKey = getBillsStorageKey(userId);
-    
+
     // Check if old key exists and new key doesn't
     const oldBills = localStorage.getItem(oldKey);
     const newBills = localStorage.getItem(newKey);
-    
+
     if (oldBills && !newBills) {
       localStorage.setItem(newKey, oldBills);
       localStorage.removeItem(oldKey);
-      console.log(`✅ Migrated bills from old key "${oldKey}" to new key "${newKey}"`);
+      console.log(
+        `✅ Migrated bills from old key "${oldKey}" to new key "${newKey}"`,
+      );
       return true;
     }
-    
+
     return false;
   } catch (error) {
-    console.error('❌ Error migrating bills:', error);
+    console.error("❌ Error migrating bills:", error);
     return false;
   }
 };
-
 
 const storageUtilsExport = {
   STORAGE_KEYS,
