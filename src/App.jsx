@@ -11,6 +11,7 @@ import { useAuth } from './hooks/useAuth';
 
 // Components - Import directly (not lazy)
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Pages - Import commonly used pages directly
 import LoginPage from './pages/LoginPage';
@@ -70,18 +71,20 @@ function AppRoutes() {
 
 function App() {
   return (
-    <I18nextProvider i18n={i18n}>
-      <AuthProvider>
-        <Router
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
-    </I18nextProvider>
+    <ErrorBoundary>
+      <I18nextProvider i18n={i18n}>
+        <AuthProvider>
+          <Router
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </I18nextProvider>
+    </ErrorBoundary>
   );
 }
 
