@@ -17,7 +17,10 @@ function AIAssistant({ user }) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,6 +32,11 @@ function AIAssistant({ user }) {
 
   const callGroqAPI = async (userMessage) => {
     try {
+      // Helper defined outside loops to satisfy no-loop-func
+      const updateStreamingMessage = (id, text) => {
+        setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text } : msg)));
+      };
+
       const systemPrompt = `You are an expert GST (Goods and Services Tax) compliance assistant for Indian businesses. 
       Provide accurate, clear, and practical information about:
       - GST rates and calculations
@@ -45,21 +53,10 @@ function AIAssistant({ user }) {
       Keep responses concise but informative. Use simple language that shopkeepers can understand.
       dont make up answers if you dont know the answer dont provide in markdown format as the end interface doesnt have mkd support`;
 
-      // Create a temporary message for the bot response
-      const tempMessageId = Date.now() + 1;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: tempMessageId,
-          type: 'bot',
-          text: '',
-        },
-      ]);
-
-      // Call backend API instead of Groq directly
-      const response = await fetch('/api/chat', {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -73,28 +70,65 @@ function AIAssistant({ user }) {
               content: userMessage,
             },
           ],
+          model: 'llama-3.3-70b-versatile',
           temperature: 0.7,
           max_tokens: 1024,
+          top_p: 0.9,
+          stream: true,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+        throw new Error(`API Error: ${response.status}`);
       }
 
-      const data = await response.json();
-      const botResponse = data.content || '';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
 
-      // Update the message with the bot's response
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempMessageId ? { ...msg, text: botResponse } : msg
-        )
-      );
+      // Create a temporary message for streaming
+      const tempMessageId = Date.now() + 1;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: tempMessageId,
+          type: 'bot',
+          text: '',
+        },
+      ]);
+      setStreaming(true);
 
-      return botResponse;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || '';
+              if (content) {
+                fullResponse += content;
+                // Update the streaming message without defining a function in the loop
+                updateStreamingMessage(tempMessageId, fullResponse);
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+      setStreaming(false);
+      return fullResponse;
     } catch (error) {
+      setStreaming(false);
       throw error;
     }
   };
@@ -145,7 +179,7 @@ function AIAssistant({ user }) {
             {t('ai_assistant')}
           </h3>
           <p style={{ fontSize: '0.8125rem', opacity: 0.9 }}>
-            {loading ? 'Typing...' : 'Online • Powered by Groq AI'}
+            {loading || streaming ? 'Typing...' : 'Online • Powered by Groq AI'}
           </p>
         </div>
       </div>
@@ -198,14 +232,14 @@ function AIAssistant({ user }) {
               }}
               placeholder={t('type_message') || 'Ask me anything about GST...'}
               rows="1"
-              disabled={loading}
+              disabled={loading || streaming}
             />
             <button
               type="submit"
               className="chat-send-btn"
-              disabled={loading || !input.trim()}
+              disabled={loading || streaming || !input.trim()}
             >
-              {loading ? (
+              {loading || streaming ? (
                 <>
                   <div
                     className="spinner"
