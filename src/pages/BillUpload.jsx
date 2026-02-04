@@ -35,8 +35,6 @@ function BillUpload({ user, setUser }) {
   const [modalCapturedBlob, setModalCapturedBlob] = useState(null);
   const [modalCapturedPreview, setModalCapturedPreview] = useState(null);
 
-  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
-
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 4000);
@@ -376,71 +374,28 @@ function BillUpload({ user, setUser }) {
     setExtractionProgress(70);
     // Pre-parse locally first
     const preParsed = preParseTaxFromOCR(ocrText);
-    const hintsJSON = JSON.stringify(preParsed);
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      // Call backend API instead of Groq directly
+      const response = await fetch('/api/extract', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert Indian GST invoice extraction AI trained to handle camera-captured invoices with varied quality.
-You receive:
-1) RAW_OCR_TEXT (may be noisy or partial from camera capture)
-2) LOCAL_HINTS (a preliminary numeric guess object)
-
-EXTRACTION RULES:
-- Use LOCAL_HINTS as a strong starting point. If hints provide non-zero amount/taxPercent, prefer those over guessing.
-- Search for any visible numbers that could be: subtotal, total, amount, CGST, SGST, IGST.
-- VALID GST RATES: 5, 12, 18, 28. Snap to nearest if unsure.
-- If you find any plausible numeric amount >= 100, use it as 'amount' (not zero).
-- If you can't find an explicit total, compute it: total = amount + tax.
-- Handle OCR noise: "2000" might appear as "2000", "200O", "20OO", etc. Try to parse variants.
-
-OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
-{
-  "supplierName": "string or 'Unknown'",
-  "gstin": "string (15 chars) or '27XXXXX0000X0Z0'",
-  "invoiceNumber": "string or 'INV-AUTO'",
-  "invoiceDate": "YYYY-MM-DD or today's date",
-  "amount": <number, preferably from LOCAL_HINTS or OCR. Min 100 if guessing>,
-  "taxPercent": <5, 12, 18, or 28. Prefer explicit or LOCAL_HINTS>,
-  "taxAmount": <calculated or from OCR>,
-  "totalAmount": <amount + taxAmount or explicit total>,
-  "expenseType": "Raw Material|Travel|Utilities|Equipment|Services|Others (default: Others)",
-  "extractionConfidence": "high|medium|low",
-  "taxBreakdown": { "cgst": number|null, "sgst": number|null, "igst": number|null }
-}`
-            },
-            {
-              role: 'user',
-              content: `RAW_OCR_TEXT:\n${ocrText}\n\nLOCAL_HINTS:\n${hintsJSON}\n\nReturn final JSON only.`
-            }
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.05,
-          max_tokens: 1400,
+          ocrText,
+          hints: preParsed,
         }),
       });
 
       setExtractionProgress(85);
-      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API Error: ${response.status}`);
+      }
 
       const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
-
-      let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/```([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Missing JSON in AI response');
-
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const extracted = JSON.parse(jsonStr);
+      const extracted = data.data;
       setExtractionProgress(100);
       return extracted;
     } catch (err) {
@@ -752,10 +707,10 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     try {
       setNotification({ message: 'Analyzing voice with AI...', type: 'info' });
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      // Call backend API instead of Groq directly
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -786,13 +741,6 @@ RULES:
 - Calculate missing values: if total and amount exist, tax = total - amount
 - ALWAYS return a complete JSON object with all fields populated (use reasonable defaults if needed)
 
-EXAMPLES:
-"Bill from XYZ Store for 50000 rupees with 18% GST"
-→ {"supplierName":"XYZ Store","gstin":"27XXXXX0000X0Z0","invoiceNumber":"INV-AUTO","invoiceDate":"2025-11-15","amount":50000,"taxPercent":18,"taxAmount":9000,"totalAmount":59000,"expenseType":"Others","extractionConfidence":"high","taxBreakdown":{"cgst":4500,"sgst":4500,"igst":null}}
-
-"Fuel from Shell, 5000 rupees, 5% tax, invoice 123"
-→ {"supplierName":"Shell","gstin":"27XXXXX0000X0Z0","invoiceNumber":"123","invoiceDate":"2025-11-15","amount":5000,"taxPercent":5,"taxAmount":250,"totalAmount":5250,"expenseType":"Travel","extractionConfidence":"high","taxBreakdown":{"cgst":null,"sgst":null,"igst":250}}
-
 CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation.`
             },
             {
@@ -800,23 +748,18 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               content: `Extract invoice data from this input and return ONLY the JSON object:\n\n${voiceText}`
             }
           ],
-          model: 'llama-3.3-70b-versatile',
           temperature: 0.1,
           max_tokens: 1000,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`API Error ${response.status}: ${response.statusText}. Details: ${errorData}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API Error: ${response.status}`);
       }
 
       const data = await response.json();
-
-      const content = data.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('No response from AI');
-      }
+      const content = data.content || '';
 
       // Try to extract JSON from various formats
       let extracted = null;
