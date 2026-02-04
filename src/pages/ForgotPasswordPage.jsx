@@ -50,7 +50,14 @@ function ForgotPasswordPage() {
 
         try {
             perf.start('FIREBASE_RESET_EMAIL');
-            await sendPasswordResetEmail(auth, email);
+            
+            // Configure action code settings for password reset email
+            const actionCodeSettings = {
+                url: `${window.location.origin}/login`,
+                handleCodeInApp: true,
+            };
+            
+            await sendPasswordResetEmail(auth, email, actionCodeSettings);
             perf.end('FIREBASE_RESET_EMAIL');
 
             setSuccessMessage('✅ Password reset email sent! Check your inbox for instructions.');

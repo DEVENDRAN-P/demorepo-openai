@@ -607,7 +607,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
   const handleExtract = async (targetFile) => {
     const activeFile = targetFile || file;
     if (!activeFile) {
-      setNotification({ message: 'Please select a file first', type: 'warning' });
+      setNotification({ message: t('Please select a file first'), type: 'warning' });
       return;
     }
     setLoading(true);

@@ -222,13 +222,13 @@ function GSTForms({ user, setUser }) {
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📋</span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--neutral-900)' }}>
-              No GST Forms Available
+              {t('No GST Forms Available')}
             </h2>
             <p style={{ color: 'var(--neutral-600)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
-              Upload bills first to generate GSTR-1 and GSTR-3B forms automatically.
+              {t('Upload bills first to generate GSTR-1 and GSTR-3B forms automatically')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
-              Upload Bills
+              {t('Upload Bills')}
             </a>
           </div>
         </div>

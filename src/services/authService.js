@@ -6,9 +6,11 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
+  signInWithPopup,
+  signInWithPhoneNumber,
 } from "firebase/auth";
 import { setDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebase";
+import { auth, db, googleProvider } from "../config/firebase";
 import { perf } from "./perfService";
 
 /**
@@ -118,7 +120,14 @@ export const logout = async () => {
  */
 export const sendPasswordReset = async (email) => {
   try {
-    await sendPasswordResetEmail(auth, email);
+    // Configure action code settings for password reset
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const actionCodeSettings = {
+      url: `${origin}/login`,
+      handleCodeInApp: true,
+    };
+
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
   } catch (error) {
     throw error;
   }
@@ -235,4 +244,246 @@ export const checkEmailExists = async (email) => {
   // In production, you might want to use Firebase Cloud Functions for this
   // For now, Firebase will handle duplicate email during signup
   return false;
+};
+
+/**
+ * Sign in with Google OAuth - OPTIMIZED for speed
+ * @returns {object} Firebase user credential
+ */
+export const loginWithGoogle = async () => {
+  try {
+    perf.start("GOOGLE_AUTH");
+    console.log("🔐 Initiating Google Sign-In...");
+    const result = await signInWithPopup(auth, googleProvider);
+    perf.end("GOOGLE_AUTH");
+    console.log("✅ Google Sign-In successful", result.user.email);
+
+    const firebaseUser = result.user;
+
+    // Check if user already exists in Firestore
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+
+    // If user is new, create their profile
+    if (!userDocSnapshot.exists()) {
+      setDoc(userDocRef, {
+        uid: firebaseUser.uid,
+        name: firebaseUser.displayName || "",
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL || "",
+        shopName: "",
+        gstin: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        emailVerified: firebaseUser.emailVerified,
+        lastLogin: new Date().toISOString(),
+        authProvider: "google",
+      }).catch((err) => {
+        console.error("Error creating user profile:", err);
+      });
+    } else {
+      // Update last login for existing user
+      updateDoc(userDocRef, {
+        lastLogin: new Date().toISOString(),
+      }).catch((err) => {
+        console.error("Error updating last login:", err);
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error("❌ Google Sign-In Error:", {
+      code: error.code,
+      message: error.message,
+      customData: error.customData,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Sign up with Google OAuth - OPTIMIZED for speed
+ * @param {object} userData - Additional user data (shopName, gstin)
+ * @returns {object} Firebase user credential
+ */
+export const signupWithGoogle = async (userData = {}) => {
+  try {
+    perf.start("GOOGLE_SIGNUP");
+    console.log("🔐 Initiating Google Sign-Up...");
+    const result = await signInWithPopup(auth, googleProvider);
+    perf.end("GOOGLE_SIGNUP");
+    console.log("✅ Google Sign-Up successful", result.user.email);
+
+    const firebaseUser = result.user;
+
+    // Create user profile in Firestore
+    setDoc(doc(db, "users", firebaseUser.uid), {
+      uid: firebaseUser.uid,
+      name: firebaseUser.displayName || "",
+      email: firebaseUser.email,
+      photoURL: firebaseUser.photoURL || "",
+      shopName: userData.shopName || "",
+      gstin: userData.gstin || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      emailVerified: firebaseUser.emailVerified,
+      lastLogin: new Date().toISOString(),
+      authProvider: "google",
+    }).catch((err) => {
+      console.error("Error creating user profile:", err);
+    });
+
+    return result;
+  } catch (error) {
+    console.error("❌ Google Sign-Up Error:", {
+      code: error.code,
+      message: error.message,
+      customData: error.customData,
+    });
+    throw error;
+  }
+};
+
+/**
+ * Send OTP to phone number
+ * @param {string} phoneNumber - Phone number with country code (e.g., +91 9876543210)
+ * @param {object} recaptchaVerifier - RecaptchaVerifier instance
+ * @returns {object} Confirmation result with verificationId
+ */
+export const sendPhoneOTP = async (phoneNumber, recaptchaVerifier) => {
+  try {
+    perf.start("PHONE_OTP_SEND");
+
+    const appVerifier = recaptchaVerifier;
+    const confirmationResult = await signInWithPhoneNumber(
+      auth,
+      phoneNumber,
+      appVerifier,
+    );
+
+    perf.end("PHONE_OTP_SEND");
+
+    // Return confirmation result to be used for verifying OTP
+    return confirmationResult;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Verify OTP and sign in user
+ * @param {object} confirmationResult - Result from sendPhoneOTP
+ * @param {string} otp - OTP code entered by user
+ * @param {object} userData - Additional user data (name, shopName, gstin)
+ * @returns {object} Firebase user credential
+ */
+export const verifyPhoneOTP = async (
+  confirmationResult,
+  otp,
+  userData = {},
+) => {
+  try {
+    perf.start("PHONE_OTP_VERIFY");
+
+    const result = await confirmationResult.confirm(otp);
+
+    perf.end("PHONE_OTP_VERIFY");
+
+    const firebaseUser = result.user;
+
+    // Check if user already exists in Firestore
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+
+    // If user is new, create their profile
+    if (!userDocSnapshot.exists()) {
+      setDoc(userDocRef, {
+        uid: firebaseUser.uid,
+        name: userData.name || "",
+        email: firebaseUser.email || "",
+        phoneNumber: firebaseUser.phoneNumber || "",
+        shopName: userData.shopName || "",
+        gstin: userData.gstin || "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        emailVerified: firebaseUser.emailVerified,
+        phoneVerified: true,
+        lastLogin: new Date().toISOString(),
+        authProvider: "phone",
+      }).catch((err) => {
+        console.error("Error creating user profile:", err);
+      });
+    } else {
+      // Update last login for existing user
+      updateDoc(userDocRef, {
+        lastLogin: new Date().toISOString(),
+        phoneVerified: true,
+      }).catch((err) => {
+        console.error("Error updating user profile:", err);
+      });
+    }
+
+    return result;
+  } catch (error) {
+    if (error.code === "auth/invalid-verification-code") {
+      throw new Error("Invalid OTP. Please check and try again.");
+    }
+    throw error;
+  }
+};
+
+/**
+ * Sign in with phone number (existing user)
+ * @param {string} phoneNumber - Phone number with country code
+ * @param {object} recaptchaVerifier - RecaptchaVerifier instance
+ * @returns {object} Confirmation result
+ */
+export const loginWithPhone = async (phoneNumber, recaptchaVerifier) => {
+  try {
+    perf.start("PHONE_LOGIN");
+
+    const confirmationResult = await signInWithPhoneNumber(
+      auth,
+      phoneNumber,
+      recaptchaVerifier,
+    );
+
+    perf.end("PHONE_LOGIN");
+
+    return confirmationResult;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Complete phone login with OTP
+ * @param {object} confirmationResult - Result from loginWithPhone
+ * @param {string} otp - OTP code
+ * @returns {object} Firebase user credential
+ */
+export const completePhoneLogin = async (confirmationResult, otp) => {
+  try {
+    perf.start("PHONE_LOGIN_VERIFY");
+
+    const result = await confirmationResult.confirm(otp);
+
+    perf.end("PHONE_LOGIN_VERIFY");
+
+    const firebaseUser = result.user;
+
+    // Update last login
+    updateDoc(doc(db, "users", firebaseUser.uid), {
+      lastLogin: new Date().toISOString(),
+    }).catch((err) => {
+      console.error("Error updating last login:", err);
+    });
+
+    return result;
+  } catch (error) {
+    if (error.code === "auth/invalid-verification-code") {
+      throw new Error("Invalid OTP. Please check and try again.");
+    }
+    throw error;
+  }
 };

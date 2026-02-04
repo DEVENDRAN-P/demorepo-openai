@@ -58,13 +58,16 @@ function Dashboard({ user, setUser }) {
   };
 
   useEffect(() => {
-    // Migrate old storage format if needed
-    if (user?.id) {
-      migrateOldBillsKey(user.id);
+    // Only run if user has a valid ID
+    if (!user?.id) {
+      return;
     }
 
+    // Migrate old storage format if needed
+    migrateOldBillsKey(user.id);
+
     // Load real user data
-    const bills = getBills(user?.id);
+    const bills = getBills(user.id);
 
     // Calculate stats
     const totalGST = bills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
@@ -114,14 +117,14 @@ function Dashboard({ user, setUser }) {
     if (bills.length === 0) {
       newReminders.push({
         type: 'info',
-        title: 'Upload Your First Bill',
-        message: 'Start by uploading your first invoice to begin GST compliance tracking',
+        title: t('Upload Your First Bill'),
+        message: t('Start by uploading your first invoice to begin GST compliance tracking'),
       });
     }
 
     // Listen for storage changes (bills updated in another tab or window)
     const handleStorageChange = () => {
-      const updatedBills = getBills(user?.id);
+      const updatedBills = getBills(user.id);
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 
@@ -135,7 +138,7 @@ function Dashboard({ user, setUser }) {
 
     // Listen for custom bill update event (within same window)
     const handleBillUpdated = (event) => {
-      const updatedBills = event.detail?.bills || getBills(user?.id);
+      const updatedBills = event.detail?.bills || getBills(user.id);
       const updatedTotalGST = updatedBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
       const updatedCostSavings = calculateCostSavings(updatedBills);
 
@@ -154,7 +157,7 @@ function Dashboard({ user, setUser }) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('billUpdated', handleBillUpdated);
     };
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -227,10 +230,10 @@ function Dashboard({ user, setUser }) {
               ₹{stats.costSavings.toLocaleString()}
             </div>
             <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)', position: 'relative', zIndex: 1 }}>
-              💰 Cost Savings (6%)
+              💰 {t('Cost Savings (6%)')}
             </div>
             <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#16a34a', marginTop: '0.5rem', position: 'relative', zIndex: 1, opacity: 0.8 }}>
-              From Automation
+              {t('From Automation')}
             </div>
           </div>
         </div>
@@ -365,7 +368,7 @@ function Dashboard({ user, setUser }) {
                   }}
                 >
                   <IconRobot />
-                  <span style={{ fontWeight: 600, fontSize: '1rem' }}>AI Assistant</span>
+                  <span style={{ fontWeight: 600, fontSize: '1rem' }}>{t('ai_assistant')}</span>
                 </Link>
               </div>
             </div>

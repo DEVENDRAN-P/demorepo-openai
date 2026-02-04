@@ -81,13 +81,13 @@ function Reports({ user, setUser }) {
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📊</span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--neutral-900)' }}>
-              No Data Available
+              {t('No Data Available')}
             </h2>
             <p style={{ color: 'var(--neutral-600)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
-              Upload your bills to see detailed analytics and reports about your GST compliance.
+              {t('Upload your bills to see detailed analytics and reports about your GST compliance')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
-              Upload Your First Bill
+              {t('Upload Your First Bill')}
             </a>
           </div>
         </div>

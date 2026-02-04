@@ -40,7 +40,7 @@ function Profile({ user, setUser }) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('Name')}</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full" required />
               </div>
               <div>
@@ -52,7 +52,7 @@ function Profile({ user, setUser }) {
                 <input type="text" name="shopName" value={formData.shopName} onChange={handleChange} className="w-full" required />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">GSTIN</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('gstin')}</label>
                 <input type="text" name="gstin" value={formData.gstin} onChange={handleChange} className="w-full" required />
               </div>
               <div>

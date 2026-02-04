@@ -3,10 +3,11 @@ import {
   getAuth,
   setPersistence,
   browserLocalPersistence,
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 } from "firebase/auth";
-import {
-  getFirestore,
-} from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
@@ -18,7 +19,7 @@ import { getDatabase, connectDatabaseEmulator } from "firebase/database";
 // Validate that required environment variables are set
 if (!process.env.REACT_APP_FIREBASE_API_KEY) {
   console.error(
-    "CRITICAL: REACT_APP_FIREBASE_API_KEY is not set. Please configure your .env file."
+    "CRITICAL: REACT_APP_FIREBASE_API_KEY is not set. Please configure your .env file.",
   );
 }
 
@@ -56,6 +57,62 @@ const useEmulator = process.env.REACT_APP_USE_EMULATOR === "true";
 // INITIALIZE FIREBASE AUTHENTICATION
 // ========================================
 export const auth = getAuth(app);
+
+// Initialize Google Auth Provider
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// Debug: Log Google Provider setup
+if (typeof window !== "undefined") {
+  console.log("✅ Google OAuth Provider initialized");
+  console.log("Auth Domain:", process.env.REACT_APP_FIREBASE_AUTH_DOMAIN);
+  console.log("Project ID:", process.env.REACT_APP_FIREBASE_PROJECT_ID);
+}
+
+// ========================================
+// PHONE AUTHENTICATION SETUP
+// ========================================
+
+// Enable test mode for phone auth in development
+// Set this to true in .env for easier testing without real SMS
+if (process.env.REACT_APP_PHONE_AUTH_TEST_MODE === "true") {
+  auth.settings.appVerificationDisabledForTesting = true;
+  console.warn(
+    "⚠️ Phone Auth Test Mode ENABLED - App verification disabled for testing",
+  );
+}
+
+// Initialize reCAPTCHA Verifier for Phone Authentication
+export const setupRecaptchaVerifier = (containerId) => {
+  try {
+    const verifier = new RecaptchaVerifier(auth, containerId, {
+      size: "invisible",
+      callback: (response) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber
+        console.log("✅ reCAPTCHA verified");
+      },
+      "expired-callback": () => {
+        // Response expired. Ask user to solve reCAPTCHA again
+        console.warn("⚠️ reCAPTCHA response expired");
+      },
+    });
+
+    // Pre-render reCAPTCHA if test mode is enabled
+    if (process.env.REACT_APP_PHONE_AUTH_TEST_MODE === "true") {
+      verifier.render().then((widgetId) => {
+        console.log("ℹ️ reCAPTCHA widget ID:", widgetId);
+      });
+    }
+
+    return verifier;
+  } catch (error) {
+    console.error("Error setting up reCAPTCHA verifier:", error);
+    return null;
+  }
+};
+
+// Export signInWithPhoneNumber for use in phone auth
+export { signInWithPhoneNumber };
 
 // Enable auth persistence (keep users logged in)
 setPersistence(auth, browserLocalPersistence)

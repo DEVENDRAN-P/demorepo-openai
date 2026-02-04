@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Home = () => {
+    const { t } = useTranslation();
     const [expandedStep, setExpandedStep] = useState(null);
     return (
         <div style={{ paddingTop: '120px' }}>
             {/* Home Section */}
-            <section id="home" style={{ 
-                minHeight: '100vh', 
-                padding: '2rem', 
+            <section id="home" style={{
+                minHeight: '100vh',
+                padding: '2rem',
                 background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
                 display: 'flex',
                 alignItems: 'center',
@@ -28,9 +30,9 @@ const Home = () => {
             </section>
 
             {/* GST Calculator Section */}
-            <section id="gst-calculator" style={{ 
-                minHeight: '100vh', 
-                padding: '4rem 2rem', 
+            <section id="gst-calculator" style={{
+                minHeight: '100vh',
+                padding: '4rem 2rem',
                 background: '#ffffff'
             }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
@@ -38,10 +40,10 @@ const Home = () => {
                         🧮 GST Calculator
                     </h2>
                     <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '3rem' }}>
-                        Calculate GST with precision using our AI-powered calculator. 
+                        Calculate GST with precision using our AI-powered calculator.
                         Support for all GST rates and complex scenarios.
                     </p>
-                    <div style={{ 
+                    <div style={{
                         background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                         padding: '3rem',
                         borderRadius: '20px',
@@ -60,9 +62,9 @@ const Home = () => {
             </section>
 
             {/* Compliance Section */}
-            <section id="compliance" style={{ 
-                minHeight: '100vh', 
-                padding: '4rem 2rem', 
+            <section id="compliance" style={{
+                minHeight: '100vh',
+                padding: '4rem 2rem',
                 background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
             }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
@@ -70,41 +72,41 @@ const Home = () => {
                         📋 Compliance Management
                     </h2>
                     <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '3rem' }}>
-                        Stay compliant with automated tracking and reporting. 
+                        Stay compliant with automated tracking and reporting.
                         Never miss a deadline again with our intelligent reminder system.
                     </p>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                         gap: '2rem',
                         marginTop: '3rem'
                     }}>
-                        <div style={{ 
+                        <div style={{
                             background: 'white',
                             padding: '2rem',
                             borderRadius: '15px',
                             boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <h4 style={{ color: '#1e3c72', marginBottom: '1rem' }}>Auto Filing</h4>
-                            <p style={{ color: '#64748b' }}>Automated GST return filing with error checking</p>
+                            <h4 style={{ color: '#1e3c72', marginBottom: '1rem' }}>{t('Auto Filing')}</h4>
+                            <p style={{ color: '#64748b' }}>{t('Automated GST return filing with error checking')}</p>
                         </div>
-                        <div style={{ 
+                        <div style={{
                             background: 'white',
                             padding: '2rem',
                             borderRadius: '15px',
                             boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <h4 style={{ color: '#1e3c72', marginBottom: '1rem' }}>Deadline Tracking</h4>
-                            <p style={{ color: '#64748b' }}>Smart reminders for all compliance deadlines</p>
+                            <h4 style={{ color: '#1e3c72', marginBottom: '1rem' }}>{t('Deadline Tracking')}</h4>
+                            <p style={{ color: '#64748b' }}>{t('Smart reminders for all compliance deadlines')}</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* AI Features Section */}
-            <section id="ai-features" style={{ 
-                minHeight: '100vh', 
-                padding: '4rem 2rem', 
+            <section id="ai-features" style={{
+                minHeight: '100vh',
+                padding: '4rem 2rem',
                 background: 'linear-gradient(135deg, #1e3c72 0%, #3b82f6 100%)',
                 color: 'white'
             }}>
@@ -113,16 +115,16 @@ const Home = () => {
                         🤖 AI-Powered Features
                     </h2>
                     <p style={{ fontSize: '1.1rem', marginBottom: '3rem', opacity: 0.9 }}>
-                        Leverage artificial intelligence to automate your business processes 
+                        Leverage artificial intelligence to automate your business processes
                         and gain intelligent insights.
                     </p>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                         gap: '2rem',
                         marginTop: '3rem'
                     }}>
-                        <div style={{ 
+                        <div style={{
                             background: 'rgba(255, 255, 255, 0.1)',
                             padding: '2rem',
                             borderRadius: '15px',
@@ -131,7 +133,7 @@ const Home = () => {
                             <h4 style={{ marginBottom: '1rem' }}>Smart Analysis</h4>
                             <p style={{ opacity: 0.9 }}>AI-driven insights and recommendations for your business</p>
                         </div>
-                        <div style={{ 
+                        <div style={{
                             background: 'rgba(255, 255, 255, 0.1)',
                             padding: '2rem',
                             borderRadius: '15px',
@@ -140,7 +142,7 @@ const Home = () => {
                             <h4 style={{ marginBottom: '1rem' }}>Predictive Compliance</h4>
                             <p style={{ opacity: 0.9 }}>Predict and prevent compliance issues before they occur</p>
                         </div>
-                        <div style={{ 
+                        <div style={{
                             background: 'rgba(255, 255, 255, 0.1)',
                             padding: '2rem',
                             borderRadius: '15px',
@@ -154,9 +156,9 @@ const Home = () => {
             </section>
 
             {/* Essential Features & How to Use Section */}
-            <section id="how-to-use" style={{ 
-                minHeight: '100vh', 
-                padding: '4rem 2rem', 
+            <section id="how-to-use" style={{
+                minHeight: '100vh',
+                padding: '4rem 2rem',
                 background: '#ffffff'
             }}>
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -168,15 +170,15 @@ const Home = () => {
                     </p>
 
                     {/* Feature Cards Grid */}
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
                         gap: '2rem',
                         marginBottom: '4rem'
                     }}>
                         {/* Feature 1: Bill Upload */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -201,8 +203,8 @@ const Home = () => {
                         </div>
 
                         {/* Feature 2: Voice Input */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -227,8 +229,8 @@ const Home = () => {
                         </div>
 
                         {/* Feature 3: AI Extraction */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -253,8 +255,8 @@ const Home = () => {
                         </div>
 
                         {/* Feature 4: GST Calculation */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -279,8 +281,8 @@ const Home = () => {
                         </div>
 
                         {/* Feature 5: Form Generation */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -305,8 +307,8 @@ const Home = () => {
                         </div>
 
                         {/* Feature 6: Reports & Analytics */}
-                        <div 
-                            style={{ 
+                        <div
+                            style={{
                                 background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
@@ -332,7 +334,7 @@ const Home = () => {
                     </div>
 
                     {/* Quick Start Guide */}
-                    <div style={{ 
+                    <div style={{
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         padding: '3rem',
                         borderRadius: '20px',
@@ -363,9 +365,9 @@ const Home = () => {
             </section>
 
             {/* Contact Section */}
-            <section id="contact" style={{ 
-                minHeight: '100vh', 
-                padding: '4rem 2rem', 
+            <section id="contact" style={{
+                minHeight: '100vh',
+                padding: '4rem 2rem',
                 background: '#ffffff',
                 display: 'flex',
                 alignItems: 'center'
@@ -375,10 +377,10 @@ const Home = () => {
                         📞 Get In Touch
                     </h2>
                     <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '3rem' }}>
-                        Ready to transform your business with AI-powered compliance tools? 
+                        Ready to transform your business with AI-powered compliance tools?
                         Contact us today for a personalized demo.
                     </p>
-                    <div style={{ 
+                    <div style={{
                         background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
                         padding: '3rem',
                         borderRadius: '20px',
