@@ -1,14 +1,18 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "env": {
-    "CI": "false"
-  },
-  "redirects": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/:path((?!static/|_next/|build/).*)",
-      "destination": "/index.html",
-      "permanent": false
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
