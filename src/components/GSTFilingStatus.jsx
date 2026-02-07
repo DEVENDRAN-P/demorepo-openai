@@ -8,10 +8,7 @@ function GSTFilingStatus({ bills = [] }) {
     const { isDarkMode } = useDarkMode();
 
     useEffect(() => {
-        calculateFilingStatus();
-    }, [bills]);
-
-    const calculateFilingStatus = () => {
+        const calculateFilingStatus = () => {
         const now = new Date();
         const currentYear = now.getFullYear();
 
@@ -121,7 +118,10 @@ function GSTFilingStatus({ bills = [] }) {
         });
 
         setFilingStatus(filings);
-    };
+        };
+
+        calculateFilingStatus();
+    }, [bills]);
 
     return (
         <div style={{

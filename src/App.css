@@ -62,6 +62,8 @@
   --card-bg: #ffffff;
 }
 
+
+
 /* Dark Mode */
 :root.dark-mode {
   --bg-primary: #1a1a1a;

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Tesseract from 'tesseract.js';
 import { saveBills, getBills, migrateOldBillsKey } from '../utils/storageUtils';
-import { saveBillToFirebase, getBillsFromFirebase } from '../services/billService';
+import { saveBillToFirebase } from '../services/billService';
 import { createBillReminders } from '../services/reminderService';
 
 // Add voice icon
