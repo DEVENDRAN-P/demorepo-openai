@@ -9,21 +9,82 @@ function GSTFilingStatus({ bills = [] }) {
 
     useEffect(() => {
         const calculateFilingStatus = () => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
+            const now = new Date();
+            const currentYear = now.getFullYear();
 
-        // If no bills uploaded, show static deadlines
-        if (!bills || bills.length === 0) {
-            const deadlines = [
-                { month: 'April', dueDate: '13th May', deadline: new Date(currentYear, 4, 13), gstr: 'GSTR-1', period: 'April' },
-                { month: 'May', dueDate: '13th June', deadline: new Date(currentYear, 5, 13), gstr: 'GSTR-1', period: 'May' },
-                { month: 'June', dueDate: '13th July', deadline: new Date(currentYear, 6, 13), gstr: 'GSTR-1', period: 'June' },
-                { month: 'July', dueDate: '13th August', deadline: new Date(currentYear, 7, 13), gstr: 'GSTR-1', period: 'July' },
-                { month: 'August', dueDate: '13th September', deadline: new Date(currentYear, 8, 13), gstr: 'GSTR-1', period: 'August' },
-                { month: 'September', dueDate: '13th October', deadline: new Date(currentYear, 9, 13), gstr: 'GSTR-1', period: 'September' },
-            ];
+            // If no bills uploaded, show static deadlines
+            if (!bills || bills.length === 0) {
+                const deadlines = [
+                    { month: 'April', dueDate: '13th May', deadline: new Date(currentYear, 4, 13), gstr: 'GSTR-1', period: 'April' },
+                    { month: 'May', dueDate: '13th June', deadline: new Date(currentYear, 5, 13), gstr: 'GSTR-1', period: 'May' },
+                    { month: 'June', dueDate: '13th July', deadline: new Date(currentYear, 6, 13), gstr: 'GSTR-1', period: 'June' },
+                    { month: 'July', dueDate: '13th August', deadline: new Date(currentYear, 7, 13), gstr: 'GSTR-1', period: 'July' },
+                    { month: 'August', dueDate: '13th September', deadline: new Date(currentYear, 8, 13), gstr: 'GSTR-1', period: 'August' },
+                    { month: 'September', dueDate: '13th October', deadline: new Date(currentYear, 9, 13), gstr: 'GSTR-1', period: 'September' },
+                ];
 
-            const status = deadlines.map(item => {
+                const status = deadlines.map(item => {
+                    const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
+                    let status = 'upcoming';
+                    let statusColor = '#3b82f6';
+                    let statusIcon = '📅';
+
+                    if (daysUntilDeadline < 0) {
+                        status = 'overdue';
+                        statusColor = '#ef4444';
+                        statusIcon = '⚠️';
+                    } else if (daysUntilDeadline <= 3) {
+                        status = 'urgent';
+                        statusColor = '#f97316';
+                        statusIcon = '🔴';
+                    } else if (daysUntilDeadline <= 7) {
+                        status = 'warning';
+                        statusColor = '#eab308';
+                        statusIcon = '🟡';
+                    } else {
+                        status = 'upcoming';
+                        statusColor = '#10b981';
+                        statusIcon = '🟢';
+                    }
+
+                    return {
+                        ...item,
+                        status,
+                        statusColor,
+                        statusIcon,
+                        daysUntilDeadline,
+                    };
+                });
+
+                setFilingStatus(status);
+                return;
+            }
+
+            // If bills exist, extract deadlines from bills and group by month
+            const billDeadlines = {};
+
+            bills.forEach((bill) => {
+                if (bill.gstrDeadline) {
+                    const deadline = new Date(bill.gstrDeadline);
+                    const monthYear = deadline.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                    if (!billDeadlines[monthYear]) {
+                        billDeadlines[monthYear] = {
+                            month: deadline.toLocaleDateString('en-US', { month: 'long' }),
+                            year: deadline.getFullYear(),
+                            dueDate: deadline.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+                            deadline: deadline,
+                            gstr: 'GSTR-1',
+                            period: deadline.toLocaleDateString('en-US', { month: 'long' }),
+                            bills: []
+                        };
+                    }
+                    billDeadlines[monthYear].bills.push(bill);
+                }
+            });
+
+            // Convert to array and calculate status
+            const filings = Object.values(billDeadlines).map(item => {
                 const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
                 let status = 'upcoming';
                 let statusColor = '#3b82f6';
@@ -56,68 +117,7 @@ function GSTFilingStatus({ bills = [] }) {
                 };
             });
 
-            setFilingStatus(status);
-            return;
-        }
-
-        // If bills exist, extract deadlines from bills and group by month
-        const billDeadlines = {};
-
-        bills.forEach((bill) => {
-            if (bill.gstrDeadline) {
-                const deadline = new Date(bill.gstrDeadline);
-                const monthYear = deadline.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-                if (!billDeadlines[monthYear]) {
-                    billDeadlines[monthYear] = {
-                        month: deadline.toLocaleDateString('en-US', { month: 'long' }),
-                        year: deadline.getFullYear(),
-                        dueDate: deadline.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-                        deadline: deadline,
-                        gstr: 'GSTR-1',
-                        period: deadline.toLocaleDateString('en-US', { month: 'long' }),
-                        bills: []
-                    };
-                }
-                billDeadlines[monthYear].bills.push(bill);
-            }
-        });
-
-        // Convert to array and calculate status
-        const filings = Object.values(billDeadlines).map(item => {
-            const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
-            let status = 'upcoming';
-            let statusColor = '#3b82f6';
-            let statusIcon = '📅';
-
-            if (daysUntilDeadline < 0) {
-                status = 'overdue';
-                statusColor = '#ef4444';
-                statusIcon = '⚠️';
-            } else if (daysUntilDeadline <= 3) {
-                status = 'urgent';
-                statusColor = '#f97316';
-                statusIcon = '🔴';
-            } else if (daysUntilDeadline <= 7) {
-                status = 'warning';
-                statusColor = '#eab308';
-                statusIcon = '🟡';
-            } else {
-                status = 'upcoming';
-                statusColor = '#10b981';
-                statusIcon = '🟢';
-            }
-
-            return {
-                ...item,
-                status,
-                statusColor,
-                statusIcon,
-                daysUntilDeadline,
-            };
-        });
-
-        setFilingStatus(filings);
+            setFilingStatus(filings);
         };
 
         calculateFilingStatus();
