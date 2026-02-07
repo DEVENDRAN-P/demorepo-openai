@@ -8,6 +8,7 @@ import './styles/auth-animations.css';
 // Auth
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
+import { DarkModeProvider } from './context/DarkModeContext';
 
 // Components - Import directly (not lazy)
 import ProtectedRoute from './components/ProtectedRoute';
@@ -25,6 +26,8 @@ const GSTForms = lazy(() => import('./pages/GSTForms'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Support = lazy(() => import('./pages/Support'));
 
 // Loading Component
 function LoadingScreen() {
@@ -60,6 +63,8 @@ function AppRoutes() {
           <Route path="/reports" element={<Reports user={user} />} />
           <Route path="/profile" element={<Profile user={user} />} />
           <Route path="/chat" element={<ChatPage user={user} />} />
+          <Route path="/settings" element={<Settings user={user} />} />
+          <Route path="/support" element={<Support user={user} />} />
         </Route>
 
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
@@ -74,14 +79,16 @@ function App() {
     <ErrorBoundary>
       <I18nextProvider i18n={i18n}>
         <AuthProvider>
-          <Router
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AppRoutes />
-          </Router>
+          <DarkModeProvider>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <AppRoutes />
+            </Router>
+          </DarkModeProvider>
         </AuthProvider>
       </I18nextProvider>
     </ErrorBoundary>

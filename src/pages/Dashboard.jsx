@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import ReminderPanel from '../components/ReminderPanel';
+import GSTFilingStatus from '../components/GSTFilingStatus';
 import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 // SVG Icons - matching navbar style
 const IconUploadCloud = () => (
-  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />
@@ -15,7 +16,7 @@ const IconUploadCloud = () => (
 );
 
 const IconDocuments = () => (
-  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="2" width="6" height="4" rx="1" />
     <path d="M9 4H5a2 2 0 0 0-2 2v13a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V6a2 2 0 0 0-2-2h-4" />
     <line x1="9" y1="12" x2="15" y2="12" />
@@ -24,7 +25,7 @@ const IconDocuments = () => (
 );
 
 const IconBarChart = () => (
-  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="3" y1="3" x2="3" y2="21" />
     <line x1="3" y1="21" x2="21" y2="21" />
     <rect x="7" y="10" width="3" height="7" />
@@ -34,12 +35,12 @@ const IconBarChart = () => (
 );
 
 const IconRobot = () => (
-  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="7" width="18" height="13" rx="2" ry="2" />
     <line x1="3" y1="11" x2="21" y2="11" />
-    <circle cx="8" cy="14.5" r="1" fill="white" />
-    <circle cx="12" cy="14.5" r="1" fill="white" />
-    <circle cx="16" cy="14.5" r="1" fill="white" />
+    <circle cx="8" cy="14.5" r="1" fill="currentColor" />
+    <circle cx="12" cy="14.5" r="1" fill="currentColor" />
+    <circle cx="16" cy="14.5" r="1" fill="currentColor" />
     <path d="M7 7V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3" />
   </svg>
 );
@@ -47,7 +48,12 @@ const IconRobot = () => (
 function Dashboard({ user, setUser }) {
   const { t } = useTranslation();
   const [filingStatus, setFilingStatus] = useState([]);
-  const [stats, setStats] = useState({ totalBills: 0, pendingFiling: 0, totalGST: 0, costSavings: 0 });
+  const [stats, setStats] = useState({
+    totalBills: 0,
+    pendingFiling: 0,
+    totalGST: 0,
+    costSavings: 0,
+  });
 
   // Calculate cost savings from bills
   const calculateCostSavings = (bills) => {
@@ -178,7 +184,12 @@ function Dashboard({ user, setUser }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      transition: 'background-color 0.3s ease'
+    }}>
       <Navbar user={user} />
 
       <div className="container section">
@@ -204,7 +215,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary-700)', marginBottom: '0.25rem' }}>
               {stats.totalBills}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               {t('Total Bills Uploaded')}
             </div>
           </div>
@@ -212,7 +223,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#b45309', marginBottom: '0.25rem' }}>
               {stats.pendingFiling}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               {t('view_reports')}
             </div>
           </div>
@@ -220,7 +231,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#166534', marginBottom: '0.25rem' }}>
               ₹{stats.totalGST.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               {t('total_gst_amount')}
             </div>
           </div>
@@ -229,7 +240,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#16a34a', marginBottom: '0.25rem', position: 'relative', zIndex: 1 }}>
               ₹{stats.costSavings.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)', position: 'relative', zIndex: 1 }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', position: 'relative', zIndex: 1 }}>
               💰 {t('Cost Savings (6%)')}
             </div>
             <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#16a34a', marginTop: '0.5rem', position: 'relative', zIndex: 1, opacity: 0.8 }}>
@@ -241,6 +252,9 @@ function Dashboard({ user, setUser }) {
         <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
           {/* Main Content */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* GST Filing Status - Live Calculator */}
+            <GSTFilingStatus bills={getBills(user?.id)} />
+
             {/* Quick Actions */}
             <div className="card">
               <div className="card-header">

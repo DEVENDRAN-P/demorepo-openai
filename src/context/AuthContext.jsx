@@ -24,6 +24,8 @@ export const AuthProvider = ({ children }) => {
         clearTimeout(loadingTimeout); // Clear timeout once auth state is determined
 
         if (firebaseUser) {
+          console.log("🔐 User authenticated:", firebaseUser.uid, firebaseUser.email);
+
           // STRATEGY: Use cached user data immediately, then fetch fresh data in background
 
           // Step 1: Check localStorage cache FIRST (instant load)
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }) => {
           if (cachedUser) {
             try {
               const userData = JSON.parse(cachedUser);
+              console.log("✅ Using cached user data");
               setUser(userData);
               setIsAuthenticated(true);
               setLoading(false); // Show UI immediately with cached data
@@ -39,6 +42,7 @@ export const AuthProvider = ({ children }) => {
               getDoc(doc(db, 'users', firebaseUser.uid))
                 .then((userDoc) => {
                   if (userDoc.exists()) {
+                    console.log("✅ Fresh Firestore data fetched");
                     const freshData = {
                       id: firebaseUser.uid,
                       uid: firebaseUser.uid,
@@ -48,13 +52,17 @@ export const AuthProvider = ({ children }) => {
                     };
                     setUser(freshData);
                     localStorage.setItem('user', JSON.stringify(freshData));
+                  } else {
+                    console.warn("⚠️  No Firestore document found for user");
                   }
                 })
-                .catch(() => {
+                .catch((err) => {
+                  console.error("❌ Error fetching Firestore data:", err.message);
                   // Fail silently - keep using cached data
                 });
               return;
             } catch (e) {
+              console.warn("⚠️  Invalid cache, proceeding to fetch fresh data");
               // Invalid cache, proceed to fetch
             }
           }
@@ -70,6 +78,7 @@ export const AuthProvider = ({ children }) => {
           };
 
           // Show minimal data IMMEDIATELY
+          console.log("📋 Using minimal user data from Firebase Auth");
           setUser(minimalUser);
           setIsAuthenticated(true);
           setLoading(false);
@@ -80,6 +89,7 @@ export const AuthProvider = ({ children }) => {
           getDoc(doc(db, 'users', firebaseUser.uid))
             .then((userDoc) => {
               if (userDoc.exists()) {
+                console.log("✅ Complete Firestore profile fetched");
                 const userData = {
                   id: firebaseUser.uid,
                   uid: firebaseUser.uid,
@@ -89,13 +99,26 @@ export const AuthProvider = ({ children }) => {
                 };
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
+              } else {
+                console.warn("⚠️  Firestore document not found, creating new one");
+                // Document doesn't exist, create it with minimal data
+                const newUserData = {
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email,
+                  displayName: firebaseUser.displayName || '',
+                  createdAt: new Date().toISOString(),
+                };
+                setUser(newUserData);
+                localStorage.setItem('user', JSON.stringify(newUserData));
               }
             })
-            .catch(() => {
+            .catch((err) => {
+              console.error("❌ Error fetching Firestore profile:", err.message);
               // Fail silently - keep using minimal data
             });
         } else {
           // User is logged out
+          console.log("🚪 User logged out");
           setUser(null);
           setIsAuthenticated(false);
           localStorage.removeItem('user');

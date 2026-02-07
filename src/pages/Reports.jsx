@@ -75,15 +75,15 @@ function Reports({ user, setUser }) {
 
   if (!hasData) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <Navbar user={user} />
         <div className="container section">
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📊</span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--neutral-900)' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
               {t('No Data Available')}
             </h2>
-            <p style={{ color: 'var(--neutral-600)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
               {t('Upload your bills to see detailed analytics and reports about your GST compliance')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
@@ -96,7 +96,7 @@ function Reports({ user, setUser }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Navbar user={user} />
 
       <div className="container section">
@@ -147,7 +147,7 @@ function Reports({ user, setUser }) {
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
           {/* Monthly Trend */}
           {monthlyData.length > 0 && (
-            <div className="card">
+            <div className="card\">
               <div className="card-header">
                 <h2 className="card-title">
                   <div className="card-title-icon">📈</div>
@@ -156,10 +156,10 @@ function Reports({ user, setUser }) {
               </div>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--neutral-200)" />
-                  <XAxis dataKey="month" stroke="var(--neutral-500)" style={{ fontSize: '0.75rem' }} />
-                  <YAxis stroke="var(--neutral-500)" style={{ fontSize: '0.75rem' }} />
-                  <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                  <XAxis dataKey="month" stroke="var(--text-secondary)" style={{ fontSize: '0.75rem' }} />
+                  <YAxis stroke="var(--text-secondary)" style={{ fontSize: '0.75rem' }} />
+                  <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
                   <Legend wrapperStyle={{ fontSize: '0.875rem' }} />
                   <Line type="monotone" dataKey="paid" stroke="#ef4444" strokeWidth={2} name="GST Paid" dot={{ fill: '#ef4444', strokeWidth: 2 }} />
                   <Line type="monotone" dataKey="collected" stroke="#10b981" strokeWidth={2} name="GST Collected" dot={{ fill: '#10b981', strokeWidth: 2 }} />
@@ -187,13 +187,13 @@ function Reports({ user, setUser }) {
                     cy="50%"
                     outerRadius={100}
                     label={(entry) => `${entry.name}: ₹${entry.value.toLocaleString()}`}
-                    labelStyle={{ fontSize: '0.75rem', fontWeight: 600 }}
+                    labelStyle={{ fontSize: '0.75rem', fontWeight: 600, fill: 'var(--text-primary)' }}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)' }} />
+                  <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

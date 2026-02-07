@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logout } from '../services/authService';
+import { useDarkMode } from '../context/DarkModeContext';
 
 // Inline SVG icons (clean, production-grade)
 const IconBriefcase = (props) => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <rect x="3" y="7" width="18" height="13" rx="2" />
     <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <path d="M3 13h18" />
@@ -46,6 +47,18 @@ const IconChat = ({ active }) => (
     <circle cx="15" cy="10" r="1" />
   </svg>
 );
+const IconSettings = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m2.12-2.12l4.24-4.24M19.78 19.78l-4.24-4.24m-2.12-2.12l-4.24-4.24" />
+  </svg>
+);
+const IconHelpCircle = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4M12 8h.01" />
+  </svg>
+);
 const IconGlobe = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -79,6 +92,24 @@ const IconWhatsApp = () => (
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004c-1.022 0-2.032.218-2.992.654-5.61 2.63-7.423 8.816-3.906 13.938 1.92 2.858 5.264 4.53 8.896 4.53 5.343 0 9.788-4.308 9.988-9.682.049-.956.066-1.922.03-2.887-.006-.122-.039-.243-.06-.364-.09-1.054-.313-2.083-.716-3.058-2.615-6.325-9.412-9.587-16.08-6.761-1.83 1.123-3.295 2.67-4.226 4.39 6.168-2.236 12.324 1.367 14.288 6.937 1.964 5.57-1.04 11.9-6.93 14.158-1.843.677-3.866.77-5.835.307-6.305-1.514-10.68-7.582-9.625-14.191.23-1.502 1.008-3.09 2.176-4.265 1.168-1.175 2.692-2.087 4.263-2.524.893-.243 1.82-.367 2.775-.366z" />
   </svg>
 );
+const IconMoon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+const IconSun = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" />
+    <line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+  </svg>
+);
 
 // Theme support
 const THEMES = {
@@ -89,6 +120,7 @@ const THEMES = {
 
 function Navbar({ user }) {
   const { t, i18n } = useTranslation();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -100,6 +132,7 @@ function Navbar({ user }) {
   // Refs for click-outside detection
   const themeRef = useRef(null);
   const langRef = useRef(null);
+  const menuRef = useRef(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -109,6 +142,9 @@ function Navbar({ user }) {
       }
       if (langRef.current && !langRef.current.contains(event.target)) {
         setLangOpen(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
       }
     };
 
@@ -167,19 +203,22 @@ function Navbar({ user }) {
 
   return (
     <nav style={{
-      background: 'white',
-      borderBottom: '1px solid var(--neutral-200)',
+      background: 'var(--bg-primary)',
+      borderBottom: '1px solid var(--border-color)',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
       boxShadow: 'var(--shadow-sm)',
+      transition: 'all 0.3s ease',
     }}>
-      <div className="container" style={{ padding: '0 1.5rem' }}>
+      <div className="container" style={{ padding: '0 1.5rem', maxWidth: '100%' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           height: '4.5rem',
+          gap: '1rem',
+          minWidth: 0,
         }}>
           {/* Logo */}
           <Link to="/dashboard" style={{
@@ -187,7 +226,8 @@ function Navbar({ user }) {
             alignItems: 'center',
             gap: '0.875rem',
             textDecoration: 'none',
-            flex: 1,
+            minWidth: 0,
+            flex: '0 1 auto',
           }}>
             <div style={{
               width: '2.5rem',
@@ -202,7 +242,7 @@ function Navbar({ user }) {
             }}>
               <IconBriefcase />
             </div>
-            <div style={{ display: 'none', minWidth: 0 }} className="logo-text">
+            <div style={{ minWidth: 0 }} className="logo-text">
               <h1 style={{
                 fontSize: '1.125rem',
                 fontWeight: 800,
@@ -211,19 +251,11 @@ function Navbar({ user }) {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 letterSpacing: '-0.025em',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}>
-                GST Buddy
+                {t('app_name')}
               </h1>
-              <p style={{
-                fontSize: '0.6875rem',
-                color: 'var(--neutral-500)',
-                margin: 0,
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-              }}>
-                AI Compliance
-              </p>
             </div>
           </Link>
 
@@ -246,7 +278,7 @@ function Navbar({ user }) {
                     padding: '0.625rem 1rem',
                     borderRadius: 'var(--radius-lg)',
                     textDecoration: 'none',
-                    color: active ? 'var(--primary-700)' : 'var(--neutral-600)',
+                    color: active ? 'var(--primary-700)' : 'var(--text-secondary)',
                     background: active ? 'var(--primary-50)' : 'transparent',
                     fontWeight: active ? 600 : 500,
                     fontSize: '0.875rem',
@@ -254,14 +286,14 @@ function Navbar({ user }) {
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.background = 'var(--neutral-50)';
-                      e.currentTarget.style.color = 'var(--neutral-900)';
+                      e.currentTarget.style.background = 'var(--bg-secondary)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--neutral-600)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
                     }
                   }}
                 >
@@ -274,6 +306,32 @@ function Navbar({ user }) {
 
           {/* Right Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="btn btn-ghost btn-sm"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isDarkMode ? '#fbbf24' : '#6b7280',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                padding: '0.625rem',
+              }}
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-secondary)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {isDarkMode ? <IconSun /> : <IconMoon />}
+            </button>
+
             {/* WhatsApp Button */}
             <a
               href="https://chat.whatsapp.com/EIp9BBhF3PX3jAc3pghamL?mode=wwt"
@@ -311,11 +369,11 @@ function Navbar({ user }) {
                   setLangOpen(false);
                 }}
                 className="btn btn-ghost btn-sm"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', transition: 'all 0.3s ease' }}
                 aria-label="Change theme"
               >
                 <IconPalette />
-                <span style={{ textTransform: 'capitalize', color: 'var(--neutral-700)', fontSize: '0.85rem' }}>
+                <span style={{ textTransform: 'capitalize', fontSize: '0.85rem' }}>
                   {theme}
                 </span>
               </button>
@@ -325,12 +383,13 @@ function Navbar({ user }) {
                   right: 0,
                   marginTop: '0.5rem',
                   width: '180px',
-                  background: 'white',
+                  background: 'var(--bg-primary)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--neutral-200)',
+                  border: '1px solid var(--border-color)',
                   overflow: 'hidden',
                   zIndex: 60,
+                  transition: 'all 0.3s ease',
                 }}>
                   {/*
                     { key: 'indigo', name: 'Indigo', swatch: ['#eef2ff', '#4f46e5'] },
@@ -345,15 +404,16 @@ function Navbar({ user }) {
                         width: '100%',
                         padding: '0.75rem 1rem',
                         border: 'none',
-                        background: theme === key ? 'var(--primary-50)' : 'white',
+                        background: theme === key ? (isDarkMode ? 'var(--bg-secondary)' : 'var(--primary-50)') : 'transparent',
                         cursor: 'pointer',
                         fontSize: '0.875rem',
                         fontWeight: theme === key ? 700 : 500,
-                        color: theme === key ? 'var(--primary-700)' : 'var(--neutral-700)',
+                        color: theme === key ? 'var(--primary-700)' : 'var(--text-secondary)',
                         textAlign: 'left',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.625rem',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       <span style={{
@@ -362,7 +422,7 @@ function Navbar({ user }) {
                         height: '18px',
                         borderRadius: '4px',
                         background: `linear-gradient(135deg, ${def['--primary-50']} 0%, ${def['--primary-700']} 100%)`,
-                        border: '1px solid var(--neutral-200)',
+                        border: '1px solid var(--border-color)',
                       }} />
                       <span>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
                     </button>
@@ -379,7 +439,7 @@ function Navbar({ user }) {
                   setThemeOpen(false);
                 }}
                 className="btn btn-ghost btn-sm"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', transition: 'all 0.3s ease' }}
               >
                 <IconGlobe />
                 <span style={{ textTransform: 'uppercase' }}>{i18n.language}</span>
@@ -390,14 +450,15 @@ function Navbar({ user }) {
                   right: 0,
                   marginTop: '0.5rem',
                   width: '160px',
-                  background: 'white',
+                  background: 'var(--bg-primary)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--neutral-200)',
+                  border: '1px solid var(--border-color)',
                   overflow: 'hidden',
                   zIndex: 50,
+                  transition: 'all 0.3s ease',
                 }}>
-                  {['en', 'hi', 'ta'].map((code, index) => (
+                  {['en', 'hi', 'ta', 'ml', 'kn'].map((code, index) => (
                     <button
                       key={code}
                       onClick={() => changeLanguage(code)}
@@ -405,11 +466,11 @@ function Navbar({ user }) {
                         width: '100%',
                         padding: '0.75rem 1rem',
                         border: 'none',
-                        background: i18n.language === code ? 'var(--primary-50)' : 'white',
+                        background: i18n.language === code ? 'var(--primary-50)' : 'var(--bg-primary)',
                         cursor: 'pointer',
                         fontSize: '0.875rem',
                         fontWeight: i18n.language === code ? 600 : 500,
-                        color: i18n.language === code ? 'var(--primary-700)' : 'var(--neutral-700)',
+                        color: i18n.language === code ? 'var(--primary-700)' : 'var(--text-secondary)',
                         textAlign: 'left',
                         display: 'flex',
                         alignItems: 'center',
@@ -418,17 +479,17 @@ function Navbar({ user }) {
                       }}
                       onMouseEnter={(e) => {
                         if (i18n.language !== code) {
-                          e.currentTarget.style.background = 'var(--neutral-50)';
+                          e.currentTarget.style.background = 'var(--bg-secondary)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (i18n.language !== code) {
-                          e.currentTarget.style.background = 'white';
+                          e.currentTarget.style.background = 'var(--bg-primary)';
                         }
                       }}
                     >
-                      <span style={{ fontSize: '1.125rem' }}>{['🇬🇧', '🇮🇳', '🇮🇳'][index]}</span>
-                      <span>{t(['english', 'hindi', 'tamil'][index])}</span>
+                      <span style={{ fontSize: '1.125rem' }}>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
+                      <span>{t(['english', 'hindi', 'tamil', 'malayalam', 'kannada'][index])}</span>
                     </button>
                   ))}
                 </div>
@@ -436,7 +497,7 @@ function Navbar({ user }) {
             </div>
 
             {/* User Menu */}
-            <div style={{ position: 'relative', display: 'none' }} className="user-menu">
+            <div style={{ position: 'relative', display: 'none' }} className="user-menu" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="btn btn-ghost btn-sm"
@@ -455,7 +516,7 @@ function Navbar({ user }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  color: 'var(--text-primary)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                 }}>
@@ -471,30 +532,34 @@ function Navbar({ user }) {
                   right: 0,
                   marginTop: '0.5rem',
                   width: '200px',
-                  background: 'white',
+                  background: 'var(--bg-primary)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--neutral-200)',
+                  border: '1px solid var(--border-color)',
                   overflow: 'hidden',
                   zIndex: 50,
+                  transition: 'all 0.3s ease',
                 }}>
                   <div style={{
                     padding: '0.875rem 1rem',
-                    borderBottom: '1px solid var(--neutral-100)',
+                    borderBottom: '1px solid var(--border-color)',
+                    transition: 'all 0.3s ease',
                   }}>
                     <p style={{
                       fontSize: '0.875rem',
                       fontWeight: 600,
-                      color: 'var(--neutral-900)',
+                      color: 'var(--text-primary)',
                       margin: 0,
+                      transition: 'color 0.3s ease',
                     }}>
                       {user?.name}
                     </p>
                     <p style={{
                       fontSize: '0.75rem',
-                      color: 'var(--neutral-500)',
+                      color: 'var(--text-tertiary)',
                       margin: 0,
                       marginTop: '0.125rem',
+                      transition: 'color 0.3s ease',
                     }}>
                       {user?.email}
                     </p>
@@ -507,17 +572,57 @@ function Navbar({ user }) {
                       alignItems: 'center',
                       gap: '0.625rem',
                       padding: '0.75rem 1rem',
-                      color: 'var(--neutral-700)',
+                      color: 'var(--text-secondary)',
                       textDecoration: 'none',
                       fontSize: '0.875rem',
                       fontWeight: 500,
                       transition: 'all 0.15s ease',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--neutral-50)'}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span>👤</span>
+                    <span>{t('profile')}</span>
+                  </Link>
+                  <Link
+                    to="/settings"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.75rem 1rem',
+                      color: 'var(--text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <span>⚙️</span>
-                    <span>{t('profile')}</span>
+                    <span>{t('settings')}</span>
+                  </Link>
+                  <Link
+                    to="/support"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.75rem 1rem',
+                      color: 'var(--text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span>❓</span>
+                    <span>{t('help')}</span>
                   </Link>
                   <button
                     onClick={handleLogout}
@@ -534,7 +639,7 @@ function Navbar({ user }) {
                       fontSize: '0.875rem',
                       fontWeight: 500,
                       textAlign: 'left',
-                      borderTop: '1px solid var(--neutral-100)',
+                      borderTop: '1px solid var(--border-color)',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--error-light)'}
@@ -559,7 +664,7 @@ function Navbar({ user }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--neutral-700)',
+                color: 'var(--text-secondary)',
               }}
               aria-label="Toggle menu"
             >
@@ -572,12 +677,15 @@ function Navbar({ user }) {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div style={{
-          background: 'white',
-          borderTop: '1px solid var(--neutral-200)',
+          background: 'var(--bg-primary)',
+          borderTop: '1px solid var(--border-color)',
           padding: '1rem 1.5rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.5rem',
+          maxHeight: 'calc(100vh - 4.5rem)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
         }}>
           {navItems.map((item) => {
             const active = isActive(item.path);
@@ -593,8 +701,8 @@ function Navbar({ user }) {
                   padding: '0.75rem 1rem',
                   borderRadius: 'var(--radius-lg)',
                   textDecoration: 'none',
-                  color: active ? 'var(--primary-700)' : 'var(--neutral-700)',
-                  background: active ? 'var(--primary-50)' : 'transparent',
+                  color: active ? 'var(--primary-700)' : 'var(--text-secondary)',
+                  background: active ? (isDarkMode ? 'var(--bg-secondary)' : 'var(--primary-50)') : 'transparent',
                   fontWeight: active ? 600 : 500,
                   fontSize: '0.9375rem',
                   transition: 'all 0.15s ease',
@@ -605,7 +713,7 @@ function Navbar({ user }) {
               </Link>
             );
           })}
-          <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid var(--neutral-200)' }} />
+          <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
           <a
             href="https://chat.whatsapp.com/EIp9BBhF3PX3jAc3pghamL?mode=wwt"
             target="_blank"
@@ -630,10 +738,10 @@ function Navbar({ user }) {
             <IconWhatsApp />
             <span>Join WhatsApp Group</span>
           </a>
-          <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid var(--neutral-200)' }} />
+          <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
           <button
             onClick={() => {
-              setThemeOpen(!themeOpen);
+              setLangOpen(!langOpen);
               setMobileMenuOpen(false);
             }}
             style={{
@@ -645,14 +753,64 @@ function Navbar({ user }) {
               border: 'none',
               borderRadius: 'var(--radius-lg)',
               cursor: 'pointer',
-              color: 'var(--neutral-700)',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
               fontSize: '0.9375rem',
             }}
           >
-            <IconPalette />
-            <span>{t('language')}</span>
+            <IconGlobe />
+            <span>{t('language')} ({i18n.language.toUpperCase()})</span>
           </button>
+          {langOpen && (
+            <div style={{
+              background: 'var(--bg-secondary)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '0.5rem',
+              marginBottom: '0.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.25rem',
+            }}>
+              {['en', 'hi', 'ta', 'ml', 'kn'].map((code, index) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    changeLanguage(code);
+                    setLangOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: 'none',
+                    background: i18n.language === code ? (isDarkMode ? 'var(--bg-secondary)' : 'white') : 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '0.8125rem',
+                    fontWeight: i18n.language === code ? 600 : 500,
+                    color: i18n.language === code ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    borderRadius: 'var(--radius-md)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (i18n.language !== code) {
+                      e.currentTarget.style.background = 'var(--bg-secondary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (i18n.language !== code) {
+                      e.currentTarget.style.background = 'transparent';
+                    }
+                  }}
+                >
+                  <span>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
+                  <span>{t(['english', 'hindi', 'tamil', 'malayalam', 'kannada'][index])}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <Link
             to="/profile"
             onClick={() => handleNavClick('/profile')}
@@ -663,13 +821,49 @@ function Navbar({ user }) {
               padding: '0.75rem 1rem',
               textDecoration: 'none',
               borderRadius: 'var(--radius-lg)',
-              color: 'var(--neutral-700)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              fontSize: '0.9375rem',
+            }}
+          >
+            <span>👤</span>
+            <span>{t('profile')}</span>
+          </Link>
+          <Link
+            to="/settings"
+            onClick={() => handleNavClick('/settings')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              textDecoration: 'none',
+              borderRadius: 'var(--radius-lg)',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
               fontSize: '0.9375rem',
             }}
           >
             <span>⚙️</span>
-            <span>{t('profile')}</span>
+            <span>{t('settings')}</span>
+          </Link>
+          <Link
+            to="/support"
+            onClick={() => handleNavClick('/support')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              textDecoration: 'none',
+              borderRadius: 'var(--radius-lg)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              fontSize: '0.9375rem',
+            }}
+          >
+            <span>❓</span>
+            <span>{t('help')}</span>
           </Link>
           <button
             onClick={handleLogout}

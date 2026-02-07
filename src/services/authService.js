@@ -14,6 +14,41 @@ import { auth, db, googleProvider } from "../config/firebase";
 import { perf } from "./perfService";
 
 /**
+ * Suppress Cross-Origin-Opener-Policy console warnings
+ * These warnings occur when Firebase checks window.closed on cross-origin popups
+ * The warnings don't affect functionality, just create console noise in Firefox/Safari
+ */
+if (typeof window !== "undefined") {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+
+  // Suppress COOP and related policy warnings
+  console.error = function (...args) {
+    const message = args.join(" ");
+    if (
+      message.includes("Cross-Origin-Opener-Policy") ||
+      message.includes("window.closed") ||
+      message.includes("Cross-Origin-Embedder-Policy")
+    ) {
+      return; // Silently suppress
+    }
+    originalError.apply(console, args);
+  };
+
+  console.warn = function (...args) {
+    const message = args.join(" ");
+    if (
+      message.includes("Cross-Origin-Opener-Policy") ||
+      message.includes("window.closed") ||
+      message.includes("Cross-Origin-Embedder-Policy")
+    ) {
+      return; // Silently suppress
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
+/**
  * Sign up a new user with email and password - OPTIMIZED for speed
  * @param {string} email - User email
  * @param {string} password - User password
@@ -254,6 +289,9 @@ export const loginWithGoogle = async () => {
   try {
     perf.start("GOOGLE_AUTH");
     console.log("🔐 Initiating Google Sign-In...");
+    console.log("📍 Auth Domain:", process.env.REACT_APP_FIREBASE_AUTH_DOMAIN);
+    console.log("📍 Project ID:", process.env.REACT_APP_FIREBASE_PROJECT_ID);
+
     const result = await signInWithPopup(auth, googleProvider);
     perf.end("GOOGLE_AUTH");
     console.log("✅ Google Sign-In successful", result.user.email);
@@ -266,7 +304,8 @@ export const loginWithGoogle = async () => {
 
     // If user is new, create their profile
     if (!userDocSnapshot.exists()) {
-      setDoc(userDocRef, {
+      console.log("📝 Creating new user profile in Firestore...");
+      await setDoc(userDocRef, {
         uid: firebaseUser.uid,
         name: firebaseUser.displayName || "",
         email: firebaseUser.email,
@@ -278,16 +317,25 @@ export const loginWithGoogle = async () => {
         emailVerified: firebaseUser.emailVerified,
         lastLogin: new Date().toISOString(),
         authProvider: "google",
-      }).catch((err) => {
-        console.error("Error creating user profile:", err);
-      });
+      })
+        .then(() => {
+          console.log("✅ User profile created successfully");
+        })
+        .catch((err) => {
+          console.error("❌ Error creating user profile:", err);
+        });
     } else {
       // Update last login for existing user
-      updateDoc(userDocRef, {
+      console.log("🔄 Updating existing user last login...");
+      await updateDoc(userDocRef, {
         lastLogin: new Date().toISOString(),
-      }).catch((err) => {
-        console.error("Error updating last login:", err);
-      });
+      })
+        .then(() => {
+          console.log("✅ Last login updated successfully");
+        })
+        .catch((err) => {
+          console.error("❌ Error updating last login:", err);
+        });
     }
 
     return result;
@@ -297,6 +345,18 @@ export const loginWithGoogle = async () => {
       message: error.message,
       customData: error.customData,
     });
+
+    // Additional debugging info
+    if (error.message && error.message.includes("unauthorized_client")) {
+      console.error(
+        "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
+      );
+      console.error(
+        "📍 Current URL:",
+        typeof window !== "undefined" ? window.location.href : "N/A",
+      );
+    }
+
     throw error;
   }
 };
@@ -310,6 +370,9 @@ export const signupWithGoogle = async (userData = {}) => {
   try {
     perf.start("GOOGLE_SIGNUP");
     console.log("🔐 Initiating Google Sign-Up...");
+    console.log("📍 Auth Domain:", process.env.REACT_APP_FIREBASE_AUTH_DOMAIN);
+    console.log("📍 Project ID:", process.env.REACT_APP_FIREBASE_PROJECT_ID);
+
     const result = await signInWithPopup(auth, googleProvider);
     perf.end("GOOGLE_SIGNUP");
     console.log("✅ Google Sign-Up successful", result.user.email);
@@ -317,21 +380,25 @@ export const signupWithGoogle = async (userData = {}) => {
     const firebaseUser = result.user;
 
     // Create user profile in Firestore
-    setDoc(doc(db, "users", firebaseUser.uid), {
+    console.log("📝 Creating new user profile in Firestore for sign-up...");
+    await setDoc(doc(db, "users", firebaseUser.uid), {
       uid: firebaseUser.uid,
       name: firebaseUser.displayName || "",
       email: firebaseUser.email,
       photoURL: firebaseUser.photoURL || "",
-      shopName: userData.shopName || "",
       gstin: userData.gstin || "",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       emailVerified: firebaseUser.emailVerified,
       lastLogin: new Date().toISOString(),
       authProvider: "google",
-    }).catch((err) => {
-      console.error("Error creating user profile:", err);
-    });
+    })
+      .then(() => {
+        console.log("✅ User profile created successfully");
+      })
+      .catch((err) => {
+        console.error("❌ Error creating user profile:", err);
+      });
 
     return result;
   } catch (error) {
@@ -340,6 +407,18 @@ export const signupWithGoogle = async (userData = {}) => {
       message: error.message,
       customData: error.customData,
     });
+
+    // Additional debugging info
+    if (error.message && error.message.includes("unauthorized_client")) {
+      console.error(
+        "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
+      );
+      console.error(
+        "📍 Current URL:",
+        typeof window !== "undefined" ? window.location.href : "N/A",
+      );
+    }
+
     throw error;
   }
 };

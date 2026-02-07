@@ -11,6 +11,15 @@ function GSTForms({ user, setUser }) {
   const [gstr1Data, setGstr1Data] = useState([]);
   const [gstr3bData, setGstr3bData] = useState(null);
   const [hasData, setHasData] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = setInterval(() => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+    }, 500);
+
+    return () => clearInterval(checkDarkMode);
+  }, []);
 
   useEffect(() => {
     // Migrate old storage format if needed
@@ -216,15 +225,15 @@ function GSTForms({ user, setUser }) {
 
   if (!hasData) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <Navbar user={user} />
         <div className="container section">
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
             <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📋</span>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--neutral-900)' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
               {t('No GST Forms Available')}
             </h2>
-            <p style={{ color: 'var(--neutral-600)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
               {t('Upload bills first to generate GSTR-1 and GSTR-3B forms automatically')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
@@ -237,7 +246,7 @@ function GSTForms({ user, setUser }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Navbar user={user} />
 
       <div className="container section">
@@ -285,7 +294,7 @@ function GSTForms({ user, setUser }) {
             <div style={{ overflowX: 'auto' }}>
               <table>
                 <thead>
-                  <tr>
+                  <tr style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                     <th>{t('GSTIN')}</th>
                     <th>{t('Supplier Name')}</th>
                     <th>{t('Invoice')}</th>
@@ -298,7 +307,7 @@ function GSTForms({ user, setUser }) {
                 </thead>
                 <tbody>
                   {gstr1Data.map((row, idx) => (
-                    <tr key={idx}>
+                    <tr key={idx} style={{ background: idx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>{row.gstin}</td>
                       <td style={{ fontWeight: 500 }}>{row.supplierName}</td>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>{row.invoiceNumber}</td>
@@ -326,13 +335,13 @@ function GSTForms({ user, setUser }) {
               </h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="card" style={{ background: 'var(--info-light)', borderColor: '#93c5fd' }}>
+              <div className="card" style={{ background: isDarkMode ? 'var(--bg-secondary)' : 'var(--info-light)', borderColor: isDarkMode ? 'var(--border-color)' : '#93c5fd' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e40af', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
                       {t('Outward Supplies')}
                     </p>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e40af' }}>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       ₹{gstr3bData.outwardSupplies.toLocaleString()}
                     </p>
                   </div>
@@ -340,13 +349,13 @@ function GSTForms({ user, setUser }) {
                 </div>
               </div>
 
-              <div className="card" style={{ background: 'var(--success-light)', borderColor: '#86efac' }}>
+              <div className="card" style={{ background: isDarkMode ? 'var(--bg-secondary)' : 'var(--success-light)', borderColor: isDarkMode ? 'var(--border-color)' : '#86efac' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#166534', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
                       {t('Inward Supplies')}
                     </p>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: '#166534' }}>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       ₹{gstr3bData.inwardSupplies.toLocaleString()}
                     </p>
                   </div>
@@ -354,13 +363,13 @@ function GSTForms({ user, setUser }) {
                 </div>
               </div>
 
-              <div className="card" style={{ background: 'var(--warning-light)', borderColor: '#fbbf24' }}>
+              <div className="card" style={{ background: isDarkMode ? 'var(--bg-secondary)' : 'var(--warning-light)', borderColor: isDarkMode ? 'var(--border-color)' : '#fbbf24' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#92400e', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
                       {t('Total Tax Liability')}
                     </p>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: '#92400e' }}>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                       ₹{gstr3bData.totalTax.toLocaleString()}
                     </p>
                   </div>
@@ -368,7 +377,7 @@ function GSTForms({ user, setUser }) {
                 </div>
               </div>
 
-              <div className="card" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-200)' }}>
+              <div className="card" style={{ background: isDarkMode ? 'var(--bg-secondary)' : 'var(--primary-50)', borderColor: isDarkMode ? 'var(--border-color)' : 'var(--primary-200)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-700)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>
@@ -383,8 +392,8 @@ function GSTForms({ user, setUser }) {
               </div>
 
               <div className="card" style={{
-                background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
-                color: 'white',
+                background: isDarkMode ? 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)' : 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
+                color: 'var(--text-primary)',
                 border: 'none',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

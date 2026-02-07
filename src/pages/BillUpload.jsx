@@ -34,8 +34,17 @@ function BillUpload({ user, setUser }) {
   const [currentPreviewUrl, setCurrentPreviewUrl] = useState(null);
   const [modalCapturedBlob, setModalCapturedBlob] = useState(null);
   const [modalCapturedPreview, setModalCapturedPreview] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  useEffect(() => {
+    const checkDarkMode = setInterval(() => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+    }, 500);
+
+    return () => clearInterval(checkDarkMode);
+  }, []);
 
   useEffect(() => {
     if (notification) {
@@ -850,14 +859,14 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Navbar user={user} />
 
       {notification && (
         <div className="notification" style={{
-          background: notification.type === 'success' ? 'var(--success-light)' :
-            notification.type === 'error' ? 'var(--error-light)' :
-              notification.type === 'warning' ? 'var(--warning-light)' : 'var(--info-light)',
+          background: notification.type === 'success' ? (isDarkMode ? '#1b5e20' : 'var(--success-light)') :
+            notification.type === 'error' ? (isDarkMode ? '#5e1b1b' : 'var(--error-light)') :
+              notification.type === 'warning' ? (isDarkMode ? '#5e5a1b' : 'var(--warning-light)') : (isDarkMode ? '#1b4a5e' : 'var(--info-light)'),
           borderLeft: `4px solid ${notification.type === 'success' ? 'var(--success)' :
             notification.type === 'error' ? 'var(--error)' :
               notification.type === 'warning' ? 'var(--warning)' : 'var(--info)'
@@ -872,7 +881,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
       <div className="container section">
         <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
           {/* Upload Section */}
-          <div className="card">
+          <div className="card" style={{}}>
             <div className="card-header">
               <h1 className="card-title">
                 <div className="card-title-icon">📄</div>
@@ -895,9 +904,9 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  background: isRecording ? 'var(--error-light)' : 'white',
-                  color: isRecording ? 'var(--error)' : 'var(--neutral-700)',
-                  border: `2px ${isRecording ? 'solid' : 'dashed'} ${isRecording ? 'var(--error)' : 'var(--neutral-300)'}`,
+                  background: isRecording ? 'var(--error-light)' : 'var(--bg-secondary)',
+                  color: isRecording ? 'var(--error)' : 'var(--text-secondary)',
+                  border: `2px ${isRecording ? 'solid' : 'dashed'} ${isRecording ? 'var(--error)' : 'var(--border-color)'}`,
                 }}
               >
                 <IconMicrophone recording={isRecording} />
@@ -909,7 +918,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                 <p style={{
                   marginTop: '0.5rem',
                   fontSize: '0.875rem',
-                  color: 'var(--neutral-600)',
+                  color: 'var(--text-secondary)',
                   fontStyle: 'italic',
                   textAlign: 'center',
                 }}>
@@ -954,14 +963,14 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
             {/* Camera modal for live capture */}
             {showCameraModal && (
               <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
-                <div style={{ width: '100%', maxWidth: '900px', background: 'white', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', maxWidth: '900px', background: 'var(--bg-secondary)', borderRadius: '8px', overflow: 'hidden' }}>
                   <div style={{ position: 'relative', background: 'black' }}>
                     {!modalCapturedPreview ? (
                       <>
                         <video ref={videoRef} style={{ width: '100%', height: 'auto', display: 'block' }} playsInline muted />
                         <canvas ref={canvasRef} style={{ display: 'none' }} />
                         <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '8px' }}>
-                          <button onClick={switchCameraFacing} className="btn btn-sm" style={{ background: 'rgba(255,255,255,0.9)' }}>Switch</button>
+                          <button onClick={switchCameraFacing} className="btn btn-sm" style={{ background: 'var(--bg-primary)' }}>Switch</button>
                           <button onClick={closeCameraModal} className="btn btn-sm btn-secondary">Close</button>
                         </div>
                         <div style={{ position: 'absolute', bottom: '12px', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
@@ -987,7 +996,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
 
             <div style={{
               textAlign: 'center',
-              color: 'var(--neutral-500)',
+              color: 'var(--text-secondary)',
               fontSize: '0.875rem',
               marginBottom: '1.5rem',
               fontWeight: 500,
@@ -1032,24 +1041,24 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                   />
 
                   {(file?.isCameraCapture || cameraCapturedAt) && (
-                    <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '6px 10px', borderRadius: '999px', fontSize: '0.75rem', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: 'var(--text-primary)', padding: '6px 10px', borderRadius: '999px', fontSize: '0.75rem', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19 12v.01" /></svg>
                       <span>Camera</span>
                       <span style={{ opacity: 0.9, marginLeft: '6px', fontSize: '0.7rem' }}>{new Date(file?.cameraCapturedAt || cameraCapturedAt).toLocaleString()}</span>
                     </div>
                   )}
 
-                  <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
+                  <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     {file.name} ({(file.size / 1024).toFixed(2)} KB)
                   </p>
                 </div>
               ) : (
                 <div>
                   <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📸</span>
-                  <p style={{ fontWeight: 600, color: 'var(--neutral-700)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>
+                  <p style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>
                     {file ? file.name : t('upload_invoice_image')}
                   </p>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     {t('Supports PNG, JPG, WEBP (Max 10MB)')}
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--primary-600)', marginTop: '0.75rem', fontWeight: 600 }}>
@@ -1064,7 +1073,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                 <div style={{
                   width: '100%',
                   height: '8px',
-                  background: 'var(--neutral-200)',
+                  background: 'var(--border-color)',
                   borderRadius: '9999px',
                   overflow: 'hidden',
                 }}>
@@ -1075,7 +1084,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     transition: 'width 0.3s ease',
                   }}></div>
                 </div>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--neutral-600)', marginTop: '0.5rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>
                   {extractionProgress < 50 ? 'Scanning image...' :
                     extractionProgress < 85 ? 'AI is analyzing...' :
                       'Almost done...'}
@@ -1101,14 +1110,14 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               )}
             </button>
 
-            <p style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', textAlign: 'center', marginTop: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '1rem' }}>
               {t('By uploading, you agree to our Terms of Service and Privacy Policy.')}
             </p>
           </div>
 
           {/* Extracted Data Section */}
           {extractedData && (
-            <div className="card animate-slide-up">
+            <div className="card animate-slide-up" style={{}}>
               <div className="card-header">
                 <h2 className="card-title">
                   <div className="card-title-icon">📋</div>
@@ -1118,11 +1127,11 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               </div>
 
               {extractedData.extractionConfidence === 'low' && (
-                <div style={{ background: 'var(--warning-light)', border: '1px solid var(--warning)', borderRadius: '8px', padding: '12px', marginBottom: '1rem', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <div style={{ background: isDarkMode ? '#5e5a1b' : 'var(--warning-light)', border: `1px solid ${isDarkMode ? '#8f8f5a' : 'var(--warning)'}`, borderRadius: '8px', padding: '12px', marginBottom: '1rem', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>⚠️</span>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 600, color: 'var(--warning)', marginBottom: '4px' }}>Low Confidence Extraction</p>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--neutral-700)', margin: 0 }}>We had difficulty reading this invoice clearly. Please verify and correct the details below before saving.</p>
+                    <p style={{ fontWeight: 600, color: isDarkMode ? '#f0f0d4' : 'var(--warning)', marginBottom: '4px' }}>Low Confidence Extraction</p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>We had difficulty reading this invoice clearly. Please verify and correct the details below before saving.</p>
                   </div>
                 </div>
               )}
@@ -1134,6 +1143,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="text"
                     value={extractedData.supplierName}
                     onChange={(e) => handleFieldChange('supplierName', e.target.value)}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                 </div>
                 <div>
@@ -1143,6 +1153,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     value={extractedData.gstin}
                     onChange={(e) => handleFieldChange('gstin', e.target.value)}
                     maxLength={15}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                 </div>
                 <div>
@@ -1151,6 +1162,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="text"
                     value={extractedData.invoiceNumber}
                     onChange={(e) => handleFieldChange('invoiceNumber', e.target.value)}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                 </div>
                 <div>
@@ -1159,6 +1171,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="date"
                     value={extractedData.invoiceDate}
                     onChange={(e) => handleFieldChange('invoiceDate', e.target.value)}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                 </div>
                 <div>
@@ -1167,6 +1180,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="number"
                     value={extractedData.amount}
                     onChange={(e) => handleFieldChange('amount', e.target.value)}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                 </div>
 
@@ -1197,6 +1211,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                       }
                     }}
                     placeholder="e.g., 9+9 or 18"
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                   {extractedData.allTaxRates && extractedData.allTaxRates.length > 1 && (
                     <p style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.25rem', fontWeight: 600 }}>
@@ -1204,12 +1219,12 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     </p>
                   )}
                   {extractedData.taxPercent > 0 && (!extractedData.allTaxRates || extractedData.allTaxRates.length <= 1) && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--neutral-600)', marginTop: '0.25rem' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                       → Single rate: {extractedData.taxPercent}% will be applied to taxable amount
                     </p>
                   )}
-                  <div style={{ fontSize: '0.75rem', color: 'var(--neutral-600)', marginTop: '0.5rem', lineHeight: '1.5' }}>
-                    <p style={{ margin: '0.25rem 0', fontWeight: 500, color: 'var(--neutral-700)' }}>📋 How to enter tax:</p>
+                  <div style={{ fontSize: '0.75rem', color: isDarkMode ? '#a3a3a3' : 'var(--neutral-600)', marginTop: '0.5rem', lineHeight: '1.5' }}>
+                    <p style={{ margin: '0.25rem 0', fontWeight: 500, color: isDarkMode ? '#e5e7eb' : 'var(--neutral-700)' }}>📋 How to enter tax:</p>
                     <ul style={{ margin: '0.25rem 0 0 1rem', paddingLeft: '0.5rem', listStyle: 'none' }}>
                       <li><strong>Single rate:</strong> Type 5, 12, 18, or 28 → Applied as-is</li>
                       <li><strong>Multiple rates:</strong> Type 9+9 or 5+12+18 → Auto-summed to one total</li>
@@ -1225,7 +1240,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="number"
                     value={extractedData.taxAmount}
                     readOnly
-                    style={{ background: 'var(--neutral-100)' }}
+                    style={{ background: isDarkMode ? '#404040' : 'var(--neutral-100)', color: isDarkMode ? '#a3a3a3' : '#000', border: isDarkMode ? '1px solid #505050' : '1px solid #ccc' }}
                   />
                 </div>
                 <div>
@@ -1234,7 +1249,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     type="number"
                     value={extractedData.totalAmount}
                     readOnly
-                    style={{ background: 'var(--neutral-100)', fontWeight: 700 }}
+                    style={{ background: isDarkMode ? '#404040' : 'var(--neutral-100)', color: isDarkMode ? '#a3a3a3' : '#000', border: isDarkMode ? '1px solid #505050' : '1px solid #ccc', fontWeight: 700 }}
                   />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
@@ -1242,6 +1257,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                   <select
                     value={extractedData.expenseType}
                     onChange={(e) => handleFieldChange('expenseType', e.target.value)}
+                    style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   >
                     <option value="Raw Material">Raw Material</option>
                     <option value="Travel">Travel</option>

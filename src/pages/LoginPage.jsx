@@ -12,8 +12,17 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+
+  useEffect(() => {
+    const checkDarkMode = setInterval(() => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+    }, 500);
+
+    return () => clearInterval(checkDarkMode);
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -147,8 +156,20 @@ function LoginPage() {
       }, 500);
 
     } catch (err) {
+      // IMMEDIATELY stop loading for instant user feedback
       setLoading(false);
+      perf.end('GOOGLE_LOGIN');
+
       let errorMessage = 'Google sign-in failed. Please try again.';
+
+      // Log detailed error for debugging
+      console.error('🔐 Google Sign-In Error Details:', {
+        code: err.code,
+        message: err.message,
+        customData: err.customData,
+        email: err.email,
+        credential: err.credential
+      });
 
       if (err.code === 'auth/popup-blocked') {
         errorMessage = '❌ Pop-up was blocked. Please allow pop-ups and try again.';
@@ -158,11 +179,19 @@ function LoginPage() {
         errorMessage = '❌ An account with this email already exists.';
       } else if (err.code === 'auth/network-request-failed') {
         errorMessage = '❌ Network error. Check your connection.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = '❌ Domain not authorized in Firebase Console. See browser console for details.';
+      } else if (err.code === 'auth/invalid-client-id') {
+        errorMessage = '❌ Google configuration error. Please try again later.';
+      } else if (err.code === 'auth/invalid-credential') {
+        errorMessage = '❌ Invalid credentials. Please try again.';
+      } else if (err.message && err.message.includes('unauthorized_client')) {
+        errorMessage = '❌ Domain not authorized. Add to Firebase Authentication → Settings.';
+      } else if (err.message && err.message.includes('domain')) {
+        errorMessage = '❌ Domain authorization error. Check Firebase console.';
       }
 
       setError(errorMessage);
-      // Stop loading immediately for user feedback
-      perf.end('GOOGLE_LOGIN');
     }
   };
 
@@ -174,7 +203,7 @@ function LoginPage() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '2rem',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      background: isDarkMode ? '#1a1a1a' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       position: 'relative',
       overflow: 'hidden'
     }}>
@@ -186,7 +215,7 @@ function LoginPage() {
         width: '600px',
         height: '600px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+        background: isDarkMode ? 'radial-gradient(circle at center, rgba(30, 80, 200, 0.1) 0%, transparent 70%)' : 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
         animation: 'float 20s ease-in-out infinite',
         zIndex: 0
       }}></div>
@@ -197,7 +226,7 @@ function LoginPage() {
         width: '700px',
         height: '700px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle at center, rgba(30, 60, 114, 0.15) 0%, transparent 70%)',
+        background: isDarkMode ? 'radial-gradient(circle at center, rgba(30, 80, 200, 0.08) 0%, transparent 70%)' : 'radial-gradient(circle at center, rgba(30, 60, 114, 0.15) 0%, transparent 70%)',
         animation: 'float 25s ease-in-out infinite reverse',
         zIndex: 0
       }}></div>
@@ -208,23 +237,24 @@ function LoginPage() {
         width: '400px',
         height: '400px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle at center, rgba(42, 82, 152, 0.1) 0%, transparent 70%)',
+        background: isDarkMode ? 'radial-gradient(circle at center, rgba(30, 80, 200, 0.06) 0%, transparent 70%)' : 'radial-gradient(circle at center, rgba(42, 82, 152, 0.1) 0%, transparent 70%)',
         animation: 'float 30s ease-in-out infinite',
         zIndex: 0
       }}></div>
 
       {/* Login Card */}
       <div style={{
-        background: 'white',
+        background: isDarkMode ? '#2d2d2d' : 'white',
         borderRadius: '24px',
         padding: '3rem',
         width: '100%',
         maxWidth: '500px',
-        boxShadow: '0 25px 70px rgba(30, 60, 114, 0.2)',
+        boxShadow: isDarkMode ? '0 25px 70px rgba(0, 0, 0, 0.5)' : '0 25px 70px rgba(30, 60, 114, 0.2)',
         position: 'relative',
         zIndex: 10,
         backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.6)'
+        border: isDarkMode ? '1px solid rgba(100, 100, 100, 0.3)' : '1px solid rgba(255, 255, 255, 0.6)',
+        color: isDarkMode ? '#e5e7eb' : '#000'
       }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -235,8 +265,8 @@ function LoginPage() {
             width: '80px',
             height: '80px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
-            boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
+            background: isDarkMode ? 'linear-gradient(135deg, #355c7d 0%, #2a5298 50%, #4a7ba7 100%)' : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
+            boxShadow: isDarkMode ? '0 10px 30px rgba(30, 80, 200, 0.2)' : '0 10px 30px rgba(59, 130, 246, 0.3)',
             marginBottom: '1.5rem'
           }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -248,13 +278,13 @@ function LoginPage() {
           <h1 style={{
             fontSize: '2.5rem',
             fontWeight: '700',
-            color: '#1e3c72',
+            color: isDarkMode ? '#e5e7eb' : '#1e3c72',
             marginBottom: '0.5rem',
             letterSpacing: '-0.02em'
           }}>
             Welcome Back
           </h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>
+          <p style={{ color: isDarkMode ? '#a3a3a3' : '#64748b', fontSize: '1rem', fontWeight: '500' }}>
             Sign in to AI IN BUSINESS
           </p>
         </div>
@@ -268,11 +298,11 @@ function LoginPage() {
               gap: '0.5rem',
               fontSize: '0.9rem',
               fontWeight: '600',
-              color: '#1e3c72',
+              color: isDarkMode ? '#e5e7eb' : '#1e3c72',
               marginBottom: '0.6rem',
               letterSpacing: '0.01em'
             }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#5a8fbf' : '#3b82f6'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
@@ -287,24 +317,25 @@ function LoginPage() {
               style={{
                 width: '100%',
                 padding: '1rem 1.2rem',
-                border: emailError ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                border: emailError ? '2px solid #ef4444' : `2px solid ${isDarkMode ? '#404040' : '#e2e8f0'}`,
                 borderRadius: '12px',
                 fontSize: '1rem',
                 outline: 'none',
                 transition: 'all 0.3s ease',
-                backgroundColor: emailError ? '#fef2f2' : 'white',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                backgroundColor: emailError ? (isDarkMode ? '#5e1b1b' : '#fef2f2') : (isDarkMode ? '#333' : 'white'),
+                color: isDarkMode ? '#fff' : '#000',
+                boxShadow: isDarkMode ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.05)'
               }}
               onFocus={(e) => {
                 if (!emailError) {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
+                  e.target.style.borderColor = isDarkMode ? '#5a8fbf' : '#3b82f6';
+                  e.target.style.boxShadow = isDarkMode ? '0 0 0 4px rgba(90, 143, 191, 0.2)' : '0 0 0 4px rgba(59, 130, 246, 0.1)';
                 }
               }}
               onBlur={(e) => {
                 if (!emailError) {
-                  e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+                  e.target.style.borderColor = isDarkMode ? '#404040' : '#e2e8f0';
+                  e.target.style.boxShadow = isDarkMode ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.05)';
                 }
               }}
             />

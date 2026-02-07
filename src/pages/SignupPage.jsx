@@ -8,7 +8,6 @@ function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    shopName: '',
     gstin: '',
     password: '',
     confirmPassword: '',
@@ -19,8 +18,17 @@ function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+
+  useEffect(() => {
+    const checkDarkMode = setInterval(() => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+    }, 500);
+
+    return () => clearInterval(checkDarkMode);
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -132,8 +140,10 @@ function SignupPage() {
       errors.confirmPassword = 'Passwords do not match';
     }
 
-    // GSTIN validation (if provided)
-    if (formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin)) {
+    // GSTIN validation (now required)
+    if (!formData.gstin.trim()) {
+      errors.gstin = 'GSTIN is required';
+    } else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin)) {
       errors.gstin = 'Invalid GSTIN format';
     }
 
@@ -160,7 +170,6 @@ function SignupPage() {
       // Sign up using authService
       await signup(formData.email, formData.password, {
         name: formData.name,
-        shopName: formData.shopName,
         gstin: formData.gstin,
       });
       perf.end('FIREBASE_SIGNUP');
@@ -208,10 +217,7 @@ function SignupPage() {
 
     try {
       perf.start('GOOGLE_SIGNUP');
-      await signupWithGoogle({
-        shopName: '',
-        gstin: '',
-      });
+      await signupWithGoogle({});
       perf.end('GOOGLE_SIGNUP');
 
       setSuccessMessage('Account created successfully with Google! Redirecting to dashboard...');
@@ -229,8 +235,20 @@ function SignupPage() {
       }, 1500);
 
     } catch (err) {
+      // IMMEDIATELY stop loading for instant user feedback
       setLoading(false);
+      perf.end('GOOGLE_SIGNUP');
+
       let errorMessage = 'Google sign-up failed. Please try again.';
+
+      // Log detailed error for debugging
+      console.error('🔐 Google Sign-Up Error Details:', {
+        code: err.code,
+        message: err.message,
+        customData: err.customData,
+        email: err.email,
+        credential: err.credential
+      });
 
       if (err.code === 'auth/popup-blocked') {
         errorMessage = '❌ Pop-up was blocked. Please allow pop-ups and try again.';
@@ -240,6 +258,14 @@ function SignupPage() {
         errorMessage = '❌ An account with this email already exists.';
       } else if (err.code === 'auth/network-request-failed') {
         errorMessage = '❌ Network error. Check your connection.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = '❌ Domain not authorized in Firebase Console. See browser console for details.';
+      } else if (err.code === 'auth/invalid-client-id') {
+        errorMessage = '❌ Google configuration error. Please try again later.';
+      } else if (err.message && err.message.includes('unauthorized_client')) {
+        errorMessage = '❌ Domain not authorized. Add to Firebase Authentication → Settings.';
+      } else if (err.message && err.message.includes('domain')) {
+        errorMessage = '❌ Domain authorization error. Check Firebase console.';
       }
 
       setError(errorMessage);
@@ -409,33 +435,10 @@ function SignupPage() {
             )}
           </div>
 
-          {/* Shop Name Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>🏪</span> Shop/Business Name
-            </label>
-            <input
-              type="text"
-              name="shopName"
-              value={formData.shopName}
-              onChange={handleChange}
-              placeholder="My Shop Name"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg outline-none transition transform focus:scale-105 bg-gray-50 hover:bg-white"
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1e3c72';
-                e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d1d5db';
-                e.target.style.boxShadow = 'none';
-              }}
-            />
-          </div>
-
           {/* GSTIN Field */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>📋</span> GSTIN (Optional)
+              <span>📋</span> GSTIN <span className="text-red-500">*</span>
             </label>
             <input
               type="text"

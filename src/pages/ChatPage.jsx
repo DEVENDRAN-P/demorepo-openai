@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import AIAssistant from '../components/AIAssistant';
 
 function ChatPage({ user }) {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--neutral-50)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Navbar user={user} />
 
       <div className="container section">
@@ -13,7 +13,7 @@ function ChatPage({ user }) {
             <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
               AI GST Assistant
             </h1>
-            <p style={{ color: 'var(--neutral-600)' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
               Get instant answers to your GST compliance questions
             </p>
           </div>

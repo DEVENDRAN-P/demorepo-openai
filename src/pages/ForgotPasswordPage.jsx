@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -10,7 +10,16 @@ function ForgotPasswordPage() {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [emailError, setEmailError] = useState('');
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const checkDarkMode = setInterval(() => {
+            setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+        }, 500);
+
+        return () => clearInterval(checkDarkMode);
+    }, []);
 
     // Real-time email validation
     const validateEmail = (value) => {
@@ -50,13 +59,13 @@ function ForgotPasswordPage() {
 
         try {
             perf.start('FIREBASE_RESET_EMAIL');
-            
+
             // Configure action code settings for password reset email
             const actionCodeSettings = {
                 url: `${window.location.origin}/login`,
                 handleCodeInApp: true,
             };
-            
+
             await sendPasswordResetEmail(auth, email, actionCodeSettings);
             perf.end('FIREBASE_RESET_EMAIL');
 
@@ -102,7 +111,7 @@ function ForgotPasswordPage() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+            background: isDarkMode ? '#1a1a1a' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
             position: 'relative',
             overflow: 'hidden'
         }}>
@@ -114,7 +123,7 @@ function ForgotPasswordPage() {
                 width: '600px',
                 height: '600px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                background: isDarkMode ? 'radial-gradient(circle at center, rgba(30, 80, 200, 0.1) 0%, transparent 70%)' : 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
                 animation: 'float 20s ease-in-out infinite',
                 zIndex: 0
             }}></div>
@@ -125,7 +134,7 @@ function ForgotPasswordPage() {
                 width: '700px',
                 height: '700px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle at center, rgba(30, 60, 114, 0.15) 0%, transparent 70%)',
+                background: isDarkMode ? 'radial-gradient(circle at center, rgba(30, 80, 200, 0.08) 0%, transparent 70%)' : 'radial-gradient(circle at center, rgba(30, 60, 114, 0.15) 0%, transparent 70%)',
                 animation: 'float 25s ease-in-out infinite reverse',
                 zIndex: 0
             }}></div>
@@ -138,12 +147,13 @@ function ForgotPasswordPage() {
                 maxWidth: '450px'
             }}>
                 <div style={{
-                    background: 'white',
+                    background: isDarkMode ? '#2d2d2d' : 'white',
                     borderRadius: '16px',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
+                    boxShadow: isDarkMode ? '0 20px 60px rgba(0, 0, 0, 0.5)' : '0 20px 60px rgba(0, 0, 0, 0.08)',
                     padding: '2.5rem',
                     backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                    border: isDarkMode ? '1px solid rgba(100, 100, 100, 0.3)' : '1px solid rgba(255, 255, 255, 0.2)',
+                    color: isDarkMode ? '#e5e7eb' : '#000'
                 }}>
                     {/* Header */}
                     <div style={{
