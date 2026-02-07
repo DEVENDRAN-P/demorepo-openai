@@ -20,7 +20,7 @@ const Home = () => {
                         Welcome to AI IN BUSINESS
                     </h1>
                     <h2 style={{ fontSize: '1.5rem', color: '#2a5298', marginBottom: '2rem' }}>
-                        AI GST & COMPLIANCE BUDDY
+                        GstBuddy
                     </h2>
                     <p style={{ fontSize: '1.2rem', color: '#64748b', lineHeight: '1.6' }}>
                         Streamline your business compliance with our AI-powered GST calculator and compliance tools.

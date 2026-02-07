@@ -1,5 +1,5 @@
 {
-  "app_name": "AI GST & Compliance Buddy",
+  "app_name": "GstBuddy",
   "login": "Login",
   "signup": "Sign Up",
   "logout": "Logout",
@@ -15,6 +15,8 @@
   "english": "English",
   "tamil": "Tamil",
   "hindi": "Hindi",
+  "malayalam": "Malayalam",
+  "kannada": "Kannada",
   "dashboard": "Dashboard",
   "dashboard_subtitle": "",
   "upload_bill": "Upload Bill",
@@ -24,7 +26,13 @@
   "pending": "Pending",
   "filed": "Filed",
   "upcoming": "Upcoming",
+  "status": "Status",
   "due_date": "Due Date",
+  "overdue": "Overdue",
+  "urgent": "Urgent (≤3 days)",
+  "warning": "Warning (4-7 days)",
+  "days_left": "days left",
+  "overdue_by": "Overdue by",
   "quick_actions": "Quick Actions",
   "bill_extraction": "Bill Data Extraction",
   "gst_forms": "GST Forms",
@@ -218,5 +226,7 @@
   "message_whatsapp": "Message on WhatsApp",
   "schedule_call": "Schedule Call",
   "important_notice": "Important Notice",
-  "important_notice_text": "This app is designed to assist with GST compliance. Always verify information with official GST portals (www.gst.gov.in) and consult with tax professionals for critical decisions. The helpdesk numbers provided are official government numbers. Contact them for official guidance."
+  "important_notice_text": "This app is designed to assist with GST compliance. Always verify information with official GST portals (www.gst.gov.in) and consult with tax professionals for critical decisions. The helpdesk numbers provided are official government numbers. Contact them for official guidance.",
+  "cost_savings_earned": "Cost Savings You've Earned",
+  "cost_savings": "Cost Savings"
 }

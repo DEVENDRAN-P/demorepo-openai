@@ -1,5 +1,5 @@
 ﻿{
-  "app_name": "AI GST & இணக்கம் தோழி",
+  "app_name": "GstBuddy",
   "login": "உள்நுழைக",
   "signup": "பதிவு செய்க",
   "logout": "வெளியேறு",
@@ -26,7 +26,13 @@
   "pending": "நிலுவையில்",
   "filed": "தாக்கல் செய்யப்பட்டது",
   "upcoming": "வரவிருக்கும்",
+  "status": "நிலை",
   "due_date": "காலாவதி தேதி",
+  "overdue": "தாமதமாக",
+  "urgent": "அவசரம் (≤3 நாட்கள்)",
+  "warning": "எச்சரிக்கை (4-7 நாட்கள்)",
+  "days_left": "நாட்கள் எஞ்சியுள்ளன",
+  "overdue_by": "தாமதமாக",
   "quick_actions": "விரைவு செயல்கள்",
   "bill_extraction": "பில் தரவு பிரித்தெடுத்தல்",
   "gst_forms": "GST படிவங்கள்",
@@ -217,8 +223,10 @@
   "call_info": "+91-XXXX-XXXXXX",
   "send_email": "ईमेल भेजें",
   "start_chat": "चैट शुरू करें",
-  "message_whatsapp": "WhatsApp पर संदेश भेजें",
+  "message_whatsapp": "WhatsApp பர संदेश भेजें",
   "schedule_call": "कॉल शेड्यूल करें",
   "important_notice": "महत्वपूर्ण सूचना",
-  "important_notice_text": "यह एप्प GST अनुपालन में सहायता के लिए है। हमेशा आधिकारिक GST पोर्टल से जानकारी सत्यापित करें"
+  "important_notice_text": "यह एप्प GST अनुपालन में सहायता के लिए है। हमेशा आधिकारिक GST पोर्टल से जानकारी सत्यापित करें",
+  "cost_savings_earned": "நீங்கள் சம்பாதித்த சேமிப்பு",
+  "cost_savings": "சேமிப்பு"
 }

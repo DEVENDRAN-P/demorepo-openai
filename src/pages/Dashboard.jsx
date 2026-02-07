@@ -446,7 +446,7 @@ function Dashboard({ user, setUser }) {
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--neutral-900)', marginBottom: '0.5rem' }}>
-              💰 Cost Savings You've Earned
+              💰 {t('cost_savings_earned')}
             </h2>
             <p style={{ color: 'var(--neutral-600)', fontSize: '1rem' }}>
               See how much you're saving with GST Buddy vs. hiring an accountant
@@ -522,11 +522,11 @@ function Dashboard({ user, setUser }) {
 
           {/* Monthly Savings Breakdown */}
           <div className="card" style={{
-            background: 'white',
+            background: 'var(--card-bg)',
             padding: '2rem',
             border: '2px solid rgba(34, 197, 94, 0.2)',
           }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--neutral-900)', marginBottom: '1.5rem', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
               Monthly Comparison
             </h3>
 
@@ -538,11 +538,11 @@ function Dashboard({ user, setUser }) {
               <div style={{
                 textAlign: 'center',
                 padding: '1rem',
-                background: 'var(--neutral-50)',
+                background: 'var(--bg-secondary)',
                 borderRadius: 'var(--radius-lg)',
                 borderLeft: '4px solid #ef4444',
               }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   Accountant Fee
                 </div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#dc2626' }}>
@@ -553,11 +553,11 @@ function Dashboard({ user, setUser }) {
               <div style={{
                 textAlign: 'center',
                 padding: '1rem',
-                background: 'var(--neutral-50)',
+                background: 'var(--bg-secondary)',
                 borderRadius: 'var(--radius-lg)',
                 borderLeft: '4px solid #8b5cf6',
               }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   GST Buddy Cost
                 </div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#7c3aed' }}>

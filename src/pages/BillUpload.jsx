@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Tesseract from 'tesseract.js';
 import { saveBills, getBills, migrateOldBillsKey } from '../utils/storageUtils';
+import { saveBillToFirebase, getBillsFromFirebase } from '../services/billService';
+import { createBillReminders } from '../services/reminderService';
 
 // Add voice icon
 const IconMicrophone = ({ recording }) => (
@@ -674,7 +676,7 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
     });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!extractedData) return;
 
     // Migrate old storage format if needed
@@ -693,6 +695,33 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
 
     savedBills.push(newBill);
     saveBills(savedBills, user?.id);
+
+    // Also save to Firebase for persistence
+    try {
+      if (user?.uid) {
+        await saveBillToFirebase(user.uid, {
+          ...extractedData,
+          uploadedAt: new Date().toISOString(),
+          filed: false,
+        });
+
+        // Create reminders for the new bill
+        try {
+          await createBillReminders(user.uid, {
+            id: newBill.id,
+            invoiceDate: extractedData.invoiceDate || new Date().toISOString(),
+            invoiceNumber: extractedData.invoiceNumber || 'N/A',
+            taxAmount: extractedData.taxAmount || 0,
+          });
+        } catch (reminderError) {
+          console.warn('⚠️ Warning: Could not create reminders:', reminderError);
+          // Don't fail the operation if reminder creation fails
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error saving bill to Firebase:', error);
+      // Don't fail the operation if Firebase save fails
+    }
 
     // Dispatch custom event for bill upload (triggers dashboard update)
     window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));

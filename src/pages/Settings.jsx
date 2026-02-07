@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import Navbar from '../components/Navbar';
 import { useDarkMode } from '../context/DarkModeContext';
 import { db } from '../config/firebase';
@@ -51,6 +52,11 @@ function Settings({ user }) {
             ...prev,
             [key]: value
         }));
+        // If language changed, update i18n immediately
+        if (key === 'language') {
+            i18n.changeLanguage(value);
+            localStorage.setItem('language', value);
+        }
     };
 
     const handleSaveSettings = async () => {
@@ -441,30 +447,20 @@ function Settings({ user }) {
                                 </label>
                                 <select
                                     value={settings.currency}
-                                    onChange={(e) => handleSelectChange('currency', e.target.value)}
+                                    disabled
                                     style={{
                                         width: '100%',
                                         padding: '0.75rem 1rem',
                                         border: `1px solid ${borderColor}`,
                                         borderRadius: '0.5rem',
                                         fontSize: '0.95rem',
-                                        cursor: 'pointer',
+                                        cursor: 'not-allowed',
                                         backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
                                         color: textColor,
                                         transition: 'all 0.3s ease',
                                     }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = accentColor;
-                                        e.target.style.boxShadow = `0 0 0 3px rgba(102, 126, 234, 0.1)`;
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = borderColor;
-                                        e.target.style.boxShadow = 'none';
-                                    }}
                                 >
                                     <option value="INR">{t('inr')}</option>
-                                    <option value="USD">{t('usd')}</option>
-                                    <option value="EUR">{t('eur')}</option>
                                 </select>
                             </div>
 
@@ -504,6 +500,47 @@ function Settings({ user }) {
                                     <option value="april-march">{t('april_march')}</option>
                                     <option value="jan-dec">{t('jan_dec')}</option>
                                     <option value="fiscal-custom">{t('custom_fiscal')}</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontWeight: '600',
+                                    marginBottom: '0.75rem',
+                                    fontSize: '0.9rem',
+                                    color: textColor,
+                                }}>
+                                    {t('language')}
+                                </label>
+                                <select
+                                    value={settings.language}
+                                    onChange={(e) => handleSelectChange('language', e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem 1rem',
+                                        border: `1px solid ${borderColor}`,
+                                        borderRadius: '0.5rem',
+                                        fontSize: '0.95rem',
+                                        cursor: 'pointer',
+                                        backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
+                                        color: textColor,
+                                        transition: 'all 0.3s ease',
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = accentColor;
+                                        e.target.style.boxShadow = `0 0 0 3px rgba(102, 126, 234, 0.1)`;
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = borderColor;
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <option value="en">{t('english')}</option>
+                                    <option value="hi">{t('hindi')}</option>
+                                    <option value="ta">{t('tamil')}</option>
+                                    <option value="ml">{t('malayalam')}</option>
+                                    <option value="kn">{t('kannada')}</option>
                                 </select>
                             </div>
                         </div>

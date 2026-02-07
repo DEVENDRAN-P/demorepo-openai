@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDarkMode } from '../context/DarkModeContext';
 
 function GSTFilingStatus({ bills = [] }) {
+    const { t } = useTranslation();
     const [filingStatus, setFilingStatus] = useState([]);
     const { isDarkMode } = useDarkMode();
 
@@ -13,17 +15,79 @@ function GSTFilingStatus({ bills = [] }) {
         const now = new Date();
         const currentYear = now.getFullYear();
 
-        // Get deadlines for current and next quarters
-        const deadlines = [
-            { month: 'April', dueDate: '13th May', deadline: new Date(currentYear, 4, 13), gstr: 'GSTR-1', period: 'April' },
-            { month: 'May', dueDate: '13th June', deadline: new Date(currentYear, 5, 13), gstr: 'GSTR-1', period: 'May' },
-            { month: 'June', dueDate: '13th July', deadline: new Date(currentYear, 6, 13), gstr: 'GSTR-1', period: 'June' },
-            { month: 'July', dueDate: '13th August', deadline: new Date(currentYear, 7, 13), gstr: 'GSTR-1', period: 'July' },
-            { month: 'August', dueDate: '13th September', deadline: new Date(currentYear, 8, 13), gstr: 'GSTR-1', period: 'August' },
-            { month: 'September', dueDate: '13th October', deadline: new Date(currentYear, 9, 13), gstr: 'GSTR-1', period: 'September' },
-        ];
+        // If no bills uploaded, show static deadlines
+        if (!bills || bills.length === 0) {
+            const deadlines = [
+                { month: 'April', dueDate: '13th May', deadline: new Date(currentYear, 4, 13), gstr: 'GSTR-1', period: 'April' },
+                { month: 'May', dueDate: '13th June', deadline: new Date(currentYear, 5, 13), gstr: 'GSTR-1', period: 'May' },
+                { month: 'June', dueDate: '13th July', deadline: new Date(currentYear, 6, 13), gstr: 'GSTR-1', period: 'June' },
+                { month: 'July', dueDate: '13th August', deadline: new Date(currentYear, 7, 13), gstr: 'GSTR-1', period: 'July' },
+                { month: 'August', dueDate: '13th September', deadline: new Date(currentYear, 8, 13), gstr: 'GSTR-1', period: 'August' },
+                { month: 'September', dueDate: '13th October', deadline: new Date(currentYear, 9, 13), gstr: 'GSTR-1', period: 'September' },
+            ];
 
-        const status = deadlines.map(item => {
+            const status = deadlines.map(item => {
+                const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
+                let status = 'upcoming';
+                let statusColor = '#3b82f6';
+                let statusIcon = '📅';
+
+                if (daysUntilDeadline < 0) {
+                    status = 'overdue';
+                    statusColor = '#ef4444';
+                    statusIcon = '⚠️';
+                } else if (daysUntilDeadline <= 3) {
+                    status = 'urgent';
+                    statusColor = '#f97316';
+                    statusIcon = '🔴';
+                } else if (daysUntilDeadline <= 7) {
+                    status = 'warning';
+                    statusColor = '#eab308';
+                    statusIcon = '🟡';
+                } else {
+                    status = 'upcoming';
+                    statusColor = '#10b981';
+                    statusIcon = '🟢';
+                }
+
+                return {
+                    ...item,
+                    status,
+                    statusColor,
+                    statusIcon,
+                    daysUntilDeadline,
+                };
+            });
+
+            setFilingStatus(status);
+            return;
+        }
+
+        // If bills exist, extract deadlines from bills and group by month
+        const billDeadlines = {};
+
+        bills.forEach((bill) => {
+            if (bill.gstrDeadline) {
+                const deadline = new Date(bill.gstrDeadline);
+                const monthYear = deadline.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                if (!billDeadlines[monthYear]) {
+                    billDeadlines[monthYear] = {
+                        month: deadline.toLocaleDateString('en-US', { month: 'long' }),
+                        year: deadline.getFullYear(),
+                        dueDate: deadline.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+                        deadline: deadline,
+                        gstr: 'GSTR-1',
+                        period: deadline.toLocaleDateString('en-US', { month: 'long' }),
+                        bills: []
+                    };
+                }
+                billDeadlines[monthYear].bills.push(bill);
+            }
+        });
+
+        // Convert to array and calculate status
+        const filings = Object.values(billDeadlines).map(item => {
             const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
             let status = 'upcoming';
             let statusColor = '#3b82f6';
@@ -56,7 +120,7 @@ function GSTFilingStatus({ bills = [] }) {
             };
         });
 
-        setFilingStatus(status);
+        setFilingStatus(filings);
     };
 
     return (
@@ -80,7 +144,7 @@ function GSTFilingStatus({ bills = [] }) {
                     color: isDarkMode ? '#e5e7eb' : '#1f2937',
                     margin: 0,
                 }}>
-                    GST Filing Status
+                    {t('gst_status')}
                 </h2>
             </div>
 
@@ -146,7 +210,7 @@ function GSTFilingStatus({ bills = [] }) {
                                 color: isDarkMode ? '#9ca3af' : '#6b7280',
                                 margin: '0 0 0.25rem 0',
                             }}>
-                                Due Date
+                                {t('due_date')}
                             </p>
                             <p style={{
                                 fontSize: '0.95rem',
@@ -164,7 +228,7 @@ function GSTFilingStatus({ bills = [] }) {
                                 color: isDarkMode ? '#9ca3af' : '#6b7280',
                                 margin: '0 0 0.25rem 0',
                             }}>
-                                Status
+                                {t('status')}
                             </p>
                             <div style={{
                                 display: 'flex',
@@ -184,8 +248,8 @@ function GSTFilingStatus({ bills = [] }) {
                                     textTransform: 'capitalize',
                                 }}>
                                     {item.daysUntilDeadline < 0
-                                        ? `Overdue by ${Math.abs(item.daysUntilDeadline)} days`
-                                        : `${item.daysUntilDeadline} days left`
+                                        ? `${t('overdue_by')} ${Math.abs(item.daysUntilDeadline)} ${t('days_left')}`
+                                        : `${item.daysUntilDeadline} ${t('days_left')}`
                                     }
                                 </span>
                             </div>
@@ -198,26 +262,26 @@ function GSTFilingStatus({ bills = [] }) {
             <div style={{
                 marginTop: '1.5rem',
                 paddingTop: '1.5rem',
-                borderTop: '1px solid #e5e7eb',
+                borderTop: `1px solid ${isDarkMode ? '#404040' : '#e5e7eb'}`,
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
                 gap: '1rem',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: '#ef4444', fontWeight: 'bold' }}>⚠️</span>
-                    <span>Overdue</span>
+                    <span>{t('overdue')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: '#f97316', fontWeight: 'bold' }}>🔴</span>
-                    <span>Urgent (≤3 days)</span>
+                    <span>{t('urgent')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: '#eab308', fontWeight: 'bold' }}>🟡</span>
-                    <span>Warning (4-7 days)</span>
+                    <span>{t('warning')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: '#10b981', fontWeight: 'bold' }}>🟢</span>
-                    <span>Upcoming (&gt;7 days)</span>
+                    <span>{t('upcoming')}</span>
                 </div>
             </div>
         </div>

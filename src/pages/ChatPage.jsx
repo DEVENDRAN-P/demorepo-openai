@@ -11,7 +11,7 @@ function ChatPage({ user }) {
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              AI GST Assistant
+              GstBuddy Assistant
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
               Get instant answers to your GST compliance questions

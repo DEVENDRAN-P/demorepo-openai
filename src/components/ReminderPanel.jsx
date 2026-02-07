@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getPendingReminders, dismissReminder, generateReminderAlerts } from '../services/reminderService';
 // eslint-disable-next-line no-unused-vars
 import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
@@ -27,6 +28,7 @@ const IconSavings = () => (
 );
 
 function ReminderPanel() {
+  const { t } = useTranslation();
   const [reminders, setReminders] = useState([]);
   const [guidanceTips, setGuidanceTips] = useState([]);
   const [costSavings, setCostSavings] = useState(null);
@@ -277,11 +279,11 @@ function ReminderPanel() {
             <div className="card-title-icon" style={{ background: 'var(--primary-50)' }}>
               <IconLightbulb />
             </div>
-            <span>💡 Compliance Tips</span>
+            <span>💡 {t('compliance_tips')}</span>
           </h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        <div>
           {guidanceTips.map((tip) => (
             <div
               key={tip.id}
@@ -315,7 +317,7 @@ function ReminderPanel() {
               <div className="card-title-icon" style={{ background: 'white' }}>
                 <IconSavings />
               </div>
-              <span>💰 Cost Savings</span>
+              <span>💰 {t('cost_savings')}</span>
             </h2>
           </div>
 

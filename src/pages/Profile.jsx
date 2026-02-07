@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import { db } from '../config/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useDarkMode } from '../context/DarkModeContext';
 
 function Profile({ user, setUser }) {
@@ -13,6 +13,7 @@ function Profile({ user, setUser }) {
   const [previewPic, setPreviewPic] = useState(user?.profilePic || null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [profileColor, setProfileColor] = useState(localStorage.getItem('profileColor') || 'indigo');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -43,8 +44,35 @@ function Profile({ user, setUser }) {
     }
   };
 
+  const handleRemoveProfilePic = () => {
+    setProfilePic(null);
+    setPreviewPic(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const getProfileGradient = () => {
+    const colors = {
+      teal: isDarkMode
+        ? 'linear-gradient(135deg, #0d6b6b 0%, #0a4d4d 100%)'
+        : 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+      indigo: isDarkMode
+        ? 'linear-gradient(135deg, #355c7d 0%, #2d5a7d 100%)'
+        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      amber: isDarkMode
+        ? 'linear-gradient(135deg, #b45309 0%, #92400e 100%)'
+        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    };
+    return colors[profileColor] || colors.indigo;
+  };
+
+  const getTextColor = () => {
+    return profileColor === 'amber' ? '#1f2937' : 'white';
   };
 
   const handleSubmit = async (e) => {
@@ -55,7 +83,7 @@ function Profile({ user, setUser }) {
 
       // Save to Firestore if user has uid
       if (user?.uid) {
-        await updateDoc(doc(db, 'users', user.uid), {
+        await setDoc(doc(db, 'users', user.uid), {
           name: formData.name,
           shopName: formData.shopName,
           gstin: formData.gstin,
@@ -63,7 +91,9 @@ function Profile({ user, setUser }) {
           mobileNumber: formData.mobileNumber,
           profilePic: profilePic,
           language: formData.language,
-        });
+          email: user.email,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
       }
 
       // Save to localStorage
@@ -95,10 +125,10 @@ function Profile({ user, setUser }) {
       }}>
         {/* Profile Header Card */}
         <div style={{
-          background: isDarkMode ? 'linear-gradient(135deg, #355c7d 0%, #2d5a7d 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: getProfileGradient(),
           borderRadius: '1rem',
           padding: '2rem',
-          color: 'white',
+          color: getTextColor(),
           marginBottom: '2rem',
           display: 'flex',
           alignItems: 'center',
@@ -142,7 +172,19 @@ function Profile({ user, setUser }) {
                   }}
                 />
               ) : (
-                <div style={{ textAlign: 'center', fontSize: '2.5rem' }}>👤</div>
+                <div style={{
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  width: '100%',
+                  gap: '0.25rem',
+                }}>
+                  <div style={{ fontSize: '2.5rem' }}>📸</div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)' }}>Add Photo</div>
+                </div>
               )}
               <div style={{
                 position: 'absolute',
@@ -163,6 +205,33 @@ function Profile({ user, setUser }) {
               onChange={handleProfilePicChange}
               style={{ display: 'none' }}
             />
+            {previewPic && (
+              <button
+                onClick={handleRemoveProfilePic}
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ef4444';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                🗑️ Remove Picture
+              </button>
+            )}
           </div>
           <div style={{ flex: 1, minWidth: '200px' }}>
             <h1 style={{
@@ -209,6 +278,66 @@ function Profile({ user, setUser }) {
             {message}
           </div>
         )}
+
+        {/* Profile Color Selector */}
+        <div style={{
+          background: isDarkMode ? '#2a2a2a' : 'white',
+          color: isDarkMode ? '#e5e7eb' : '#000',
+          borderRadius: '1rem',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        }}>
+          <h3 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            marginBottom: '1rem',
+            color: isDarkMode ? '#d1d5db' : '#374151',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}>
+            🎨 Profile Color Theme
+          </h3>
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}>
+            {[
+              { name: 'Teal', color: 'teal', bgColor: '#14b8a6' },
+              { name: 'Indigo', color: 'indigo', bgColor: '#667eea' },
+              { name: 'Amber', color: 'amber', bgColor: '#f59e0b' },
+            ].map((option) => (
+              <button
+                key={option.color}
+                onClick={() => {
+                  setProfileColor(option.color);
+                  localStorage.setItem('profileColor', option.color);
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  border: profileColor === option.color ? '3px solid var(--primary-600)' : `2px solid ${option.bgColor}`,
+                  background: option.bgColor,
+                  color: option.color === 'amber' ? '#1f2937' : 'white',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontWeight: profileColor === option.color ? '600' : '500',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                {option.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Profile Form Card */}
         <div style={{
@@ -300,15 +429,15 @@ function Profile({ user, setUser }) {
                     style={{
                       width: '100%',
                       padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
+                      border: `1px solid ${isDarkMode ? '#444' : '#d1d5db'}`,
                       borderRadius: '0.375rem',
                       fontSize: '1rem',
-                      background: '#f3f4f6',
-                      color: '#6b7280',
+                      background: isDarkMode ? '#3a3a3a' : '#f3f4f6',
+                      color: isDarkMode ? '#9ca3af' : '#6b7280',
                       cursor: 'not-allowed',
                     }}
                   />
-                  <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0 0 0' }}>
+                  <p style={{ fontSize: '0.75rem', color: isDarkMode ? '#9ca3af' : '#9ca3af', margin: '0.25rem 0 0 0' }}>
                     Email cannot be changed
                   </p>
                 </div>
@@ -317,7 +446,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('mobile_number')}</label>
                   <input
@@ -351,7 +480,7 @@ function Profile({ user, setUser }) {
                 fontSize: '1rem',
                 fontWeight: '600',
                 marginBottom: '1rem',
-                color: '#374151',
+                color: isDarkMode ? '#d1d5db' : '#374151',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
@@ -368,7 +497,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('shop_name')} *</label>
                   <input
@@ -395,7 +524,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('gstin')} *</label>
                   <input
@@ -422,7 +551,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('address')}</label>
                   <textarea
@@ -458,7 +587,7 @@ function Profile({ user, setUser }) {
                 fontSize: '1rem',
                 fontWeight: '600',
                 marginBottom: '1rem',
-                color: '#374151',
+                color: isDarkMode ? '#d1d5db' : '#374151',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
@@ -475,7 +604,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('language')}</label>
                   <select
