@@ -1,26 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import { db } from '../config/firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useDarkMode } from '../context/DarkModeContext';
 
 function Profile({ user, setUser }) {
   const { t, i18n } = useTranslation();
+  const { isDarkMode } = useDarkMode();
   const fileInputRef = useRef(null);
   const [profilePic, setProfilePic] = useState(user?.profilePic || null);
   const [previewPic, setPreviewPic] = useState(user?.profilePic || null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [loadingUser, setLoadingUser] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const checkDarkMode = setInterval(() => {
-      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
-    }, 500);
-
-    return () => clearInterval(checkDarkMode);
-  }, []);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -58,7 +50,6 @@ function Profile({ user, setUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setLoadingUser(true);
     try {
       const updatedUser = { ...user, ...formData, profilePic };
 
@@ -89,7 +80,6 @@ function Profile({ user, setUser }) {
       setTimeout(() => setMessage(''), 3000);
     } finally {
       setLoading(false);
-      setLoadingUser(false);
     }
   };
 
@@ -222,7 +212,8 @@ function Profile({ user, setUser }) {
 
         {/* Profile Form Card */}
         <div style={{
-          background: 'white',
+          background: isDarkMode ? '#2a2a2a' : 'white',
+          color: isDarkMode ? '#e5e7eb' : '#000',
           borderRadius: '1rem',
           padding: '2rem 1.5rem',
           boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
@@ -234,7 +225,7 @@ function Profile({ user, setUser }) {
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            color: '#1f2937',
+            color: isDarkMode ? '#e5e7eb' : '#1f2937',
           }}>
             <span>✏️</span>
             Edit Profile Information
@@ -251,7 +242,7 @@ function Profile({ user, setUser }) {
                 fontSize: '1rem',
                 fontWeight: '600',
                 marginBottom: '1rem',
-                color: '#374151',
+                color: isDarkMode ? '#d1d5db' : '#374151',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
@@ -268,7 +259,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('Name')} *</label>
                   <input
@@ -279,14 +270,16 @@ function Profile({ user, setUser }) {
                     style={{
                       width: '100%',
                       padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
+                      border: `1px solid ${isDarkMode ? '#444' : '#d1d5db'}`,
                       borderRadius: '0.375rem',
                       fontSize: '1rem',
                       outline: 'none',
                       transition: 'all 0.3s ease',
+                      background: isDarkMode ? '#3a3a3a' : '#fff',
+                      color: isDarkMode ? '#e5e7eb' : '#000',
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                    onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#444' : '#d1d5db'}
                     required
                   />
                 </div>
@@ -295,7 +288,7 @@ function Profile({ user, setUser }) {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '600',
-                    color: '#374151',
+                    color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
                   }}>{t('email')} *</label>
                   <input

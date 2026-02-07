@@ -215,7 +215,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary-700)', marginBottom: '0.25rem' }}>
               {stats.totalBills}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'black' }}>
               {t('Total Bills Uploaded')}
             </div>
           </div>
@@ -223,7 +223,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#b45309', marginBottom: '0.25rem' }}>
               {stats.pendingFiling}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'black' }}>
               {t('view_reports')}
             </div>
           </div>
@@ -231,7 +231,7 @@ function Dashboard({ user, setUser }) {
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#166534', marginBottom: '0.25rem' }}>
               ₹{stats.totalGST.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'black' }}>
               {t('total_gst_amount')}
             </div>
           </div>

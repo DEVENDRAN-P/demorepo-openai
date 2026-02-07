@@ -18,17 +18,10 @@ function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
-  useEffect(() => {
-    const checkDarkMode = setInterval(() => {
-      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
-    }, 500);
 
-    return () => clearInterval(checkDarkMode);
-  }, []);
 
   // Redirect if already logged in
   useEffect(() => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useDarkMode } from '../context/DarkModeContext';
 
 function GSTFilingStatus({ bills = [] }) {
     const [filingStatus, setFilingStatus] = useState([]);
+    const { isDarkMode } = useDarkMode();
 
     useEffect(() => {
         calculateFilingStatus();
@@ -9,7 +11,6 @@ function GSTFilingStatus({ bills = [] }) {
 
     const calculateFilingStatus = () => {
         const now = new Date();
-        const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
 
         // Get deadlines for current and next quarters
@@ -60,7 +61,8 @@ function GSTFilingStatus({ bills = [] }) {
 
     return (
         <div style={{
-            background: 'white',
+            background: isDarkMode ? '#2a2a2a' : 'white',
+            color: isDarkMode ? '#e5e7eb' : '#000',
             borderRadius: '0.75rem',
             padding: '1.5rem',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -75,7 +77,7 @@ function GSTFilingStatus({ bills = [] }) {
                 <h2 style={{
                     fontSize: '1.25rem',
                     fontWeight: '600',
-                    color: '#1f2937',
+                    color: isDarkMode ? '#e5e7eb' : '#1f2937',
                     margin: 0,
                 }}>
                     GST Filing Status
@@ -94,10 +96,15 @@ function GSTFilingStatus({ bills = [] }) {
                             border: `2px solid ${item.statusColor}`,
                             borderRadius: '0.5rem',
                             padding: '1rem',
-                            background: item.statusColor === '#ef4444' ? '#fef2f2' :
-                                item.statusColor === '#f97316' ? '#fffbeb' :
-                                    item.statusColor === '#eab308' ? '#fffbeb' :
-                                        '#f0fdf4',
+                            background: isDarkMode
+                                ? item.statusColor === '#ef4444' ? '#4b1b1a' :
+                                    item.statusColor === '#f97316' ? '#4a2b1a' :
+                                        item.statusColor === '#eab308' ? '#4a3d1a' :
+                                            '#1a3a2a'
+                                : item.statusColor === '#ef4444' ? '#fef2f2' :
+                                    item.statusColor === '#f97316' ? '#fffbeb' :
+                                        item.statusColor === '#eab308' ? '#fffbeb' :
+                                            '#f0fdf4',
                         }}
                     >
                         <div style={{
@@ -109,7 +116,7 @@ function GSTFilingStatus({ bills = [] }) {
                             <div>
                                 <p style={{
                                     fontSize: '0.85rem',
-                                    color: '#6b7280',
+                                    color: isDarkMode ? '#9ca3af' : '#6b7280',
                                     margin: '0 0 0.25rem 0',
                                 }}>
                                     {item.period} {item.year}
@@ -117,7 +124,7 @@ function GSTFilingStatus({ bills = [] }) {
                                 <h3 style={{
                                     fontSize: '1rem',
                                     fontWeight: '600',
-                                    color: '#1f2937',
+                                    color: isDarkMode ? '#e5e7eb' : '#1f2937',
                                     margin: 0,
                                 }}>
                                     {item.gstr}
@@ -129,14 +136,14 @@ function GSTFilingStatus({ bills = [] }) {
                         </div>
 
                         <div style={{
-                            background: 'white',
+                            background: isDarkMode ? '#3a3a3a' : 'white',
                             padding: '0.75rem',
                             borderRadius: '0.375rem',
                             marginBottom: '0.75rem',
                         }}>
                             <p style={{
                                 fontSize: '0.8rem',
-                                color: '#6b7280',
+                                color: isDarkMode ? '#9ca3af' : '#6b7280',
                                 margin: '0 0 0.25rem 0',
                             }}>
                                 Due Date
@@ -154,7 +161,7 @@ function GSTFilingStatus({ bills = [] }) {
                         <div>
                             <p style={{
                                 fontSize: '0.8rem',
-                                color: '#6b7280',
+                                color: isDarkMode ? '#9ca3af' : '#6b7280',
                                 margin: '0 0 0.25rem 0',
                             }}>
                                 Status

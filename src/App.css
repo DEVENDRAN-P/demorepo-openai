@@ -872,6 +872,19 @@ tbody tr:last-child td {
 
 .section {
   padding: 2rem 0;
+  padding-top: calc(4.5rem + 2rem);
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding-top: calc(3.75rem + 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding-top: calc(3.5rem + 2rem);
+  }
 }
 
 .flex {

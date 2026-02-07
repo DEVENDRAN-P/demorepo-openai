@@ -47,18 +47,6 @@ const IconChat = ({ active }) => (
     <circle cx="15" cy="10" r="1" />
   </svg>
 );
-const IconSettings = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m2.12-2.12l4.24-4.24M19.78 19.78l-4.24-4.24m-2.12-2.12l-4.24-4.24" />
-  </svg>
-);
-const IconHelpCircle = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 16v-4M12 8h.01" />
-  </svg>
-);
 const IconGlobe = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
