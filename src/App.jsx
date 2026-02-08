@@ -22,6 +22,7 @@ import Dashboard from './pages/Dashboard';
 
 // Pages - Lazy load secondary pages for better performance
 const BillUpload = lazy(() => import('./pages/BillUpload'));
+const BillDetails = lazy(() => import('./pages/BillDetails'));
 const GSTForms = lazy(() => import('./pages/GSTForms'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -59,6 +60,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute user={user} />}>
           <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/bill-upload" element={<BillUpload user={user} />} />
+          <Route path="/bill/:billId" element={<BillDetails user={user} />} />
           <Route path="/gst-forms" element={<GSTForms user={user} />} />
           <Route path="/reports" element={<Reports user={user} />} />
           <Route path="/profile" element={<Profile user={user} />} />

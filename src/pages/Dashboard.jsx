@@ -49,6 +49,7 @@ function Dashboard({ user, setUser }) {
   const { t } = useTranslation();
   const [filingStatus, setFilingStatus] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [bills, setBills] = useState([]);
   const [stats, setStats] = useState({
     totalBills: 0,
     pendingFiling: 0,

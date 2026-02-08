@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Tesseract from 'tesseract.js';
 import { saveBills, getBills, migrateOldBillsKey } from '../utils/storageUtils';
 import { saveBillToFirebase } from '../services/billService';
+import { saveUserBill, logUserActivity, uploadBillDocument, updateUserBill } from '../services/firebaseDataService';
 import { createBillReminders } from '../services/reminderService';
 
 // Add voice icon
@@ -679,58 +680,122 @@ OUTPUT: Return ONLY valid JSON (no markdown, no explanation):
   const handleConfirm = async () => {
     if (!extractedData) return;
 
-    // Migrate old storage format if needed
-    if (user?.id) {
-      migrateOldBillsKey(user.id);
-    }
-
-    const savedBills = getBills(user?.id);
-    const newBill = {
-      id: Date.now(),
-      ...extractedData,
-      uploadedAt: new Date().toISOString(),
-      filed: false,
-      userId: user?.id,
-    };
-
-    savedBills.push(newBill);
-    saveBills(savedBills, user?.id);
-
-    // Also save to Firebase for persistence
     try {
-      if (user?.uid) {
-        await saveBillToFirebase(user.uid, {
-          ...extractedData,
-          uploadedAt: new Date().toISOString(),
-          filed: false,
-        });
+      setLoading(true);
 
-        // Create reminders for the new bill
+      // Migrate old storage format if needed
+      if (user?.id) {
+        migrateOldBillsKey(user.id);
+      }
+
+      const newLocalBill = {
+        id: Date.now(),
+        ...extractedData,
+        uploadedAt: new Date().toISOString(),
+        filed: false,
+        userId: user?.id,
+      };
+
+      // Calculate GSTR deadline (13th of next month from invoice date)
+      const invoiceDateObj = new Date(extractedData.invoiceDate || new Date());
+      const gstrDeadlineDate = new Date(invoiceDateObj.getFullYear(), invoiceDateObj.getMonth() + 1, 13);
+
+      // STEP 1: Save to local storage (for offline support) - FAST
+      const savedBills = getBills(user?.id);
+      savedBills.push({
+        ...newLocalBill,
+        gstrDeadline: gstrDeadlineDate.toISOString(),
+      });
+      saveBills(savedBills, user?.id);
+      console.log("✅ Bill saved to local storage");
+
+      let billId = null;
+
+      // STEP 2: Save to Firebase with proper user isolation
+      if (user?.uid) {
         try {
-          await createBillReminders(user.uid, {
-            id: newBill.id,
-            invoiceDate: extractedData.invoiceDate || new Date().toISOString(),
-            invoiceNumber: extractedData.invoiceNumber || 'N/A',
-            taxAmount: extractedData.taxAmount || 0,
+          // Use new comprehensive Firebase service
+          const firebaseResult = await saveUserBill({
+            ...extractedData,
+            gstrDeadline: gstrDeadlineDate.toISOString(),
+            uploadedAt: new Date().toISOString(),
+            filed: false,
           });
-        } catch (reminderError) {
-          console.warn('⚠️ Warning: Could not create reminders:', reminderError);
-          // Don't fail the operation if reminder creation fails
+
+          billId = firebaseResult.billId;
+          console.log("✅ Bill saved to Firebase with ID:", billId);
+
+          // STEP 3: Upload actual file to Firebase Storage (if file exists) - NON-BLOCKING
+          if (file && billId) {
+            // Fire and forget - don't wait for upload
+            uploadBillDocument(file, billId)
+              .then(fileResult => {
+                console.log("✅ File uploaded to Storage:", fileResult.storagePath);
+
+                // Update bill metadata with file reference
+                return updateUserBill(billId, {
+                  storagePath: fileResult.storagePath,
+                  downloadUrl: fileResult.downloadUrl,
+                  fileName: fileResult.fileName,
+                  fileSize: fileResult.size,
+                  fileType: fileResult.type,
+                });
+              })
+              .then(() => console.log("✅ Bill updated with file reference"))
+              .catch(storageError => {
+                console.warn("⚠️ Could not upload file to Storage (bill still saved):", storageError);
+              });
+          }
+
+          // Log user activity - NON-BLOCKING
+          logUserActivity({
+            action: "upload_bill",
+            details: {
+              billId: billId,
+              invoiceNumber: extractedData.invoiceNumber,
+              amount: extractedData.totalAmount,
+              hasFile: !!file,
+            },
+          }).catch(logError => {
+            console.warn("⚠️ Could not log activity:", logError);
+          });
+
+          // Create reminders for the new bill - NON-BLOCKING
+          if (user.uid) {
+            createBillReminders(user.uid, {
+              id: newLocalBill.id,
+              invoiceDate: extractedData.invoiceDate || new Date().toISOString(),
+              invoiceNumber: extractedData.invoiceNumber || 'N/A',
+              taxAmount: extractedData.taxAmount || 0,
+            }).catch(reminderError => {
+              console.warn('⚠️ Warning: Could not create reminders:', reminderError);
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error saving bill to Firebase:', error);
+          setNotification({
+            message: `Firebase Error: ${error.message}. Bill saved locally.`,
+            type: 'warning'
+          });
+          setLoading(false);
+          return;
         }
       }
+
+      // Dispatch custom event for bill upload (triggers dashboard update)
+      window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));
+
+      setNotification({ message: '✅ Bill saved successfully! Redirecting...', type: 'success' });
+
+      // Redirect immediately to Dashboard (show uploaded bills)
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 800);
     } catch (error) {
-      console.error('❌ Error saving bill to Firebase:', error);
-      // Don't fail the operation if Firebase save fails
+      console.error('❌ Error in handleConfirm:', error);
+      setNotification({ message: 'Error saving bill. Please try again.', type: 'error' });
+      setLoading(false);
     }
-
-    // Dispatch custom event for bill upload (triggers dashboard update)
-    window.dispatchEvent(new CustomEvent('billUpdated', { detail: { bills: savedBills } }));
-
-    setNotification({ message: 'Bill saved successfully! Redirecting to GST Forms...', type: 'success' });
-
-    setTimeout(() => {
-      window.location.href = '/gst-forms';
-    }, 1500);
   };
 
   const handleCancel = () => {

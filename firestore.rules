@@ -1,29 +1,75 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ========================================
+    // USER DATA - STRICT USER ISOLATION
+    // ========================================
+    
+    // Main users collection - each user can ONLY access their own document
     match /users/{uid} {
+      // User can read/write their own profile
       allow read, write: if request.auth.uid == uid;
+      
+      // All subcollections inherit the same rule
+      // Bills, forms, reminders, settings, stats, documents, etc.
       match /{document=**} {
         allow read, write: if request.auth.uid == uid;
       }
     }
+
+    // ========================================
+    // REMINDERS - USER ISOLATED
+    // ========================================
     match /reminders/{reminderId} {
-      allow read: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth.uid == resource.data.userId;
+      // Users can only read reminders they own
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.userId;
+      
+      // Users can create reminders for themselves
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete their own reminders
+      allow update, delete: if request.auth != null && 
+                               request.auth.uid == resource.data.userId;
     }
+
+    // ========================================
+    // BILLS - ROOT LEVEL (legacy support)
+    // ========================================
     match /bills/{billId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      // Users can only access bills they own
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
     }
+
+    // ========================================
+    // DOCUMENTS - ROOT LEVEL (legacy support)
+    // ========================================
     match /documents/{docId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
     }
+
+    // ========================================
+    // GST FORMS - ROOT LEVEL (legacy support)
+    // ========================================
     match /gstForms/{formId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
     }
+
+    // ========================================
+    // REPORTS - ROOT LEVEL (legacy support)
+    // ========================================
     match /reports/{reportId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
     }
+
+    // ========================================
+    // DENY ALL OTHER ACCESS
+    // ========================================
     match /{document=**} {
       allow read, write: if false;
     }
