@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Tesseract from 'tesseract.js';
 import { saveBills, getBills, migrateOldBillsKey } from '../utils/storageUtils';
-import { saveBillToFirebase } from '../services/billService';
 import { saveUserBill, logUserActivity, uploadBillDocument, updateUserBill } from '../services/firebaseDataService';
 import { createBillReminders } from '../services/reminderService';
 

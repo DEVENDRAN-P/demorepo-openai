@@ -21,16 +21,11 @@ import {
   getDoc,
   getDocs,
   collection,
-  query,
-  where,
   updateDoc,
   deleteDoc,
   Timestamp,
   addDoc,
   serverTimestamp,
-  increment,
-  arrayUnion,
-  arrayRemove,
 } from "firebase/firestore";
 import {
   ref,
@@ -1050,7 +1045,7 @@ export const getCurrentUserInfo = () => {
   };
 };
 
-export default {
+const firebaseDataService = {
   // Profile
   saveUserProfile,
   getUserProfile,
@@ -1105,3 +1100,5 @@ export default {
   verifyUserOwnership,
   getCurrentUserInfo,
 };
+
+export default firebaseDataService;
