@@ -1,64 +1,32 @@
 /**
- * Firebase Cloud Function: Send Reminder Email
+ * Firebase Cloud Function: Send Reminder Email via SendGrid
  * This function sends email reminders for upcoming GST filing deadlines
  *
  * To deploy this function:
  * 1. Install Firebase CLI: npm install -g firebase-tools
  * 2. Initialize functions: firebase init functions
  * 3. Copy this code to functions/index.js
- * 4. Install nodemailer: npm install nodemailer
- * 5. Deploy: firebase deploy --only functions
- *
- * Alternative: Use Firebase Email Extension for a no-code solution
- * https://firebase.google.com/products/extensions/google-cloud-firestore-send-email
+ * 4. Set SendGrid API key: firebase functions:config:set sendgrid.api_key="YOUR_KEY"
+ * 5. Install dependencies: npm install nodemailer nodemailer-sendgrid-transport
+ * 6. Deploy: firebase deploy --only functions
  */
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+const sgTransport = require("nodemailer-sendgrid-transport");
 
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Configure your email service credentials
-// Option 1: Using Gmail app password
-// const transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//         user: functions.config().email.address,
-//         pass: functions.config().email.password,
-//     },
-// });
-
-// Option 2: Using SendGrid
-// const sgTransport = require('nodemailer-sendgrid-transport');
-// const transporter = nodemailer.createTransport(
-//     sgTransport({
-//         auth: {
-//             api_key: functions.config().sendgrid.api_key,
-//         },
-//     })
-// );
-
-// Option 3: Using SMTP (e.g., custom mail server)
-// const transporter = nodemailer.createTransport({
-//     host: functions.config().email.smtp_host,
-//     port: functions.config().email.smtp_port,
-//     secure: true,
-//     auth: {
-//         user: functions.config().email.smtp_user,
-//         pass: functions.config().email.smtp_password,
-//     },
-// });
-
-// For now, use a placeholder transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER || "your-email@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "your-app-password",
-  },
-});
+// Configure SendGrid transporter
+const transporter = nodemailer.createTransport(
+  sgTransport({
+    auth: {
+      api_key: process.env.SENDGRID_API_KEY || functions.config().sendgrid?.api_key,
+    },
+  })
+);
 
 /**
  * Callable Cloud Function to send reminder email
@@ -110,8 +78,8 @@ exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * HTTP Callable Function to send reminder email
- * Used as fallback from client
+ * HTTP Callable Function to send reminder email via SendGrid
+ * Used from client applications
  */
 exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
   try {
@@ -130,35 +98,42 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    const { subject, body, email } = req.body;
+    const { subject, body, email, htmlContent } = req.body;
 
     // Validate input
     if (!subject || !body || !email) {
-      res.status(400).send("Missing required fields: subject, body, email");
+      res.status(400).json({ error: "Missing required fields: subject, body, email" });
       return;
     }
 
-    // Send email
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ error: "Invalid email format" });
+      return;
+    }
+
+    // Send email via SendGrid
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "noreply@gstfiling.app",
+      from: process.env.EMAIL_FROM || "noreply@gstbuddy.app",
       to: email,
       subject: subject,
       text: body,
-      html: `<pre>${body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`,
+      html: htmlContent || `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${body.replace(/\n/g, "<br>").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`,
     });
 
-    console.log("Email sent:", info.messageId);
+    console.log("Email sent via SendGrid:", info.messageId);
 
     res.status(200).json({
       success: true,
       messageId: info.messageId,
-      message: "Email sent successfully",
+      message: "Email sent successfully via SendGrid",
     });
   } catch (error) {
     console.error("Error sending email:", error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message || "Failed to send email",
     });
   }
 });

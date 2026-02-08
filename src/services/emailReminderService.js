@@ -10,6 +10,7 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import axios from "axios";
 
 /**
  * Email Reminder Service
@@ -98,44 +99,49 @@ Thank you!
 };
 
 /**
- * Send email via Cloud Function or backend API
- * Update this function with your actual email service endpoint
+ * Send email via Firebase Cloud Function with SendGrid
+ * Requires REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL to be set in .env
  */
 const sendReminderEmail = async (emailData) => {
   try {
-    // Option 1: Send to Firebase Cloud Function
-    const response = await fetch(
+    const functionUrl =
       process.env.REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL ||
-        "https://your-region-your-project.cloudfunctions.net/sendReminderEmail",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(emailData),
-      },
-    );
+      "https://us-central1-finalopenai-fc9c5.cloudfunctions.net/sendReminderEmailHttp";
 
-    if (!response.ok) {
-      throw new Error(`Email service returned ${response.status}`);
+    if (!functionUrl || !functionUrl.startsWith("http")) {
+      throw new Error("Cloud Function URL not configured");
     }
 
-    return await response.json();
+    const response = await axios.post(functionUrl, {
+      subject: emailData.subject,
+      body: emailData.body,
+      email: emailData.email,
+    });
+
+    console.log("Email sent successfully:", response.data);
+
+    return {
+      success: true,
+      messageId: response.data.messageId,
+      message: response.data.message || "Email sent successfully",
+    };
   } catch (error) {
-    // Option 2: Fallback - Log to console (emails won't actually send without proper setup)
+    console.error("Error sending email:", error.message);
+
+    // Fallback logging for development
     console.warn(
-      "Email service not configured. Email would have been sent:",
+      "Email could not be sent. Email content:",
       emailData,
     );
-    console.warn("To enable email sending, set up:");
-    console.warn(
-      "1. Firebase Cloud Function with email service (SendGrid, Nodemailer, etc.)",
-    );
-    console.warn("2. Or use Firebase Email Extension");
-    console.warn("3. Update sendReminderEmail() with your endpoint");
+    console.warn("Make sure the Cloud Function is deployed and running.");
+    console.warn("To deploy: cd functions && npm install && firebase deploy --only functions");
 
-    // For development, we'll still return success to continue the flow
-    return { success: true, message: "Email logged (service not configured)" };
+    // Return error response
+    return {
+      success: false,
+      error: error.message || "Failed to send email",
+      message: "Email service temporarily unavailable",
+    };
   }
 };
 
@@ -350,4 +356,26 @@ export default {
   checkAndSendBillReminders,
   sendManualReminder,
   getBillReminderHistory,
+  sendTestEmail,
+};
+
+/**
+ * Test function to send a test email
+ * Call this once to verify SendGrid integration is working
+ */
+export const sendTestEmail = async (userEmail) => {
+  try {
+    const testEmailData = {
+      subject: "Test GST Buddy Reminder",
+      body: `Hello,\n\nThis is a test email from GST Buddy application.\n\nIf you received this email, your email system is working correctly!\n\nBest regards,\nGST Buddy Team`,
+      email: userEmail,
+    };
+
+    const result = await sendReminderEmail(testEmailData);
+    console.log("Test email result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    throw error;
+  }
 };

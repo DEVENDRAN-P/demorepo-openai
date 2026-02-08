@@ -38,116 +38,116 @@ function ReminderPanel() {
 
   useEffect(() => {
     const loadRemindersAndGuidance = async () => {
-    try {
-      // Get user from localStorage
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      if (user && user.uid) {
-        // Fetch reminders from Firebase
-        const dbReminders = await getPendingReminders(user.uid);
-        const alerts = generateReminderAlerts(dbReminders);
-
-        // Calculate current date info for deadline calculations
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
-
-        // Calculate deadlines
-        const gstr1Deadline = new Date(currentYear, currentMonth + 1, 11);
-        const gstr3bDeadline = new Date(currentYear, currentMonth + 1, 20);
-        const daysToGstr1 = Math.ceil((gstr1Deadline - currentDate) / (1000 * 60 * 60 * 24));
-        const daysToGstr3b = Math.ceil((gstr3bDeadline - currentDate) / (1000 * 60 * 60 * 24));
-
-        const localReminders = [];
-
-        // Fallback reminders if no Firebase data
-        if (alerts.length === 0) {
-          if (daysToGstr1 > 0 && daysToGstr1 <= 10) {
-            localReminders.push({
-              id: `local-gstr1-${daysToGstr1}`,
-              emoji: '📋',
-              title: 'GSTR-1 Filing Due',
-              message: `File GSTR-1 in ${daysToGstr1} day${daysToGstr1 > 1 ? 's' : ''} (by ${gstr1Deadline.toLocaleDateString()})`,
-              severity: daysToGstr1 <= 3 ? 'critical' : 'warning',
-              action: '/gst-forms',
-            });
-          }
-
-          if (daysToGstr3b > 0 && daysToGstr3b <= 10) {
-            localReminders.push({
-              id: `local-gstr3b-${daysToGstr3b}`,
-              emoji: '📝',
-              title: 'GSTR-3B Filing Due',
-              message: `File GSTR-3B in ${daysToGstr3b} day${daysToGstr3b > 1 ? 's' : ''} (by ${gstr3bDeadline.toLocaleDateString()})`,
-              severity: daysToGstr3b <= 3 ? 'critical' : 'warning',
-              action: '/gst-forms',
-            });
-          }
-        }
-
-        setReminders([...alerts, ...localReminders]);
-
-        // Guidance Tips
-        const tips = [
-          {
-            id: 1,
-            icon: '💡',
-            title: t('tip_itc_title'),
-            description: t('tip_itc_desc'),
-          },
-          {
-            id: 2,
-            icon: '📱',
-            title: t('tip_voice_title'),
-            description: t('tip_voice_desc'),
-          },
-          {
-            id: 3,
-            icon: '🎯',
-            title: t('tip_comply_title'),
-            description: t('tip_comply_desc'),
-          },
-          {
-            id: 4,
-            icon: '📊',
-            title: t('tip_analytics_title'),
-            description: t('tip_analytics_desc'),
-          },
-        ];
-        setGuidanceTips(tips);
-
-        // Cost Savings Calculation
-        // Get user ID from localStorage (set during login)
+      try {
+        // Get user from localStorage
         const userStr = localStorage.getItem('user');
-        const currentUser = userStr ? JSON.parse(userStr) : null;
-        const userId = currentUser?.id;
+        const user = userStr ? JSON.parse(userStr) : null;
 
-        // Migrate old storage format if needed
-        if (userId) {
-          migrateOldBillsKey(userId);
+        if (user && user.uid) {
+          // Fetch reminders from Firebase
+          const dbReminders = await getPendingReminders(user.uid);
+          const alerts = generateReminderAlerts(dbReminders);
+
+          // Calculate current date info for deadline calculations
+          const currentDate = new Date();
+          const currentMonth = currentDate.getMonth();
+          const currentYear = currentDate.getFullYear();
+
+          // Calculate deadlines
+          const gstr1Deadline = new Date(currentYear, currentMonth + 1, 11);
+          const gstr3bDeadline = new Date(currentYear, currentMonth + 1, 20);
+          const daysToGstr1 = Math.ceil((gstr1Deadline - currentDate) / (1000 * 60 * 60 * 24));
+          const daysToGstr3b = Math.ceil((gstr3bDeadline - currentDate) / (1000 * 60 * 60 * 24));
+
+          const localReminders = [];
+
+          // Fallback reminders if no Firebase data
+          if (alerts.length === 0) {
+            if (daysToGstr1 > 0 && daysToGstr1 <= 10) {
+              localReminders.push({
+                id: `local-gstr1-${daysToGstr1}`,
+                emoji: '📋',
+                title: 'GSTR-1 Filing Due',
+                message: `File GSTR-1 in ${daysToGstr1} day${daysToGstr1 > 1 ? 's' : ''} (by ${gstr1Deadline.toLocaleDateString()})`,
+                severity: daysToGstr1 <= 3 ? 'critical' : 'warning',
+                action: '/gst-forms',
+              });
+            }
+
+            if (daysToGstr3b > 0 && daysToGstr3b <= 10) {
+              localReminders.push({
+                id: `local-gstr3b-${daysToGstr3b}`,
+                emoji: '📝',
+                title: 'GSTR-3B Filing Due',
+                message: `File GSTR-3B in ${daysToGstr3b} day${daysToGstr3b > 1 ? 's' : ''} (by ${gstr3bDeadline.toLocaleDateString()})`,
+                severity: daysToGstr3b <= 3 ? 'critical' : 'warning',
+                action: '/gst-forms',
+              });
+            }
+          }
+
+          setReminders([...alerts, ...localReminders]);
+
+          // Guidance Tips
+          const tips = [
+            {
+              id: 1,
+              icon: '💡',
+              title: t('tip_itc_title'),
+              description: t('tip_itc_desc'),
+            },
+            {
+              id: 2,
+              icon: '📱',
+              title: t('tip_voice_title'),
+              description: t('tip_voice_desc'),
+            },
+            {
+              id: 3,
+              icon: '🎯',
+              title: t('tip_comply_title'),
+              description: t('tip_comply_desc'),
+            },
+            {
+              id: 4,
+              icon: '📊',
+              title: t('tip_analytics_title'),
+              description: t('tip_analytics_desc'),
+            },
+          ];
+          setGuidanceTips(tips);
+
+          // Cost Savings Calculation
+          // Get user ID from localStorage (set during login)
+          const userStr = localStorage.getItem('user');
+          const currentUser = userStr ? JSON.parse(userStr) : null;
+          const userId = currentUser?.id;
+
+          // Migrate old storage format if needed
+          if (userId) {
+            migrateOldBillsKey(userId);
+          }
+
+          const bills_data = getBills(userId);
+          const totalBills = bills_data.length;
+          const monthsActive = Math.max(1, Math.ceil(totalBills / 10));
+          const accountantFee = 3000;
+          const appCost = 500;
+          const savedAmount = (accountantFee - appCost) * monthsActive;
+
+          setCostSavings({
+            monthlyAccountantFee: accountantFee,
+            monthlyAppCost: appCost,
+            monthlySavings: accountantFee - appCost,
+            totalSaved: savedAmount,
+            monthsActive: monthsActive,
+          });
         }
-
-        const bills_data = getBills(userId);
-        const totalBills = bills_data.length;
-        const monthsActive = Math.max(1, Math.ceil(totalBills / 10));
-        const accountantFee = 3000;
-        const appCost = 500;
-        const savedAmount = (accountantFee - appCost) * monthsActive;
-
-        setCostSavings({
-          monthlyAccountantFee: accountantFee,
-          monthlyAppCost: appCost,
-          monthlySavings: accountantFee - appCost,
-          totalSaved: savedAmount,
-          monthsActive: monthsActive,
-        });
+      } catch (error) {
+        console.error('Error loading reminders:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading reminders:', error);
-    } finally {
-      setLoading(false);
-    }
     };
 
     loadRemindersAndGuidance();
