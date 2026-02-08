@@ -23,9 +23,10 @@ admin.initializeApp();
 const transporter = nodemailer.createTransport(
   sgTransport({
     auth: {
-      api_key: process.env.SENDGRID_API_KEY || functions.config().sendgrid?.api_key,
+      api_key:
+        process.env.SENDGRID_API_KEY || functions.config().sendgrid?.api_key,
     },
-  })
+  }),
 );
 
 /**
@@ -102,7 +103,9 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
 
     // Validate input
     if (!subject || !body || !email) {
-      res.status(400).json({ error: "Missing required fields: subject, body, email" });
+      res
+        .status(400)
+        .json({ error: "Missing required fields: subject, body, email" });
       return;
     }
 
@@ -119,7 +122,9 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
       to: email,
       subject: subject,
       text: body,
-      html: htmlContent || `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${body.replace(/\n/g, "<br>").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`,
+      html:
+        htmlContent ||
+        `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${body.replace(/\n/g, "<br>").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`,
     });
 
     console.log("Email sent via SendGrid:", info.messageId);

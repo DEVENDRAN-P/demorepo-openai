@@ -11,6 +11,7 @@ Your SendGrid API key has been securely stored in `.env` (not shown for security
 ## 🚀 STEP 1: Deploy the Cloud Function
 
 ### Prerequisites
+
 - Firebase CLI: `npm install -g firebase-tools`
 - Node.js 14+ installed
 - Logged in to Firebase: `firebase login`
@@ -23,6 +24,7 @@ npm install nodemailer nodemailer-sendgrid-transport
 ```
 
 If you don't have a `functions` folder, initialize it:
+
 ```bash
 firebase init functions
 ```
@@ -47,6 +49,7 @@ firebase functions:config:get
 ```
 
 Expected output:
+
 ```json
 {
   "sendgrid": {
@@ -65,6 +68,7 @@ firebase deploy --only functions
 ```
 
 After deployment, you'll see the function URL:
+
 ```
 sendReminderEmailHttp: https://us-central1-finalopenai-fc9c5.cloudfunctions.net/sendReminderEmailHttp
 ```
@@ -72,6 +76,7 @@ sendReminderEmailHttp: https://us-central1-finalopenai-fc9c5.cloudfunctions.net/
 ### Update Environment Variables
 
 The function URL is already configured in `.env`:
+
 ```
 REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL=https://us-central1-finalopenai-fc9c5.cloudfunctions.net/sendReminderEmailHttp
 ```
@@ -98,10 +103,10 @@ SendGrid requires sender email verification to prevent spam:
 In your React component or console:
 
 ```javascript
-import { sendTestEmail } from './services/emailReminderService';
+import { sendTestEmail } from "./services/emailReminderService";
 
 // Send test email
-await sendTestEmail('your-email@gmail.com');
+await sendTestEmail("your-email@gmail.com");
 ```
 
 ### Option B: Test using cURL
@@ -141,13 +146,13 @@ firebase functions:log
 
 ### Common Issues & Fixes
 
-| Issue | Fix |
-|-------|-----|
-| **Invalid API Key** | Verify key in `firebase functions:config:get` |
-| **Sender Not Verified** | Verify in SendGrid → Settings → Sender Authentication |
-| **CORS Error** | CORS is already enabled in the function |
-| **Missing Fields** | Ensure `email`, `subject`, `body` are provided |
-| **Invalid Email Format** | Email must be valid: `user@domain.com` |
+| Issue                    | Fix                                                   |
+| ------------------------ | ----------------------------------------------------- |
+| **Invalid API Key**      | Verify key in `firebase functions:config:get`         |
+| **Sender Not Verified**  | Verify in SendGrid → Settings → Sender Authentication |
+| **CORS Error**           | CORS is already enabled in the function               |
+| **Missing Fields**       | Ensure `email`, `subject`, `body` are provided        |
+| **Invalid Email Format** | Email must be valid: `user@domain.com`                |
 
 ---
 
@@ -158,7 +163,7 @@ firebase functions:log
 Call this once on component mount:
 
 ```javascript
-import { checkAndSendBillReminders } from '../services/emailReminderService';
+import { checkAndSendBillReminders } from "../services/emailReminderService";
 
 useEffect(() => {
   // Check and send reminders for due bills
@@ -171,6 +176,7 @@ useEffect(() => {
 The Cloud Function already includes `checkAndSendRemindersDaily` that runs daily at 8:00 AM UTC.
 
 To deploy it:
+
 1. Make sure it's exported in `api/emailReminders.js`
 2. Deploy: `firebase deploy --only functions`
 
@@ -214,7 +220,7 @@ Edit the email templates in `emailReminderService.js` → `getEmailTemplate()` t
 ✅ Automatic reminder checking  
 ✅ Frontend service ready to send emails  
 ✅ Test email function available  
-✅ Logging and error handling  
+✅ Logging and error handling
 
 ---
 
@@ -233,6 +239,7 @@ Edit the email templates in `emailReminderService.js` → `getEmailTemplate()` t
 ## 🆘 Need Help?
 
 ### Verify Setup
+
 ```bash
 # Check Firebase config
 firebase functions:config:get
@@ -245,6 +252,7 @@ firebase deploy --only functions
 ```
 
 ### SendGrid Troubleshooting
+
 - **SendGrid Support**: https://support.sendgrid.com
 - **Check email bounce**: https://sendgrid.com/marketing_settings/bounce
 - **Verify sender**: https://sendgrid.com/senders

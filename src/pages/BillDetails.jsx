@@ -3,6 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useAuth } from '../hooks/useAuth';
 import { getUserBillById, updateUserBill } from '../services/firebaseDataService';
+import { 
+  getBillReminderStatus, 
+  getBillReminderHistory,
+  recordReminderEmailSent,
+} from '../services/billReminderService';
+import { sendReminderEmail } from '../services/emailReminderService';
 
 function BillDetails() {
     const { billId } = useParams();
@@ -16,6 +22,9 @@ function BillDetails() {
     const [editData, setEditData] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [reminderStatus, setReminderStatus] = useState(null);
+    const [reminderHistory, setReminderHistory] = useState([]);
+    const [sendingEmail, setSendingEmail] = useState(false);
 
     const loadBill = useCallback(async () => {
         try {
@@ -70,6 +79,79 @@ function BillDetails() {
             ...prev,
             [field]: value
         }));
+    };
+
+    // Load reminder status and history
+    const loadReminderStatus = useCallback(async () => {
+        if (!user?.uid || !billId) return;
+        
+        try {
+            const status = await getBillReminderStatus(user.uid, billId);
+            setReminderStatus(status);
+
+            if (status.hasReminder) {
+                const history = await getBillReminderHistory(user.uid, billId);
+                setReminderHistory(history);
+            }
+        } catch (err) {
+            console.error('Error loading reminder status:', err);
+        }
+    }, [user?.uid, billId]);
+
+    // Load reminders when bill changes
+    useEffect(() => {
+        if (bill && user?.uid) {
+            loadReminderStatus();
+        }
+    }, [bill, user?.uid, loadReminderStatus]);
+
+    // Send reminder email
+    const handleSendReminderEmail = async () => {
+        if (!user?.uid || !billId || (!bill?.supplierEmail && !user?.email)) {
+            setError('Cannot send email: User email not configured');
+            return;
+        }
+
+        try {
+            setSendingEmail(true);
+            setError('');
+
+            // Prepare email data
+            const recipientEmail = bill.supplierEmail || user.email;
+            const deadline = new Date(bill.gstrDeadline);
+            const now = new Date();
+            const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+
+            const emailData = {
+                email: recipientEmail,
+                subject: `GST Filing Reminder: Invoice #${bill.invoiceNumber}`,
+                body: `Dear,\n\nThis is a reminder for GST filing:\n\nInvoice Number: ${bill.invoiceNumber}\nSupplier: ${bill.supplierName || 'N/A'}\nAmount: ₹${bill.amount?.toFixed(2) || '0.00'}\nDeadline: ${deadline.toLocaleDateString()}\n\n${daysUntilDeadline === 0 ? 'The deadline is TODAY!' : daysUntilDeadline === 1 ? 'The deadline is TOMORROW!' : `The deadline is in ${daysUntilDeadline} days.`}\n\nPlease complete your GST filing at your earliest convenience.\n\nBest regards,\nGST Buddy Team`,
+            };
+
+            // Show sending alert
+            setSuccess('📧 Sending reminder email...');
+
+            // Send email
+            const result = await sendReminderEmail(emailData);
+
+            if (result.success) {
+                // Record the email send
+                await recordReminderEmailSent(user.uid, billId, recipientEmail, 'manual');
+
+                // Update reminder status
+                await loadReminderStatus();
+
+                // Show success message
+                setSuccess(`✅ Reminder email sent successfully to ${recipientEmail}!`);
+                setTimeout(() => setSuccess(''), 4000);
+            } else {
+                setError(`❌ Failed to send email: ${result.error || 'Unknown error'}`);
+            }
+        } catch (err) {
+            setError(`❌ Error: ${err.message || 'Failed to send reminder email'}`);
+        } finally {
+            setSendingEmail(false);
+        }
     };
 
     if (loading) {
@@ -185,6 +267,107 @@ function BillDetails() {
                         marginBottom: '20px',
                     }}>
                         {success}
+                    </div>
+                )}
+
+                {/* Reminder Alert Box */}
+                {reminderStatus?.hasReminder && (
+                    <div style={{
+                        padding: '16px 20px',
+                        backgroundColor: reminderStatus.reminderType === 'overdue' 
+                            ? '#fee2e2' 
+                            : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                            ? '#fef3c7'
+                            : '#e0f2fe',
+                        borderLeft: `4px solid ${
+                            reminderStatus.reminderType === 'overdue' ? '#dc2626' :
+                            reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow' ? '#f59e0b' :
+                            '#0284c7'
+                        }`,
+                        borderRadius: '6px',
+                        marginBottom: '20px',
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                        }}>
+                            <div>
+                                <h3 style={{
+                                    margin: '0 0 8px 0',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    color: reminderStatus.reminderType === 'overdue' 
+                                        ? '#991b1b' 
+                                        : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                                        ? '#92400e'
+                                        : '#0c4a6e',
+                                }}>
+                                    {reminderStatus.reminderType === 'overdue' ? '🚨 OVERDUE - URGENT' :
+                                     reminderStatus.reminderType === 'today' ? '⏰ DUE TODAY' :
+                                     reminderStatus.reminderType === 'tomorrow' ? '⏰ DUE TOMORROW' :
+                                     reminderStatus.reminderType === 'three-days' ? '📅 DUE SOON' :
+                                     '📅 UPCOMING DEADLINE'}
+                                </h3>
+                                <p style={{
+                                    margin: '0 0 8px 0',
+                                    fontSize: '14px',
+                                    color: reminderStatus.reminderType === 'overdue' 
+                                        ? '#991b1b' 
+                                        : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                                        ? '#92400e'
+                                        : '#0c4a6e',
+                                }}>
+                                    {reminderStatus.daysText}
+                                </p>
+                                <p style={{
+                                    margin: '0 0 8px 0',
+                                    fontSize: '13px',
+                                    color: reminderStatus.reminderType === 'overdue' 
+                                        ? '#991b1b' 
+                                        : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                                        ? '#92400e'
+                                        : '#0c4a6e',
+                                }}>
+                                    🗓️ Deadline: {reminderStatus.deadline}
+                                </p>
+                                {reminderStatus.lastSentEmail && (
+                                    <p style={{
+                                        margin: '0',
+                                        fontSize: '12px',
+                                        color: reminderStatus.reminderType === 'overdue' 
+                                            ? '#991b1b' 
+                                            : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                                            ? '#92400e'
+                                            : '#0c4a6e',
+                                    }}>
+                                        ✅ Last reminder sent to: {reminderStatus.lastSentEmail}
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                onClick={handleSendReminderEmail}
+                                disabled={sendingEmail}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: reminderStatus.reminderType === 'overdue' 
+                                        ? '#dc2626'
+                                        : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
+                                        ? '#f59e0b'
+                                        : '#0284c7',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    whiteSpace: 'nowrap',
+                                    opacity: sendingEmail ? 0.7 : 1,
+                                }}
+                            >
+                                {sendingEmail ? '📧 Sending...' : '📧 Send Reminder'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -512,6 +695,78 @@ function BillDetails() {
                         </div>
                     )}
                 </div>
+
+                {/* Reminder History */}
+                {reminderHistory && reminderHistory.length > 0 && (
+                    <div style={{
+                        marginTop: '20px',
+                        backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                        borderRadius: '12px',
+                        padding: '30px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    }}>
+                        <h2 style={{
+                            marginTop: 0,
+                            marginBottom: '20px',
+                            fontSize: '20px',
+                            fontWeight: '700',
+                            color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                        }}>
+                            📧 Reminder Email History
+                        </h2>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                        }}>
+                            {reminderHistory.map((reminder, index) => (
+                                <div 
+                                    key={reminder.id || index}
+                                    style={{
+                                        padding: '12px 16px',
+                                        backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+                                        borderRadius: '6px',
+                                        borderLeft: '4px solid #10b981',
+                                    }}
+                                >
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                    }}>
+                                        <div>
+                                            <p style={{
+                                                margin: '0 0 4px 0',
+                                                fontSize: '14px',
+                                                fontWeight: '500',
+                                                color: isDarkMode ? '#e5e7eb' : '#1f2937',
+                                            }}>
+                                                ✅ Email sent to {reminder.emailSent}
+                                            </p>
+                                            <p style={{
+                                                margin: 0,
+                                                fontSize: '12px',
+                                                color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                            }}>
+                                                {reminder.sentDate?.toLocaleDateString()} at {reminder.sentDate?.toLocaleTimeString()}
+                                            </p>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            color: '#10b981',
+                                            backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.2)' : '#d1fae5',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                        }}>
+                                            {reminder.type === 'manual' ? '🤚 Manual' : '⏰ Automatic'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

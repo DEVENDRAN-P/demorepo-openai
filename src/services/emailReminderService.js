@@ -1,12 +1,10 @@
 import {
   getFirestore,
+  collection,
   query,
   where,
-  collection,
   getDocs,
   serverTimestamp,
-  updateDoc,
-  doc,
   addDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -102,7 +100,7 @@ Thank you!
  * Send email via Firebase Cloud Function with SendGrid
  * Requires REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL to be set in .env
  */
-const sendReminderEmail = async (emailData) => {
+export const sendReminderEmail = async (emailData) => {
   try {
     const functionUrl =
       process.env.REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL ||
@@ -129,12 +127,11 @@ const sendReminderEmail = async (emailData) => {
     console.error("Error sending email:", error.message);
 
     // Fallback logging for development
-    console.warn(
-      "Email could not be sent. Email content:",
-      emailData,
-    );
+    console.warn("Email could not be sent. Email content:", emailData);
     console.warn("Make sure the Cloud Function is deployed and running.");
-    console.warn("To deploy: cd functions && npm install && firebase deploy --only functions");
+    console.warn(
+      "To deploy: cd functions && npm install && firebase deploy --only functions",
+    );
 
     // Return error response
     return {
@@ -296,7 +293,6 @@ export const sendManualReminder = async (userId, billId) => {
     const userUid = userId || currentUser.uid;
 
     // Get bill details
-    const billRef = doc(db, "users", userUid, "bills", billId);
     const billSnapshot = await getDocs(query(where("__name__", "==", billId)));
 
     if (billSnapshot.empty) {
@@ -352,13 +348,6 @@ export const getBillReminderHistory = async (userId, billId) => {
   }
 };
 
-export default {
-  checkAndSendBillReminders,
-  sendManualReminder,
-  getBillReminderHistory,
-  sendTestEmail,
-};
-
 /**
  * Test function to send a test email
  * Call this once to verify SendGrid integration is working
@@ -379,3 +368,12 @@ export const sendTestEmail = async (userEmail) => {
     throw error;
   }
 };
+
+const emailReminderService = {
+  checkAndSendBillReminders,
+  sendManualReminder,
+  getBillReminderHistory,
+  sendTestEmail,
+};
+
+export default emailReminderService;
