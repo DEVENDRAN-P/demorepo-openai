@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useAuth } from '../hooks/useAuth';
@@ -17,13 +17,7 @@ function BillDetails() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    useEffect(() => {
-        if (!bill && billId && user) {
-            loadBill();
-        }
-    }, [billId, user]);
-
-    const loadBill = async () => {
+    const loadBill = useCallback(async () => {
         try {
             setLoading(true);
             const billData = await getUserBillById(billId);
@@ -38,7 +32,13 @@ function BillDetails() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [billId]);
+
+    useEffect(() => {
+        if (!bill && billId && user) {
+            loadBill();
+        }
+    }, [billId, user, bill, loadBill]);
 
     const handleEdit = () => {
         setEditData({ ...bill });
@@ -114,8 +114,6 @@ function BillDetails() {
             </div>
         );
     }
-
-    const data = editing ? editData : bill;
 
     return (
         <div style={{

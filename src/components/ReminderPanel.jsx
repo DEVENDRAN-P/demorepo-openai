@@ -37,13 +37,7 @@ function ReminderPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadRemindersAndGuidance();
-    // Refresh reminders every 5 minutes
-    const interval = setInterval(loadRemindersAndGuidance, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadRemindersAndGuidance = async () => {
+    const loadRemindersAndGuidance = async () => {
     try {
       // Get user from localStorage
       const userStr = localStorage.getItem('user');
@@ -154,7 +148,14 @@ function ReminderPanel() {
     } finally {
       setLoading(false);
     }
-  };
+    };
+
+    loadRemindersAndGuidance();
+    // Refresh reminders every 5 minutes
+    const interval = setInterval(loadRemindersAndGuidance, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDismissReminder = async (reminderId) => {
     try {
