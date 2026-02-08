@@ -8,6 +8,41 @@
   <meta name="description" content="AI GST & Compliance Buddy - Automated GST filing for small businesses" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <title>AI GST & Compliance Buddy</title>
+  
+  <script>
+    // Suppress Cross-Origin-Opener-Policy and popup-closed-by-user warnings
+    // This must run BEFORE any other scripts to intercept Firebase warnings
+    if (typeof window !== 'undefined') {
+      const originalError = console.error;
+      const originalWarn = console.warn;
+
+      console.error = function(...args) {
+        const message = args.join(' ');
+        if (
+          message.includes('Cross-Origin-Opener-Policy') ||
+          message.includes('window.closed') ||
+          message.includes('Cross-Origin-Embedder-Policy') ||
+          message.includes('popup-closed-by-user')
+        ) {
+          return; // Silently suppress
+        }
+        originalError.apply(console, args);
+      };
+
+      console.warn = function(...args) {
+        const message = args.join(' ');
+        if (
+          message.includes('Cross-Origin-Opener-Policy') ||
+          message.includes('window.closed') ||
+          message.includes('Cross-Origin-Embedder-Policy') ||
+          message.includes('popup-closed-by-user')
+        ) {
+          return; // Silently suppress
+        }
+        originalWarn.apply(console, args);
+      };
+    }
+  </script>
 </head>
 
 <body>
