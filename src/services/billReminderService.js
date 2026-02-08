@@ -30,7 +30,7 @@ export const getBillReminderStatus = async (userId, billId) => {
     // Get the bill details
     const billRef = doc(db, "users", userId, "bills", billId);
     const billSnapshot = await getDoc(billRef);
-    
+
     if (!billSnapshot.exists()) {
       return { hasReminder: false };
     }
@@ -40,15 +40,15 @@ export const getBillReminderStatus = async (userId, billId) => {
 
     // Check if bill has a deadline
     if (!bill.gstrDeadline) {
-      return { 
-        hasReminder: false, 
-        message: "No deadline set for this bill" 
+      return {
+        hasReminder: false,
+        message: "No deadline set for this bill",
       };
     }
 
     const deadline = new Date(bill.gstrDeadline);
     const daysUntilDeadline = Math.ceil(
-      (deadline - now) / (1000 * 60 * 60 * 24)
+      (deadline - now) / (1000 * 60 * 60 * 24),
     );
 
     let reminderType = null;
@@ -77,18 +77,15 @@ export const getBillReminderStatus = async (userId, billId) => {
 
     // Get the last sent reminder email
     const remindersRef = collection(db, "users", userId, "emailReminders");
-    const remindersQuery = query(
-      remindersRef,
-      where("billId", "==", billId)
-    );
-    
+    const remindersQuery = query(remindersRef, where("billId", "==", billId));
+
     const remindersSnapshot = await getDocs(remindersQuery);
     let lastSentEmail = null;
     let lastSentDate = null;
 
     if (!remindersSnapshot.empty) {
       const reminders = remindersSnapshot.docs
-        .map(doc => ({
+        .map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }))
@@ -126,13 +123,10 @@ export const getBillReminderStatus = async (userId, billId) => {
 export const getBillReminderHistory = async (userId, billId) => {
   try {
     const remindersRef = collection(db, "users", userId, "emailReminders");
-    const remindersQuery = query(
-      remindersRef,
-      where("billId", "==", billId)
-    );
+    const remindersQuery = query(remindersRef, where("billId", "==", billId));
 
     const snapshot = await getDocs(remindersQuery);
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       sentDate: doc.data().sentDate?.toDate?.() || null,
@@ -150,11 +144,11 @@ export const recordReminderEmailSent = async (
   userId,
   billId,
   email,
-  type = "manual"
+  type = "manual",
 ) => {
   try {
     const remindersRef = collection(db, "users", userId, "emailReminders");
-    
+
     const docRef = await addDoc(remindersRef, {
       billId,
       type,
@@ -182,7 +176,7 @@ export const recordReminderEmailSent = async (
  */
 function getDaysText(daysUntilDeadline) {
   if (daysUntilDeadline < 0) {
-    return `OVERDUE by ${Math.abs(daysUntilDeadline)} day${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+    return `OVERDUE by ${Math.abs(daysUntilDeadline)} day${Math.abs(daysUntilDeadline) > 1 ? "s" : ""}`;
   } else if (daysUntilDeadline === 0) {
     return "Due TODAY";
   } else if (daysUntilDeadline === 1) {

@@ -3,10 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useAuth } from '../hooks/useAuth';
 import { getUserBillById, updateUserBill } from '../services/firebaseDataService';
-import { 
-  getBillReminderStatus, 
-  getBillReminderHistory,
-  recordReminderEmailSent,
+import {
+    getBillReminderStatus,
+    getBillReminderHistory,
+    recordReminderEmailSent,
 } from '../services/billReminderService';
 import { sendReminderEmail } from '../services/emailReminderService';
 
@@ -84,7 +84,7 @@ function BillDetails() {
     // Load reminder status and history
     const loadReminderStatus = useCallback(async () => {
         if (!user?.uid || !billId) return;
-        
+
         try {
             const status = await getBillReminderStatus(user.uid, billId);
             setReminderStatus(status);
@@ -274,16 +274,15 @@ function BillDetails() {
                 {reminderStatus?.hasReminder && (
                     <div style={{
                         padding: '16px 20px',
-                        backgroundColor: reminderStatus.reminderType === 'overdue' 
-                            ? '#fee2e2' 
+                        backgroundColor: reminderStatus.reminderType === 'overdue'
+                            ? '#fee2e2'
                             : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                            ? '#fef3c7'
-                            : '#e0f2fe',
-                        borderLeft: `4px solid ${
-                            reminderStatus.reminderType === 'overdue' ? '#dc2626' :
-                            reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow' ? '#f59e0b' :
-                            '#0284c7'
-                        }`,
+                                ? '#fef3c7'
+                                : '#e0f2fe',
+                        borderLeft: `4px solid ${reminderStatus.reminderType === 'overdue' ? '#dc2626' :
+                                reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow' ? '#f59e0b' :
+                                    '#0284c7'
+                            }`,
                         borderRadius: '6px',
                         marginBottom: '20px',
                     }}>
@@ -297,37 +296,37 @@ function BillDetails() {
                                     margin: '0 0 8px 0',
                                     fontSize: '16px',
                                     fontWeight: '600',
-                                    color: reminderStatus.reminderType === 'overdue' 
-                                        ? '#991b1b' 
+                                    color: reminderStatus.reminderType === 'overdue'
+                                        ? '#991b1b'
                                         : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                                        ? '#92400e'
-                                        : '#0c4a6e',
+                                            ? '#92400e'
+                                            : '#0c4a6e',
                                 }}>
                                     {reminderStatus.reminderType === 'overdue' ? '🚨 OVERDUE - URGENT' :
-                                     reminderStatus.reminderType === 'today' ? '⏰ DUE TODAY' :
-                                     reminderStatus.reminderType === 'tomorrow' ? '⏰ DUE TOMORROW' :
-                                     reminderStatus.reminderType === 'three-days' ? '📅 DUE SOON' :
-                                     '📅 UPCOMING DEADLINE'}
+                                        reminderStatus.reminderType === 'today' ? '⏰ DUE TODAY' :
+                                            reminderStatus.reminderType === 'tomorrow' ? '⏰ DUE TOMORROW' :
+                                                reminderStatus.reminderType === 'three-days' ? '📅 DUE SOON' :
+                                                    '📅 UPCOMING DEADLINE'}
                                 </h3>
                                 <p style={{
                                     margin: '0 0 8px 0',
                                     fontSize: '14px',
-                                    color: reminderStatus.reminderType === 'overdue' 
-                                        ? '#991b1b' 
+                                    color: reminderStatus.reminderType === 'overdue'
+                                        ? '#991b1b'
                                         : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                                        ? '#92400e'
-                                        : '#0c4a6e',
+                                            ? '#92400e'
+                                            : '#0c4a6e',
                                 }}>
                                     {reminderStatus.daysText}
                                 </p>
                                 <p style={{
                                     margin: '0 0 8px 0',
                                     fontSize: '13px',
-                                    color: reminderStatus.reminderType === 'overdue' 
-                                        ? '#991b1b' 
+                                    color: reminderStatus.reminderType === 'overdue'
+                                        ? '#991b1b'
                                         : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                                        ? '#92400e'
-                                        : '#0c4a6e',
+                                            ? '#92400e'
+                                            : '#0c4a6e',
                                 }}>
                                     🗓️ Deadline: {reminderStatus.deadline}
                                 </p>
@@ -335,11 +334,11 @@ function BillDetails() {
                                     <p style={{
                                         margin: '0',
                                         fontSize: '12px',
-                                        color: reminderStatus.reminderType === 'overdue' 
-                                            ? '#991b1b' 
+                                        color: reminderStatus.reminderType === 'overdue'
+                                            ? '#991b1b'
                                             : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                                            ? '#92400e'
-                                            : '#0c4a6e',
+                                                ? '#92400e'
+                                                : '#0c4a6e',
                                     }}>
                                         ✅ Last reminder sent to: {reminderStatus.lastSentEmail}
                                     </p>
@@ -350,11 +349,11 @@ function BillDetails() {
                                 disabled={sendingEmail}
                                 style={{
                                     padding: '8px 16px',
-                                    backgroundColor: reminderStatus.reminderType === 'overdue' 
+                                    backgroundColor: reminderStatus.reminderType === 'overdue'
                                         ? '#dc2626'
                                         : reminderStatus.reminderType === 'today' || reminderStatus.reminderType === 'tomorrow'
-                                        ? '#f59e0b'
-                                        : '#0284c7',
+                                            ? '#f59e0b'
+                                            : '#0284c7',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '6px',
@@ -720,7 +719,7 @@ function BillDetails() {
                             gap: '12px',
                         }}>
                             {reminderHistory.map((reminder, index) => (
-                                <div 
+                                <div
                                     key={reminder.id || index}
                                     style={{
                                         padding: '12px 16px',

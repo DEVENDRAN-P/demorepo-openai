@@ -232,6 +232,12 @@ function SignupPage() {
       setLoading(false);
       perf.end('GOOGLE_SIGNUP');
 
+      // User cancelled the popup - silently ignore
+      if (err.code === 'auth/popup-closed-by-user') {
+        console.log('ℹ️ User cancelled Google sign-up popup');
+        return;
+      }
+
       let errorMessage = 'Google sign-up failed. Please try again.';
 
       // Log detailed error for debugging
@@ -245,8 +251,6 @@ function SignupPage() {
 
       if (err.code === 'auth/popup-blocked') {
         errorMessage = '❌ Pop-up was blocked. Please allow pop-ups and try again.';
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        errorMessage = '❌ Google sign-up was cancelled.';
       } else if (err.code === 'auth/account-exists-with-different-credential') {
         errorMessage = '❌ An account with this email already exists.';
       } else if (err.code === 'auth/network-request-failed') {

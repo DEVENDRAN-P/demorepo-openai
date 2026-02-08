@@ -12,53 +12,10 @@ function GSTFilingStatus({ bills = [] }) {
     useEffect(() => {
         const calculateFilingStatus = () => {
             const now = new Date();
-            const currentYear = now.getFullYear();
 
-            // If no bills uploaded, show static deadlines
+            // If no bills uploaded, show nothing (empty)
             if (!bills || bills.length === 0) {
-                const deadlines = [
-                    { month: 'April', dueDate: '13th May', deadline: new Date(currentYear, 4, 13), gstr: 'GSTR-1', period: 'April' },
-                    { month: 'May', dueDate: '13th June', deadline: new Date(currentYear, 5, 13), gstr: 'GSTR-1', period: 'May' },
-                    { month: 'June', dueDate: '13th July', deadline: new Date(currentYear, 6, 13), gstr: 'GSTR-1', period: 'June' },
-                    { month: 'July', dueDate: '13th August', deadline: new Date(currentYear, 7, 13), gstr: 'GSTR-1', period: 'July' },
-                    { month: 'August', dueDate: '13th September', deadline: new Date(currentYear, 8, 13), gstr: 'GSTR-1', period: 'August' },
-                    { month: 'September', dueDate: '13th October', deadline: new Date(currentYear, 9, 13), gstr: 'GSTR-1', period: 'September' },
-                ];
-
-                const status = deadlines.map(item => {
-                    const daysUntilDeadline = Math.floor((item.deadline - now) / (1000 * 60 * 60 * 24));
-                    let status = 'upcoming';
-                    let statusColor = '#3b82f6';
-                    let statusIcon = '📅';
-
-                    if (daysUntilDeadline < 0) {
-                        status = 'overdue';
-                        statusColor = '#ef4444';
-                        statusIcon = '⚠️';
-                    } else if (daysUntilDeadline <= 3) {
-                        status = 'urgent';
-                        statusColor = '#f97316';
-                        statusIcon = '🔴';
-                    } else if (daysUntilDeadline <= 7) {
-                        status = 'warning';
-                        statusColor = '#eab308';
-                        statusIcon = '🟡';
-                    } else {
-                        status = 'upcoming';
-                        statusColor = '#10b981';
-                        statusIcon = '🟢';
-                    }
-
-                    return {
-                        ...item,
-                        status,
-                        statusColor,
-                        statusIcon,
-                        daysUntilDeadline,
-                    };
-                });
-
-                setFilingStatus(status);
+                setFilingStatus([]);
                 return;
             }
 
@@ -144,12 +101,13 @@ function GSTFilingStatus({ bills = [] }) {
                 style={{
                     marginTop: 0,
                     marginBottom: '20px',
-                    fontSize: '20px',
-                    fontWeight: '600',
+                    fontSize: '22px',
+                    fontWeight: '700',
                     color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                    letterSpacing: '-0.3px',
                 }}
             >
-                {t('gstFilingStatus')} 📊
+                {t('gstFilingStatus') || 'GST Filing Status'}
             </h2>
 
             {filingStatus.length === 0 ? (
