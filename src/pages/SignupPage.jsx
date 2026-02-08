@@ -320,11 +320,11 @@ function SignupPage() {
       <div style={{
         background: 'white',
         borderRadius: '24px',
-        padding: '3rem',
+        padding: '2rem',
         width: '100%',
         maxWidth: '550px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
+        maxHeight: 'auto',
+        overflowY: 'visible',
         boxShadow: '0 25px 70px rgba(30, 60, 114, 0.2)',
         position: 'relative',
         zIndex: 10,
@@ -332,7 +332,7 @@ function SignupPage() {
         border: '1px solid rgba(255, 255, 255, 0.6)'
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -342,7 +342,7 @@ function SignupPage() {
             borderRadius: '16px',
             background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
             boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-            marginBottom: '1.5rem'
+            marginBottom: '1rem'
           }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -352,24 +352,28 @@ function SignupPage() {
             </svg>
           </div>
           <h1 style={{
-            fontSize: '2.5rem',
+            fontSize: '2rem',
             fontWeight: '700',
             color: '#1e3c72',
-            marginBottom: '0.5rem',
+            marginBottom: '0.3rem',
             letterSpacing: '-0.02em'
           }}>
             Create Account
           </h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '500' }}>
             Join AI IN BUSINESS today
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-4 animate-fade-in">
+        <form onSubmit={handleSignup} className="space-y-3 animate-fade-in">
           {/* Name Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>👤</span> Full Name <span className="text-red-500">*</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3c72', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Full Name *</span>
             </label>
             <input
               type="text"
@@ -377,8 +381,7 @@ function SignupPage() {
               value={formData.name}
               onChange={handleChange}
               placeholder="John Doe"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'}`}
               onFocus={(e) => {
                 if (!fieldErrors.name) {
                   e.target.style.borderColor = '#1e3c72';
@@ -401,8 +404,12 @@ function SignupPage() {
 
           {/* Email Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>✉️</span> Email Address <span className="text-red-500">*</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3c72', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span>Email Address *</span>
             </label>
             <input
               type="email"
@@ -410,8 +417,7 @@ function SignupPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'}`}
               onFocus={(e) => {
                 if (!fieldErrors.email) {
                   e.target.style.borderColor = '#1e3c72';
@@ -434,8 +440,14 @@ function SignupPage() {
 
           {/* GSTIN Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>📋</span> GSTIN <span className="text-red-500">*</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3c72', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="19" x2="12" y2="12" />
+                <line x1="9" y1="16" x2="15" y2="16" />
+              </svg>
+              <span>GSTIN *</span>
             </label>
             <input
               type="text"
@@ -444,8 +456,7 @@ function SignupPage() {
               onChange={handleChange}
               placeholder="27AAHCT5055K1Z0"
               maxLength="15"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'}`}
               onFocus={(e) => {
                 if (!fieldErrors.gstin) {
                   e.target.style.borderColor = '#1e3c72';
@@ -459,28 +470,35 @@ function SignupPage() {
                 }
               }}
             />
+            {!fieldErrors.gstin && (
+              <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                
+              </p>
+            )}
             {fieldErrors.gstin && (
               <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
                 <span>⚠️</span> {fieldErrors.gstin}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">Format: 27AAHCT5055K1Z0</p>
           </div>
 
           {/* Password Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>🔐</span> Password <span className="text-red-500">*</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3c72', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span>Password *</span>
             </label>
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 pr-12 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                  }`}
+                className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 pr-12 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'}`}
                 onFocus={(e) => {
                   if (!fieldErrors.password) {
                     e.target.style.borderColor = '#1e3c72';
@@ -497,9 +515,34 @@ function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-3.5 text-gray-500 hover:text-purple-600 transition text-xl hover:scale-110 active:scale-95"
+                style={{
+                  position: 'absolute',
+                  right: '0.6rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: 0.6,
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
               </button>
             </div>
             {fieldErrors.password && (
@@ -532,8 +575,11 @@ function SignupPage() {
 
           {/* Confirm Password Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>✓</span> Confirm Password <span className="text-red-500">*</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e3c72', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>Confirm Password *</span>
             </label>
             <input
               type="password"
@@ -541,8 +587,7 @@ function SignupPage() {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="••••••••"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'}`}
               onFocus={(e) => {
                 if (!fieldErrors.confirmPassword) {
                   e.target.style.borderColor = '#1e3c72';
@@ -571,7 +616,11 @@ function SignupPage() {
           {/* Error Alert */}
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg text-sm flex items-start gap-3 animate-slide-in-up">
-              <span className="text-2xl flex-shrink-0">🚨</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
               <div>
                 <p className="font-semibold text-red-700">{error}</p>
               </div>
@@ -581,7 +630,9 @@ function SignupPage() {
           {/* Success Message */}
           {successMessage && (
             <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg text-sm flex items-start gap-3 animate-slide-in-up">
-              <span className="text-2xl flex-shrink-0 animate-checkmark">✅</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
               <div>
                 <p className="font-semibold text-green-700">{successMessage}</p>
               </div>
@@ -594,23 +645,23 @@ function SignupPage() {
             disabled={loading || Object.keys(fieldErrors).length > 0}
             style={{
               width: '100%',
-              padding: '1.1rem',
-              borderRadius: '12px',
+              padding: '0.95rem 1.4rem',
+              borderRadius: '28px',
               border: 'none',
               background: (loading || Object.keys(fieldErrors).length > 0)
                 ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)'
-                : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
+                : 'linear-gradient(135deg, #1459b6 0%, #1e3c72 50%, #3b82f6 100%)',
               color: 'white',
-              fontSize: '1.05rem',
-              fontWeight: 'bold',
+              fontSize: '1.06rem',
+              fontWeight: 700,
               cursor: (loading || Object.keys(fieldErrors).length > 0) ? 'not-allowed' : 'pointer',
-              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.35)',
-              transition: 'all 0.3s ease',
+              boxShadow: '0 12px 36px rgba(30,60,114,0.25)',
+              transition: 'all 0.25s ease',
               opacity: (loading || Object.keys(fieldErrors).length > 0) ? 0.6 : 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.6rem'
+              gap: '0.8rem'
             }}
             onMouseEnter={(e) => {
               if (!loading && Object.keys(fieldErrors).length === 0) {
@@ -647,7 +698,7 @@ function SignupPage() {
         </form>
 
         {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '2rem 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
           <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
           <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '600' }}>OR</span>
           <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
@@ -699,7 +750,7 @@ function SignupPage() {
         </button>
 
         {/* Login Link */}
-        <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.95rem', marginTop: '1.5rem' }}>
+        <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.9rem', marginTop: '1rem' }}>
           Already have an account?{' '}
           <Link to="/login" style={{
             color: '#3b82f6',
@@ -719,17 +770,17 @@ function SignupPage() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '0.5rem',
-          marginTop: '1.5rem',
-          padding: '0.75rem 1.25rem',
+          marginTop: '1rem',
+          padding: '0.5rem 1rem',
           background: '#f8fafc',
           border: '1px solid #e2e8f0',
           borderRadius: '8px',
-          fontSize: '0.8rem',
+          fontSize: '0.75rem',
           color: '#64748b',
           fontWeight: '500',
           textAlign: 'center'
         }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           Secured with Firebase
