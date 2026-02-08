@@ -553,7 +553,7 @@ function Profile({ user, setUser }) {
                     fontWeight: '600',
                     color: isDarkMode ? '#d1d5db' : '#374151',
                     marginBottom: '0.5rem',
-                  }}>{t('address')}</label>
+                  }}>Shop Address</label>
                   <textarea
                     name="address"
                     value={formData.address}

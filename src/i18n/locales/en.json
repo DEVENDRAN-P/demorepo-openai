@@ -228,5 +228,13 @@
   "important_notice": "Important Notice",
   "important_notice_text": "This app is designed to assist with GST compliance. Always verify information with official GST portals (www.gst.gov.in) and consult with tax professionals for critical decisions. The helpdesk numbers provided are official government numbers. Contact them for official guidance.",
   "cost_savings_earned": "Cost Savings You've Earned",
-  "cost_savings": "Cost Savings"
+  "cost_savings": "Cost Savings",
+  "tip_itc_title": "Input Tax Credit",
+  "tip_itc_desc": "Claim ITC on business purchases to reduce GST liability. Keep invoices organized!",
+  "tip_voice_title": "Use Voice Input",
+  "tip_voice_desc": "Try voice-based bill entry! Just speak invoice details and AI will fill the form.",
+  "tip_comply_title": "Stay Compliant",
+  "tip_comply_desc": "File GSTR-1 by 11th and GSTR-3B by 20th of every month to avoid penalties.",
+  "tip_analytics_title": "Track Your Analytics",
+  "tip_analytics_desc": "Check monthly reports to understand your tax trends and plan better."
 }

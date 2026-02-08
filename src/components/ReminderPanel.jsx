@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDarkMode } from '../context/DarkModeContext';
 import { getPendingReminders, dismissReminder, generateReminderAlerts } from '../services/reminderService';
 // eslint-disable-next-line no-unused-vars
 import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
@@ -29,6 +30,7 @@ const IconSavings = () => (
 
 function ReminderPanel() {
   const { t } = useTranslation();
+  const { isDarkMode } = useDarkMode();
   const [reminders, setReminders] = useState([]);
   const [guidanceTips, setGuidanceTips] = useState([]);
   const [costSavings, setCostSavings] = useState(null);
@@ -97,26 +99,26 @@ function ReminderPanel() {
           {
             id: 1,
             icon: '💡',
-            title: 'Input Tax Credit',
-            description: 'Claim ITC on business purchases to reduce GST liability. Keep invoices organized!',
+            title: t('tip_itc_title'),
+            description: t('tip_itc_desc'),
           },
           {
             id: 2,
             icon: '📱',
-            title: 'Use Voice Input',
-            description: 'Try voice-based bill entry! Just speak invoice details and AI will fill the form.',
+            title: t('tip_voice_title'),
+            description: t('tip_voice_desc'),
           },
           {
             id: 3,
             icon: '🎯',
-            title: 'Stay Compliant',
-            description: 'File GSTR-1 by 11th and GSTR-3B by 20th of every month to avoid penalties.',
+            title: t('tip_comply_title'),
+            description: t('tip_comply_desc'),
           },
           {
             id: 4,
             icon: '📊',
-            title: 'Track Your Analytics',
-            description: 'Check monthly reports to understand your tax trends and plan better.',
+            title: t('tip_analytics_title'),
+            description: t('tip_analytics_desc'),
           },
         ];
         setGuidanceTips(tips);
@@ -311,10 +313,10 @@ function ReminderPanel() {
 
       {/* Cost Savings */}
       {costSavings && costSavings.totalSaved > 0 && (
-        <div className="card" style={{ background: 'var(--success-light)', borderColor: '#86efac' }}>
-          <div className="card-header" style={{ borderBottom: '1px solid #86efac' }}>
-            <h2 className="card-title" style={{ color: '#166534' }}>
-              <div className="card-title-icon" style={{ background: 'white' }}>
+        <div className="card" style={{ background: isDarkMode ? '#1a3a1a' : 'var(--success-light)', borderColor: isDarkMode ? '#4ade80' : '#86efac' }}>
+          <div className="card-header" style={{ borderBottom: `1px solid ${isDarkMode ? '#4ade80' : '#86efac'}` }}>
+            <h2 className="card-title" style={{ color: isDarkMode ? '#ffffff' : '#166534' }}>
+              <div className="card-title-icon" style={{ background: isDarkMode ? '#ffffff' : 'white' }}>
                 <IconSavings />
               </div>
               <span>💰 {t('cost_savings')}</span>
@@ -322,23 +324,23 @@ function ReminderPanel() {
           </div>
 
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <p style={{ fontSize: '0.875rem', color: '#166534', marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '0.875rem', color: isDarkMode ? '#ffffff' : '#166534', marginBottom: '0.5rem' }}>
               You've saved so far:
             </p>
-            <p style={{ fontSize: '2.5rem', fontWeight: 800, color: '#166534', marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '2.5rem', fontWeight: 800, color: isDarkMode ? '#ffffff' : '#166534', marginBottom: '0.5rem' }}>
               ₹{costSavings.totalSaved.toLocaleString()}
             </p>
-            <p style={{ fontSize: '0.8125rem', color: '#166534' }}>
+            <p style={{ fontSize: '0.8125rem', color: isDarkMode ? '#ffffff' : '#166534' }}>
               vs. hiring an accountant (₹{costSavings.monthlyAccountantFee.toLocaleString()}/month)
             </p>
           </div>
 
           <div style={{
-            background: 'white',
+            background: isDarkMode ? '#2d2d2d' : 'white',
             padding: '0.875rem',
             borderRadius: 'var(--radius-lg)',
             fontSize: '0.8125rem',
-            color: '#166534',
+            color: isDarkMode ? '#ffffff' : '#166534',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span>Monthly app cost:</span>
@@ -348,9 +350,9 @@ function ReminderPanel() {
               <span>Typical accountant fee:</span>
               <span style={{ fontWeight: 600 }}>₹{costSavings.monthlyAccountantFee}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid #86efac' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: `1px solid ${isDarkMode ? '#4ade80' : '#86efac'}` }}>
               <span style={{ fontWeight: 700 }}>Monthly savings:</span>
-              <span style={{ fontWeight: 800, color: '#15803d' }}>₹{costSavings.monthlySavings}</span>
+              <span style={{ fontWeight: 800, color: isDarkMode ? '#86efac' : '#15803d' }}>₹{costSavings.monthlySavings}</span>
             </div>
           </div>
         </div>

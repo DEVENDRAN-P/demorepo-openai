@@ -593,6 +593,26 @@ function Navbar({ user }) {
                     <span>{t('settings')}</span>
                   </Link>
                   <Link
+                    to="/support?tab=contact"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.75rem 1rem',
+                      color: 'var(--text-secondary)',
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span>📞</span>
+                    <span>Contact Us</span>
+                  </Link>
+                  <Link
                     to="/support"
                     onClick={() => setMenuOpen(false)}
                     style={{
@@ -834,6 +854,24 @@ function Navbar({ user }) {
           >
             <span>⚙️</span>
             <span>{t('settings')}</span>
+          </Link>
+          <Link
+            to="/support?tab=contact"
+            onClick={() => handleNavClick('/support?tab=contact')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              textDecoration: 'none',
+              borderRadius: 'var(--radius-lg)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              fontSize: '0.9375rem',
+            }}
+          >
+            <span>📞</span>
+            <span>Contact Us</span>
           </Link>
           <Link
             to="/support"

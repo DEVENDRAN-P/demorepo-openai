@@ -1084,14 +1084,14 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
               ) : (
                 <div>
                   <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📸</span>
-                  <p style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>
+                  <p style={{ fontWeight: 600, color: isDarkMode ? 'black' : 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>
                     {file ? file.name : t('upload_invoice_image')}
                   </p>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  <p style={{ fontSize: '0.875rem', color: isDarkMode ? 'black' : 'var(--text-secondary)' }}>
                     {t('Supports PNG, JPG, WEBP (Max 10MB)')}
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--primary-600)', marginTop: '0.75rem', fontWeight: 600 }}>
-                    {t('🤖 AI + OCR will extract invoice details automatically')}
+                    {t(' AI + OCR will extract invoice details automatically')}
                   </p>
                 </div>
               )}

@@ -48,6 +48,7 @@ const IconRobot = () => (
 function Dashboard({ user, setUser }) {
   const { t } = useTranslation();
   const [filingStatus, setFilingStatus] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [stats, setStats] = useState({
     totalBills: 0,
     pendingFiling: 0,
@@ -165,6 +166,14 @@ function Dashboard({ user, setUser }) {
     };
   }, [user?.id, t]);
 
+  useEffect(() => {
+    const checkDarkMode = setInterval(() => {
+      setIsDarkMode(localStorage.getItem('darkMode') === 'true');
+    }, 500);
+
+    return () => clearInterval(checkDarkMode);
+  }, []);
+
   const getStatusBadge = (status) => {
     const badges = {
       filed: 'badge-success',
@@ -197,20 +206,20 @@ function Dashboard({ user, setUser }) {
         <div className="card" style={{
           background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
           color: 'white',
-          margin: '2rem',
-          padding: '2.5rem',
+          margin: '1.5rem',
+          padding: '2rem 1.5rem',
           border: 'none',
         }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem', color: 'white' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.3rem', color: 'white' }}>
             {t('welcome')}, {user?.name}! 👋
           </h1>
-          <p style={{ opacity: 0.95, fontSize: '1rem', color: 'white' }}>
+          <p style={{ opacity: 0.95, fontSize: '1rem', color: 'white', margin: 0 }}>
             {t('dashboard_subtitle')}
           </p>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-4" style={{ margin: '2rem', gap: '1.25rem' }}>
+        <div className="grid grid-cols-4" style={{ margin: '1.5rem', gap: '1.25rem' }}>
           <div className="card" style={{ textAlign: 'center', background: 'var(--primary-50)', borderColor: 'var(--primary-200)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary-700)', marginBottom: '0.25rem' }}>
               {stats.totalBills}
@@ -445,10 +454,10 @@ function Dashboard({ user, setUser }) {
       }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--neutral-900)', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: isDarkMode ? 'white' : 'var(--neutral-900)', marginBottom: '0.5rem' }}>
               💰 {t('cost_savings_earned')}
             </h2>
-            <p style={{ color: 'var(--neutral-600)', fontSize: '1rem' }}>
+            <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '1rem' }}>
               See how much you're saving with GST Buddy vs. hiring an accountant
             </p>
           </div>
@@ -590,7 +599,7 @@ function Dashboard({ user, setUser }) {
               border: '2px solid rgba(34, 197, 94, 0.2)',
               textAlign: 'center',
             }}>
-              <p style={{ color: 'var(--neutral-600)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                 If you use GST Buddy for a full year:
               </p>
               <div style={{
@@ -601,7 +610,7 @@ function Dashboard({ user, setUser }) {
               }}>
                 ₹30,000 saved annually
               </div>
-              <p style={{ color: 'var(--neutral-600)', fontSize: '0.875rem', margin: 0 }}>
+              <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '0.875rem', margin: 0 }}>
                 Plus ₹{(stats.costSavings * 12).toLocaleString()} from automation efficiency based on your current upload rate
               </p>
             </div>
