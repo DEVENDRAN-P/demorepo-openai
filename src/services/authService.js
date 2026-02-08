@@ -14,21 +14,23 @@ import { auth, db, googleProvider } from "../config/firebase";
 import { perf } from "./perfService";
 
 /**
- * Suppress Cross-Origin-Opener-Policy console warnings
+ * Suppress Cross-Origin-Opener-Policy console warnings and popup cancellations
  * These warnings occur when Firebase checks window.closed on cross-origin popups
- * The warnings don't affect functionality, just create console noise in Firefox/Safari
+ * Popup-closed-by-user errors are handled gracefully in components
+ * The warnings don't affect functionality, just create console noise
  */
 if (typeof window !== "undefined") {
   const originalError = console.error;
   const originalWarn = console.warn;
 
-  // Suppress COOP and related policy warnings
+  // Suppress COOP, policy warnings, and popup cancellation errors
   console.error = function (...args) {
     const message = args.join(" ");
     if (
       message.includes("Cross-Origin-Opener-Policy") ||
       message.includes("window.closed") ||
-      message.includes("Cross-Origin-Embedder-Policy")
+      message.includes("Cross-Origin-Embedder-Policy") ||
+      message.includes("popup-closed-by-user")
     ) {
       return; // Silently suppress
     }
@@ -40,7 +42,8 @@ if (typeof window !== "undefined") {
     if (
       message.includes("Cross-Origin-Opener-Policy") ||
       message.includes("window.closed") ||
-      message.includes("Cross-Origin-Embedder-Policy")
+      message.includes("Cross-Origin-Embedder-Policy") ||
+      message.includes("popup-closed-by-user")
     ) {
       return; // Silently suppress
     }
@@ -340,21 +343,24 @@ export const loginWithGoogle = async () => {
 
     return result;
   } catch (error) {
-    console.error("❌ Google Sign-In Error:", {
-      code: error.code,
-      message: error.message,
-      customData: error.customData,
-    });
+    // Don't log popup-closed-by-user errors - they're handled gracefully
+    if (error.code !== "auth/popup-closed-by-user") {
+      console.error("❌ Google Sign-In Error:", {
+        code: error.code,
+        message: error.message,
+        customData: error.customData,
+      });
 
-    // Additional debugging info
-    if (error.message && error.message.includes("unauthorized_client")) {
-      console.error(
-        "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
-      );
-      console.error(
-        "📍 Current URL:",
-        typeof window !== "undefined" ? window.location.href : "N/A",
-      );
+      // Additional debugging info
+      if (error.message && error.message.includes("unauthorized_client")) {
+        console.error(
+          "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
+        );
+        console.error(
+          "📍 Current URL:",
+          typeof window !== "undefined" ? window.location.href : "N/A",
+        );
+      }
     }
 
     throw error;
@@ -402,21 +408,24 @@ export const signupWithGoogle = async (userData = {}) => {
 
     return result;
   } catch (error) {
-    console.error("❌ Google Sign-Up Error:", {
-      code: error.code,
-      message: error.message,
-      customData: error.customData,
-    });
+    // Don't log popup-closed-by-user errors - they're handled gracefully
+    if (error.code !== "auth/popup-closed-by-user") {
+      console.error("❌ Google Sign-Up Error:", {
+        code: error.code,
+        message: error.message,
+        customData: error.customData,
+      });
 
-    // Additional debugging info
-    if (error.message && error.message.includes("unauthorized_client")) {
-      console.error(
-        "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
-      );
-      console.error(
-        "📍 Current URL:",
-        typeof window !== "undefined" ? window.location.href : "N/A",
-      );
+      // Additional debugging info
+      if (error.message && error.message.includes("unauthorized_client")) {
+        console.error(
+          "⚠️ DOMAIN AUTHORIZATION ISSUE: Domain may not be authorized in Firebase console",
+        );
+        console.error(
+          "📍 Current URL:",
+          typeof window !== "undefined" ? window.location.href : "N/A",
+        );
+      }
     }
 
     throw error;
