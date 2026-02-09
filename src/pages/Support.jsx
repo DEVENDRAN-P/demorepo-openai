@@ -190,8 +190,8 @@ function Support({ user }) {
                 {/* Header */}
                 <div style={{
                     background: isDarkMode
-                        ? 'linear-gradient(135deg, #4c51bf 0%, #6b3ba0 100%)'
-                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        ? 'linear-gradient(135deg, var(--primary-600) 0%, #6b3ba0 100%)'
+                        : 'linear-gradient(135deg, var(--primary-600) 0%, #764ba2 100%)',
                     borderRadius: '1rem',
                     padding: '2.5rem 1.5rem',
                     color: 'white',
@@ -238,11 +238,11 @@ function Support({ user }) {
                                 padding: '1rem 1.5rem',
                                 background: 'none',
                                 border: 'none',
-                                borderBottom: activeTab === tab.id ? '3px solid #667eea' : 'none',
+                                borderBottom: activeTab === tab.id ? '3px solid var(--primary-600)' : 'none',
                                 cursor: 'pointer',
                                 fontSize: '1rem',
                                 fontWeight: activeTab === tab.id ? '600' : '500',
-                                color: activeTab === tab.id ? '#667eea' : textSecondary,
+                                color: activeTab === tab.id ? 'var(--primary-600)' : textSecondary,
                                 transition: 'all 0.3s ease',
                             }}
                         >
@@ -309,7 +309,7 @@ function Support({ user }) {
                                     <p style={{
                                         fontSize: '1.5rem',
                                         fontWeight: 'bold',
-                                        color: '#667eea',
+                                        color: 'var(--primary-600)',
                                         margin: 0,
                                     }}>
                                         {item.number}
@@ -448,7 +448,7 @@ function Support({ user }) {
                                 <button
                                     onClick={() => handleChannelClick(item)}
                                     style={{
-                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                        background: 'linear-gradient(135deg, var(--primary-600) 0%, #764ba2 100%)',
                                         color: 'white',
                                         padding: '0.75rem 1.5rem',
                                         border: 'none',

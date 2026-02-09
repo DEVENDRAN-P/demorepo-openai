@@ -95,7 +95,7 @@ function Settings({ user }) {
     const textColor = isDarkMode ? '#ffffff' : '#1f2937';
     const textSecondary = isDarkMode ? '#b0b0b0' : '#6b7280';
     const borderColor = isDarkMode ? '#404040' : '#e5e7eb';
-    const accentColor = '#667eea';
+    const accentColor = 'var(--primary-600)';
 
     return (
         <div style={{
@@ -264,7 +264,7 @@ function Settings({ user }) {
                                         cursor: 'pointer',
                                         position: 'relative',
                                         transition: 'background 0.3s ease',
-                                        boxShadow: settings.emailNotifications ? `0 2px 8px rgba(102, 126, 234, 0.3)` : 'none',
+                                        boxShadow: settings.emailNotifications ? '0 2px 8px var(--primary-600)' : 'none',
                                     }}
                                 >
                                     <div style={{
@@ -329,7 +329,7 @@ function Settings({ user }) {
                                                     cursor: 'pointer',
                                                     position: 'relative',
                                                     transition: 'background 0.3s ease',
-                                                    boxShadow: settings[key] ? `0 2px 6px rgba(102, 126, 234, 0.3)` : 'none',
+                                                    boxShadow: settings[key] ? '0 2px 6px var(--primary-600)' : 'none',
                                                 }}
                                             >
                                                 <div style={{
