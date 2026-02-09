@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+const RETURN_TYPES = [
+  { value: 'GSTR-1', label: 'GSTR-1', feePerDay: 50, maxFee: 10000 },
+  { value: 'GSTR-3B', label: 'GSTR-3B', feePerDay: 50, maxFee: 10000 },
+  { value: 'NIL', label: 'NIL Return', feePerDay: 20, maxFee: 5000 },
+];
 
 function PenaltyLateFeeEstimator() {
   const [returnType, setReturnType] = useState('GSTR-3B');
@@ -7,17 +13,7 @@ function PenaltyLateFeeEstimator() {
   const [taxAmount, setTaxAmount] = useState('');
   const [results, setResults] = useState(null);
 
-  const returnTypes = [
-    { value: 'GSTR-1', label: 'GSTR-1', feePerDay: 50, maxFee: 10000 },
-    { value: 'GSTR-3B', label: 'GSTR-3B', feePerDay: 50, maxFee: 10000 },
-    { value: 'NIL', label: 'NIL Return', feePerDay: 20, maxFee: 5000 },
-  ];
-
-  const getSelectedReturnType = () => {
-    return returnTypes.find(rt => rt.value === returnType) || returnTypes[0];
-  };
-
-  const calculatePenalty = () => {
+  const calculatePenalty = useCallback(() => {
     if (!dueDate || !actualDate || !taxAmount) {
       setResults(null);
       return;
@@ -40,7 +36,9 @@ function PenaltyLateFeeEstimator() {
 
     const delayMs = actual - due;
     const delayDays = Math.ceil(delayMs / (1000 * 60 * 60 * 24));
-    const rt = getSelectedReturnType();
+    
+    // Get selected return type
+    const rt = RETURN_TYPES.find(r => r.value === returnType) || RETURN_TYPES[0];
 
     // Late filing fee calculation
     const lateFee = Math.min(delayDays * rt.feePerDay, rt.maxFee);
@@ -59,11 +57,11 @@ function PenaltyLateFeeEstimator() {
       totalPenalty,
       isTimely: false,
     });
-  };
+  }, [dueDate, actualDate, taxAmount, returnType]);
 
   useEffect(() => {
     calculatePenalty();
-  }, [returnType, dueDate, actualDate, taxAmount, calculatePenalty]);
+  }, [calculatePenalty]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-IN', {
@@ -74,7 +72,7 @@ function PenaltyLateFeeEstimator() {
     }).format(value);
   };
 
-  const rt = getSelectedReturnType();
+  const rt = RETURN_TYPES.find(r => r.value === returnType) || RETURN_TYPES[0];
 
   return (
     <div className="card">
@@ -107,7 +105,7 @@ function PenaltyLateFeeEstimator() {
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '0.75rem',
           }}>
-            {returnTypes.map((type) => (
+            {RETURN_TYPES.map((type) => (
               <button
                 key={type.value}
                 onClick={() => setReturnType(type.value)}
