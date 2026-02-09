@@ -48,7 +48,7 @@ const IconRobot = () => (
 
 function Dashboard({ user, setUser }) {
   const { t } = useTranslation();
-  const [filingStatus, setFilingStatus] = useState([]);
+  const [, setFilingStatus] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [stats, setStats] = useState({
     totalBills: 0,
@@ -175,23 +175,7 @@ function Dashboard({ user, setUser }) {
     return () => clearInterval(checkDarkMode);
   }, []);
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      filed: 'badge-success',
-      pending: 'badge-warning',
-      upcoming: 'badge-neutral',
-    };
-    return badges[status] || 'badge-neutral';
-  };
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      filed: '✓',
-      pending: '⏳',
-      upcoming: '📅',
-    };
-    return icons[status] || '•';
-  };
 
   return (
     <div style={{

@@ -63,7 +63,7 @@ function PenaltyLateFeeEstimator() {
 
   useEffect(() => {
     calculatePenalty();
-  }, [returnType, dueDate, actualDate, taxAmount]);
+  }, [returnType, dueDate, actualDate, taxAmount, calculatePenalty]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-IN', {
