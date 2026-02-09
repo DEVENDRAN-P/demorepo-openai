@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import ReminderPanel from '../components/ReminderPanel';
 import GSTFilingStatus from '../components/GSTFilingStatus';
+import PenaltyLateFeeEstimator from '../components/PenaltyLateFeeEstimator';
 import { getBills, migrateOldBillsKey } from '../utils/storageUtils';
 
 // SVG Icons - matching navbar style
@@ -396,46 +397,8 @@ function Dashboard({ user, setUser }) {
               </div>
             </div>
 
-            {/* GST Status Section */}
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">
-                  <div className="card-title-icon">📊</div>
-                  <span>{t('gst_status')}</span>
-                </h2>
-              </div>
-
-              {filingStatus.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {filingStatus.map((item, idx) => (
-                    <div key={idx} className="status-card">
-                      <div className="status-card-icon" style={{
-                        background: item.status === 'filed' ? 'var(--success-light)' :
-                          item.status === 'pending' ? 'var(--warning-light)' : 'var(--neutral-100)',
-                      }}>
-                        {getStatusIcon(item.status)}
-                      </div>
-                      <div className="status-card-content">
-                        <div className="status-card-title">{item.month}</div>
-                        <div className="status-card-description">
-                          {item.billCount} bills • ₹{item.amount.toLocaleString()} • Due: {new Date(item.dueDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <span className={`badge ${getStatusBadge(item.status)}`}>
-                        {t(item.status)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--neutral-400)' }}>
-                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📋</span>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>
-                    No filing data yet. Upload bills to track your GST status.
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Penalty & Late Fee Estimator */}
+            <PenaltyLateFeeEstimator />
           </div>
 
           {/* Sidebar */}
