@@ -3,24 +3,39 @@ import { useTranslation } from 'react-i18next';
 
 function AIAssistant({ user }) {
   const { t, i18n } = useTranslation();
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'bot',
-      text:
-        i18n.language === 'en'
-          ? "Hello! I'm your AI GST Compliance Assistant powered by Groq. I can help you understand GST regulations, filing procedures, tax calculations, and compliance requirements. How may I assist you today?"
-          : i18n.language === 'hi'
-            ? 'नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं आपको GST नियम, फाइलिंग प्रक्रिया, कर गणना और अनुपालन आवश्यकताओं को समझने में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?'
-            : "வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். GST விதிமுறைகள், தாக்கல் செயல்முறைகள், வரி கணக்கீடுகள் மற்றும் இணக்க தேவைகளைப் புரிந்துகொள்ள நான் உங்களுக்கு உதவ முடியும். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const messagesEndRef = useRef(null);
 
   const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  // Get welcome message based on current language
+  const getWelcomeMessage = () => {
+    const lang = i18n.language;
+    if (lang === 'hi') {
+      return 'नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं आपको GST नियम, फाइलिंग प्रक्रिया, कर गणना और अनुपालन आवश्यकताओं को समझने में मदद कर सकता हूं। आज मैं आपकी कैसे मदद कर सकता हूं?';
+    } else if (lang === 'ta') {
+      return 'வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். GST விதிமுறைகள், தாக்கல் செயல்முறைகள், வரி கணக்கீடுகள் மற்றும் இணக்க தேவைகளைப் புரிந்துகொள்ள நான் உங்களுக்கு உதவ முடியும். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?';
+    } else if (lang === 'ml') {
+      return 'നിങ്ങളെ സ്വാഗതം! ഞാൻ നിങ്ങളുടെ AI GST കംപ്ലയൻസ് അസിസ്റ്റൻറാണ്. ഞാൻ നിങ്ങളെ GST നിയമങ്ങൾ, ഫിലിംഗ് നടപടിക്രമങ്ങൾ, കരം കണക്കുകൂട്ടൽ, കംപ്ലയൻസ് ആവശ്യകതകൾ മനസിലാക്കാൻ സഹായിക്കാൻ കഴിയും. ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കാം?';
+    } else if (lang === 'kn') {
+      return 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ AI GST ಅನುಸರಣೆ ಸಹಾಯಕ. GST ನಿಯಮಗಳು, ಫೈಲಿಂಗ್ ಕಾರ್ಯವಿಧಿಗಳು, ತೆರಿಗೆ ಲೆಕ್ಕಾಚಾರಗಳು ಮತ್ತು ಅನುಸರಣೆ ಅವಶ್ಯಕತೆಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?';
+    }
+    return "Hello! I'm your AI GST Compliance Assistant powered by Groq. I can help you understand GST regulations, filing procedures, tax calculations, and compliance requirements. How may I assist you today?";
+  };
+
+  // Initialize and update welcome message on language change
+  useEffect(() => {
+    setMessages([
+      {
+        id: 1,
+        type: 'bot',
+        text: getWelcomeMessage(),
+      },
+    ]);
+  }, [i18n.language]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -179,7 +194,7 @@ function AIAssistant({ user }) {
             {t('ai_assistant')}
           </h3>
           <p style={{ fontSize: '0.8125rem', opacity: 0.9 }}>
-            {loading || streaming ? 'Typing...' : 'Online • Powered by Groq AI'}
+            {loading || streaming ? t('typing') : t('online_powered_groq')}
           </p>
         </div>
       </div>
@@ -263,7 +278,7 @@ function AIAssistant({ user }) {
             textAlign: 'center',
           }}
         >
-          Powered by Groq AI (Llama 3.3 70B) • Press Enter to send
+          {t('powered_by_groq_full')}
         </p>
       </div>
     </div>

@@ -297,7 +297,7 @@ function Profile({ user, setUser }) {
             alignItems: 'center',
             gap: '0.5rem',
           }}>
-            🎨 Profile Color Theme
+            🎨 {t('profile_color_theme')}
           </h3>
           <div style={{
             display: 'flex',
@@ -305,9 +305,9 @@ function Profile({ user, setUser }) {
             flexWrap: 'wrap',
           }}>
             {[
-              { name: 'Teal', color: 'teal', bgColor: '#14b8a6' },
-              { name: 'Indigo', color: 'indigo', bgColor: '#667eea' },
-              { name: 'Amber', color: 'amber', bgColor: '#f59e0b' },
+              { name: t('color_teal'), color: 'teal', bgColor: '#14b8a6' },
+              { name: t('color_indigo'), color: 'indigo', bgColor: '#667eea' },
+              { name: t('color_amber'), color: 'amber', bgColor: '#f59e0b' },
             ].map((option) => (
               <button
                 key={option.color}
@@ -357,7 +357,7 @@ function Profile({ user, setUser }) {
             color: isDarkMode ? '#e5e7eb' : '#1f2937',
           }}>
             <span>✏️</span>
-            Edit Profile Information
+            {t('edit_profile_information')}
           </h2>
 
           <form onSubmit={handleSubmit} style={{
@@ -465,7 +465,7 @@ function Profile({ user, setUser }) {
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                    placeholder="Enter your mobile number"
+                    placeholder={t('enter_mobile_number')}
                   />
                 </div>
               </div>
@@ -572,7 +572,7 @@ function Profile({ user, setUser }) {
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                    placeholder="Enter your business address"
+                    placeholder={t('enter_business_address')}
                   />
                 </div>
               </div>
@@ -694,7 +694,7 @@ function Profile({ user, setUser }) {
             alignItems: 'center',
             gap: '0.5rem',
           }}>
-            <span>💡</span> Pro Tips
+            <span>💡</span> {t('pro_tips')}
           </h3>
           <ul style={{
             margin: 0,
@@ -703,10 +703,10 @@ function Profile({ user, setUser }) {
             lineHeight: '1.6',
             fontSize: '0.95rem',
           }}>
-            <li>Keep your profile information up to date for accurate GST reports</li>
-            <li>Your GSTIN is important for GST filing and cannot be easily changed</li>
-            <li>Upload a professional profile picture for better identification</li>
-            <li>Choose your preferred language to get all notifications in that language</li>
+            <li>{t('tip_profile_updated')}</li>
+            <li>{t('tip_gstin_important')}</li>
+            <li>{t('tip_profile_pic')}</li>
+            <li>{t('tip_language_preference')}</li>
           </ul>
         </div>
       </div>

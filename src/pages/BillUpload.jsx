@@ -1042,14 +1042,14 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                   justifyContent: 'center',
                   gap: '0.5rem',
                 }}
-                aria-label={t('Scan with Camera')}
+                aria-label={t('scan_with_camera')}
               >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="7" width="18" height="14" rx="2" ry="2" />
                   <circle cx="12" cy="14" r="3" />
                   <path d="M7 7L9 5h6l2 2" />
                 </svg>
-                <span style={{ fontWeight: 600 }}>{t('Scan with Camera')}</span>
+                <span style={{ fontWeight: 600 }}>{t('scan_with_camera')}</span>
               </button>
             </div>
 
@@ -1155,7 +1155,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                     {t('Supports PNG, JPG, WEBP (Max 10MB)')}
                   </p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--primary-600)', marginTop: '0.75rem', fontWeight: 600 }}>
-                    {t(' AI + OCR will extract invoice details automatically')}
+                    {t('🤖 AI + OCR will extract invoice details automatically')}
                   </p>
                 </div>
               )}
@@ -1303,7 +1303,7 @@ CRITICAL: Always output raw JSON only. No markdown, no backticks, no explanation
                         handleFieldChange('allTaxRates', null);
                       }
                     }}
-                    placeholder="e.g., 9+9 or 18"
+                    placeholder={t('placeholder_gst_amount')}
                     style={{ background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', border: isDarkMode ? '1px solid #404040' : '1px solid #ccc' }}
                   />
                   {extractedData.allTaxRates && extractedData.allTaxRates.length > 1 && (

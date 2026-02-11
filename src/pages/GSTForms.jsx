@@ -399,7 +399,7 @@ function GSTForms({ user, setUser }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontSize: '0.875rem', fontWeight: 600, opacity: 0.9, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                      Net Payable
+                      {t('net_payable')}
                     </p>
                     <p style={{ fontSize: '2.25rem', fontWeight: 800 }}>
                       ₹{gstr3bData.netPayable.toLocaleString()}

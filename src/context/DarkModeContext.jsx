@@ -4,7 +4,8 @@ const DarkModeContext = createContext();
 
 export function DarkModeProvider({ children }) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        return localStorage.getItem('darkMode') === 'true';
+        const stored = localStorage.getItem('darkMode');
+        return stored === 'true' ? true : false; // Default to light mode (false)
     });
 
     const applyDarkMode = useCallback((isDark) => {

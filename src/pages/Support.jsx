@@ -123,7 +123,7 @@ function Support({ user }) {
             action: t('start_chat_action')
         },
         {
-            channel: 'WhatsApp',
+            channel: t('whatsapp_channel'),
             info: '+91-7418227907',
             action: t('whatsapp_action')
         },
@@ -164,7 +164,7 @@ function Support({ user }) {
     const handleChannelClick = (item) => {
         if (item.channel === t('email_channel') || item.channel.includes('Email')) {
             handleEmailClick(item.info);
-        } else if (item.channel === 'WhatsApp') {
+        } else if (item.channel === t('whatsapp_channel')) {
             handleWhatsAppClick(item.info);
         } else if (item.channel === t('call_channel') || item.channel.includes('Call')) {
             handleCallClick(item.info);
@@ -184,317 +184,528 @@ function Support({ user }) {
             <div style={{
                 maxWidth: '1200px',
                 margin: '0 auto',
-                padding: '1.5rem 1rem',
+                padding: '2rem 1rem',
                 marginTop: '1.5rem',
             }}>
-                {/* Header */}
+                {/* Header with Enhanced Design */}
                 <div style={{
                     background: isDarkMode
-                        ? 'linear-gradient(135deg, #4c51bf 0%, #6b3ba0 100%)'
+                        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                         : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: '1rem',
-                    padding: '2.5rem 1.5rem',
+                    borderRadius: '1.25rem',
+                    padding: '3rem 2rem',
                     color: 'white',
-                    marginBottom: '1.5rem',
+                    marginBottom: '2rem',
                     textAlign: 'center',
                     boxShadow: isDarkMode
-                        ? '0 10px 30px rgba(75, 81, 191, 0.3)'
-                        : '0 10px 30px rgba(102, 126, 234, 0.3)',
+                        ? '0 12px 40px rgba(102, 126, 234, 0.4)'
+                        : '0 12px 40px rgba(102, 126, 234, 0.3)',
+                    position: 'relative',
+                    overflow: 'hidden',
                 }}>
-                    <h1 style={{
-                        fontSize: '2.5rem',
-                        fontWeight: 'bold',
-                        marginBottom: '0.5rem',
-                    }}>
-                        {t('support_center')}
-                    </h1>
-                    <p style={{
-                        fontSize: '1.1rem',
-                        opacity: 1,
-                        color: 'white',
-                    }}>
-                        {t('support_subtitle')}
-                    </p>
+                    {/* Decorative background elements */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '-50px',
+                        right: '-50px',
+                        width: '200px',
+                        height: '200px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: '50%',
+                    }} />
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-30px',
+                        left: '-30px',
+                        width: '150px',
+                        height: '150px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '50%',
+                    }} />
+
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <div style={{
+                            fontSize: '3rem',
+                            marginBottom: '1rem',
+                            opacity: 0.95,
+                        }}>
+                            🎯
+                        </div>
+                        <h1 style={{
+                            fontSize: '2.5rem',
+                            fontWeight: '700',
+                            marginBottom: '0.75rem',
+                            letterSpacing: '-0.5px',
+                        }}>
+                            {t('support_center')}
+                        </h1>
+                        <p style={{
+                            fontSize: '1.15rem',
+                            opacity: 0.95,
+                            color: 'white',
+                            marginBottom: 0,
+                            fontWeight: '500',
+                        }}>
+                            {t('support_subtitle')}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Tabs */}
+                {/* Tabs - Enhanced */}
                 <div style={{
                     display: 'flex',
-                    gap: '1rem',
-                    marginBottom: '1.5rem',
-                    borderBottom: `2px solid ${borderColor}`,
-                    overflowX: 'auto',
+                    gap: '0.5rem',
+                    marginBottom: '2rem',
                     flexWrap: 'wrap',
+                    background: isDarkMode ? '#2d2d2d' : '#f5f5f5',
+                    padding: '0.5rem',
+                    borderRadius: '0.75rem',
+                    border: `1px solid ${borderColor}`,
                 }}>
                     {[
-                        { id: 'helpdesk', label: t('helpdesk_numbers') },
-                        { id: 'faq', label: t('faqs') },
-                        { id: 'contact', label: t('contact_us') }
+                        { id: 'helpdesk', label: t('helpdesk_numbers'), icon: '☎️' },
+                        { id: 'faq', label: t('faqs'), icon: '❓' },
+                        { id: 'contact', label: t('contact_us'), icon: '✉️' }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             style={{
-                                padding: '1rem 1.5rem',
-                                background: 'none',
+                                padding: '0.875rem 1.25rem',
+                                background: activeTab === tab.id
+                                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                                    : 'transparent',
                                 border: 'none',
-                                borderBottom: activeTab === tab.id ? '3px solid #667eea' : 'none',
+                                borderRadius: '0.5rem',
                                 cursor: 'pointer',
                                 fontSize: '1rem',
                                 fontWeight: activeTab === tab.id ? '600' : '500',
-                                color: activeTab === tab.id ? '#667eea' : textSecondary,
+                                color: activeTab === tab.id ? 'white' : textSecondary,
                                 transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                whiteSpace: 'nowrap',
+                            }}
+                            onMouseEnter={(e) => {
+                                if (activeTab !== tab.id) {
+                                    e.currentTarget.style.background = isDarkMode ? '#3a3a3a' : '#e5e5e5';
+                                    e.currentTarget.style.color = textColor;
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (activeTab !== tab.id) {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = textSecondary;
+                                }
                             }}
                         >
+                            <span>{tab.icon}</span>
                             {tab.label}
                         </button>
                     ))}
                 </div>
 
-                {/* Helpdesk Numbers Tab */}
+                {/* Helpdesk Numbers Tab - Enhanced */}
                 {activeTab === 'helpdesk' && (
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '1.5rem',
+                        gap: '2rem',
                     }}>
                         {helpdeskNumbers.map((item, index) => (
                             <div
                                 key={index}
                                 style={{
                                     background: cardBg,
-                                    borderRadius: '0.75rem',
+                                    borderRadius: '1rem',
                                     padding: '2rem',
                                     boxShadow: isDarkMode
-                                        ? '0 2px 8px rgba(0,0,0,0.3)'
-                                        : '0 2px 8px rgba(0,0,0,0.1)',
+                                        ? '0 4px 12px rgba(0,0,0,0.3)'
+                                        : '0 4px 12px rgba(0,0,0,0.08)',
                                     border: `1px solid ${borderColor}`,
                                     transition: 'all 0.3s ease',
                                     cursor: 'pointer',
+                                    position: 'relative',
+                                    overflow: 'hidden',
                                 }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.boxShadow = isDarkMode
-                                        ? '0 8px 20px rgba(102, 126, 234, 0.15)'
-                                        : '0 8px 20px rgba(102, 126, 234, 0.2)';
-                                    e.currentTarget.style.transform = 'translateY(-5px)';
+                                        ? '0 12px 30px rgba(102, 126, 234, 0.25)'
+                                        : '0 12px 30px rgba(102, 126, 234, 0.2)';
+                                    e.currentTarget.style.transform = 'translateY(-8px)';
+                                    e.currentTarget.style.borderColor = '#667eea';
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.boxShadow = isDarkMode
-                                        ? '0 2px 8px rgba(0,0,0,0.3)'
-                                        : '0 2px 8px rgba(0,0,0,0.1)';
+                                        ? '0 4px 12px rgba(0,0,0,0.3)'
+                                        : '0 4px 12px rgba(0,0,0,0.08)';
                                     e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.borderColor = borderColor;
                                 }}
                             >
-                                <h3 style={{
-                                    fontSize: '1.25rem',
-                                    fontWeight: 'bold',
-                                    marginBottom: '0.75rem',
-                                    color: textColor,
-                                }}>
-                                    {item.type}
-                                </h3>
-                                <p style={{
-                                    color: textSecondary,
-                                    marginBottom: '0.75rem',
-                                    fontSize: '0.95rem',
-                                }}>
-                                    {item.description}
-                                </p>
+                                {/* Top accent bar */}
                                 <div style={{
-                                    background: isDarkMode ? '#404040' : '#f0f4ff',
-                                    padding: '1rem',
-                                    borderRadius: '0.5rem',
-                                    marginBottom: '0.75rem',
-                                }}>
-                                    <p style={{
-                                        fontSize: '1.5rem',
-                                        fontWeight: 'bold',
-                                        color: '#667eea',
-                                        margin: 0,
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    height: '4px',
+                                    background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                                }} />
+
+                                <div style={{ paddingTop: '0.5rem' }}>
+                                    <div style={{
+                                        fontSize: '2rem',
+                                        marginBottom: '1rem',
+                                        opacity: 0.8,
                                     }}>
-                                        {item.number}
+                                        ☎️
+                                    </div>
+                                    <h3 style={{
+                                        fontSize: '1.25rem',
+                                        fontWeight: '700',
+                                        marginBottom: '0.75rem',
+                                        color: textColor,
+                                        lineHeight: '1.4',
+                                    }}>
+                                        {item.type}
+                                    </h3>
+                                    <p style={{
+                                        color: textSecondary,
+                                        marginBottom: '1rem',
+                                        fontSize: '0.95rem',
+                                        lineHeight: '1.5',
+                                    }}>
+                                        {item.description}
                                     </p>
+                                    <div style={{
+                                        background: isDarkMode ? '#3a3a3a' : '#f0f4ff',
+                                        padding: '1.25rem',
+                                        borderRadius: '0.75rem',
+                                        marginBottom: '1rem',
+                                        border: `1px solid ${isDarkMode ? '#4a4a4a' : '#e0e7ff'}`,
+                                    }}>
+                                        <p style={{
+                                            fontSize: '0.85rem',
+                                            color: textSecondary,
+                                            margin: '0 0 0.5rem 0',
+                                            fontWeight: '500',
+                                        }}>
+                                            {t('phone_number') || 'Phone Number'}
+                                        </p>
+                                        <p style={{
+                                            fontSize: '1.7rem',
+                                            fontWeight: '700',
+                                            color: '#667eea',
+                                            margin: 0,
+                                            fontFamily: 'monospace',
+                                        }}>
+                                            {item.number}
+                                        </p>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        color: textSecondary,
+                                        fontSize: '0.9rem',
+                                    }}>
+                                        <span>🕐</span>
+                                        <span><strong>{t('hours') || 'Hours'}:</strong> {item.hours}</span>
+                                    </div>
                                 </div>
-                                <p style={{
-                                    color: textSecondary,
-                                    fontSize: '0.85rem',
-                                    margin: 0,
-                                }}>
-                                    <strong>Hours:</strong> {item.hours}
-                                </p>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* FAQs Tab */}
+                {/* FAQs Tab - Enhanced */}
                 {activeTab === 'faq' && (
                     <div>
-                        {faqs.map((faq, index) => (
-                            <div
-                                key={index}
-                                style={{
-                                    background: cardBg,
-                                    borderRadius: '0.75rem',
-                                    marginBottom: '1rem',
-                                    overflow: 'hidden',
-                                    boxShadow: isDarkMode
-                                        ? '0 1px 3px rgba(0,0,0,0.3)'
-                                        : '0 1px 3px rgba(0,0,0,0.1)',
-                                    border: `1px solid ${borderColor}`,
-                                }}
-                            >
-                                <button
-                                    onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '1.5rem',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        textAlign: 'left',
-                                        fontSize: '1rem',
-                                        fontWeight: '600',
-                                        color: textColor,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = hoverBg;
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = 'none';
-                                    }}
-                                >
-                                    {faq.question}
-                                    <span style={{
-                                        fontSize: '1.2rem',
-                                        transform: expandedFAQ === index ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.3s ease',
-                                    }}>
-                                        ▼
-                                    </span>
-                                </button>
-                                {expandedFAQ === index && (
-                                    <div style={{
-                                        padding: '0 1.5rem 1.5rem 1.5rem',
-                                        borderTop: `1px solid ${borderColor}`,
-                                        color: textSecondary,
-                                        lineHeight: '1.6',
-                                    }}>
-                                        {faq.answer}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
+                        <div style={{
+                            marginBottom: '2rem',
+                            padding: '1.5rem',
+                            background: isDarkMode ? '#2d2d2d' : '#f0f4ff',
+                            borderRadius: '0.75rem',
+                            borderLeft: '4px solid #667eea',
+                        }}>
+                            <p style={{
+                                color: textSecondary,
+                                fontSize: '0.95rem',
+                                margin: 0,
+                                lineHeight: '1.5',
+                            }}>
+                                💡 {t('faq_intro') || 'Find answers to frequently asked questions. Click a question to expand the answer.'}
+                            </p>
+                        </div>
 
-                {/* Contact Channels Tab */}
-                {activeTab === 'contact' && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '1.5rem',
-                    }}>
-                        {contactChannels.map((item, index) => (
-                            <div
-                                key={index}
-                                style={{
-                                    background: cardBg,
-                                    borderRadius: '0.75rem',
-                                    padding: '2rem',
-                                    boxShadow: isDarkMode
-                                        ? '0 2px 8px rgba(0,0,0,0.3)'
-                                        : '0 2px 8px rgba(0,0,0,0.1)',
-                                    border: `1px solid ${borderColor}`,
-                                    textAlign: 'center',
-                                }}
-                            >
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    marginBottom: '1rem',
-                                }}>
-                                    {item.channel === t('email_channel') ?
-                                        <IconEmail color={isDarkMode ? '#e5e7eb' : '#1f2937'} /> :
-                                        item.channel === 'WhatsApp' ?
-                                            <IconWhatsApp color="#25D366" /> :
-                                            item.channel === t('call_channel') ?
-                                                <IconPhone color={isDarkMode ? '#e5e7eb' : '#1f2937'} /> :
-                                                item.channel === t('live_chat_channel') ?
-                                                    <IconChat color={isDarkMode ? '#e5e7eb' : '#1f2937'} /> : null
-                                    }
-                                </div>
-                                <h3 style={{
-                                    fontSize: '1.1rem',
-                                    fontWeight: '600',
-                                    marginBottom: '0.5rem',
-                                    color: textColor,
-                                }}>
-                                    {item.channel === t('email_channel') ? 'Email' :
-                                        item.channel === 'WhatsApp' ? 'WhatsApp' :
-                                            item.channel === t('call_channel') ? 'Call' :
-                                                item.channel === t('live_chat_channel') ? 'Live Chat' : item.channel}
-                                </h3>
-                                <p style={{
-                                    color: textSecondary,
-                                    marginBottom: '1rem',
-                                    fontSize: '0.95rem',
-                                }}>
-                                    {item.info}
-                                </p>
-                                <button
-                                    onClick={() => handleChannelClick(item)}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                        }}>
+                            {faqs.map((faq, index) => (
+                                <div
+                                    key={index}
                                     style={{
-                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                        color: 'white',
-                                        padding: '0.75rem 1.5rem',
-                                        border: 'none',
-                                        borderRadius: '0.375rem',
-                                        cursor: 'pointer',
-                                        fontWeight: '600',
+                                        background: cardBg,
+                                        borderRadius: '1rem',
+                                        overflow: 'hidden',
+                                        boxShadow: isDarkMode
+                                            ? '0 4px 12px rgba(0,0,0,0.3)'
+                                            : '0 4px 12px rgba(0,0,0,0.08)',
+                                        border: `1px solid ${borderColor}`,
                                         transition: 'all 0.3s ease',
                                     }}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.boxShadow = isDarkMode
-                                            ? '0 4px 12px rgba(102, 126, 234, 0.3)'
-                                            : '0 4px 12px rgba(102, 126, 234, 0.4)';
-                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                            ? '0 8px 20px rgba(102, 126, 234, 0.2)'
+                                            : '0 8px 20px rgba(102, 126, 234, 0.15)';
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.boxShadow = 'none';
-                                        e.currentTarget.style.transform = 'scale(1)';
+                                        e.currentTarget.style.boxShadow = isDarkMode
+                                            ? '0 4px 12px rgba(0,0,0,0.3)'
+                                            : '0 4px 12px rgba(0,0,0,0.08)';
                                     }}
                                 >
-                                    {item.channel === t('email_channel') ? 'Send Email' :
-                                        item.channel === 'WhatsApp' ? 'Open WhatsApp' :
-                                            item.channel === t('call_channel') ? 'Call Now' :
-                                                item.channel === t('live_chat_channel') ? 'Start Chat' : item.action}
-                                </button>
-                            </div>
-                        ))}
+                                    <button
+                                        onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '1.5rem',
+                                            background: expandedFAQ === index
+                                                ? isDarkMode ? '#3a3a3a' : '#f8faff'
+                                                : 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            color: textColor,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: '1rem',
+                                            transition: 'all 0.3s ease',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (expandedFAQ !== index) {
+                                                e.currentTarget.style.background = isDarkMode ? '#3a3a3a' : '#f8faff';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (expandedFAQ !== index) {
+                                                e.currentTarget.style.background = 'none';
+                                            }
+                                        }}
+                                    >
+                                        <span style={{ flexGrow: 1 }}>❓ {faq.question}</span>
+                                        <span style={{
+                                            fontSize: '1.2rem',
+                                            transform: expandedFAQ === index ? 'rotate(180deg)' : 'rotate(0deg)',
+                                            transition: 'transform 0.3s ease',
+                                            flexShrink: 0,
+                                        }}>
+                                            ▼
+                                        </span>
+                                    </button>
+                                    {expandedFAQ === index && (
+                                        <div style={{
+                                            padding: '1.5rem',
+                                            borderTop: `1px solid ${borderColor}`,
+                                            color: textSecondary,
+                                            lineHeight: '1.7',
+                                            fontSize: '0.95rem',
+                                            background: isDarkMode ? '#2d2d2d' : '#fafbff',
+                                        }}>
+                                            {faq.answer}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                {/* Important Notice */}
+                {/* Contact Channels Tab - Enhanced */}
+                {activeTab === 'contact' && (
+                    <div>
+                        <div style={{
+                            marginBottom: '2rem',
+                            padding: '1.5rem',
+                            background: isDarkMode ? '#2d2d2d' : '#f0f4ff',
+                            borderRadius: '0.75rem',
+                            borderLeft: '4px solid #667eea',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>📞</span>
+                            <div>
+                                <p style={{
+                                    color: textColor,
+                                    fontWeight: '600',
+                                    margin: '0 0 0.25rem 0',
+                                }}>
+                                    {t('reach_out') || 'Reach Out to Us'}
+                                </p>
+                                <p style={{
+                                    color: textSecondary,
+                                    fontSize: '0.95rem',
+                                    margin: 0,
+                                    lineHeight: '1.4',
+                                }}>
+                                    {t('multiple_channels') || 'Choose your preferred contact method and connect with our support team'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                            gap: '2rem',
+                        }}>
+                            {contactChannels.map((item, index) => (
+                                <div
+                                    key={index}
+                                    style={{
+                                        background: cardBg,
+                                        borderRadius: '1rem',
+                                        padding: '2rem',
+                                        boxShadow: isDarkMode
+                                            ? '0 4px 12px rgba(0,0,0,0.3)'
+                                            : '0 4px 12px rgba(0,0,0,0.08)',
+                                        border: `1px solid ${borderColor}`,
+                                        textAlign: 'center',
+                                        transition: 'all 0.3s ease',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.boxShadow = isDarkMode
+                                            ? '0 12px 30px rgba(102, 126, 234, 0.25)'
+                                            : '0 12px 30px rgba(102, 126, 234, 0.2)';
+                                        e.currentTarget.style.transform = 'translateY(-8px)';
+                                        e.currentTarget.style.borderColor = '#667eea';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.boxShadow = isDarkMode
+                                            ? '0 4px 12px rgba(0,0,0,0.3)'
+                                            : '0 4px 12px rgba(0,0,0,0.08)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.borderColor = borderColor;
+                                    }}
+                                >
+                                    {/* Top accent bar */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        height: '4px',
+                                        background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                                    }} />
+
+                                    <div style={{ paddingTop: '0.5rem' }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            marginBottom: '1.5rem',
+                                            height: '50px',
+                                            alignItems: 'center',
+                                        }}>
+                                            {item.channel === t('email_channel') || item.channel.includes('Email') ?
+                                                <IconEmail color={isDarkMode ? '#667eea' : '#667eea'} /> :
+                                                item.channel === t('whatsapp_channel') ?
+                                                    <IconWhatsApp color="#25D366" /> :
+                                                    item.channel === t('call_channel') || item.channel.includes('Call') ?
+                                                        <IconPhone color={isDarkMode ? '#667eea' : '#667eea'} /> :
+                                                        item.channel === t('live_chat_channel') || item.channel.includes('Chat') ?
+                                                            <IconChat color={isDarkMode ? '#667eea' : '#667eea'} /> : null
+                                            }
+                                        </div>
+                                        <h3 style={{
+                                            fontSize: '1.15rem',
+                                            fontWeight: '700',
+                                            marginBottom: '0.75rem',
+                                            color: textColor,
+                                        }}>
+                                            {item.channel === t('email_channel') ? '📧 ' + t('email_channel') :
+                                                item.channel === t('whatsapp_channel') ? '💬 ' + t('whatsapp_channel') :
+                                                    item.channel === t('call_channel') ? '☎️ ' + t('call_channel') :
+                                                        item.channel === t('live_chat_channel') ? '💭 ' + t('live_chat_channel') : item.channel}
+                                        </h3>
+                                        <p style={{
+                                            color: textSecondary,
+                                            marginBottom: '1.5rem',
+                                            fontSize: '0.95rem',
+                                            fontWeight: '500',
+                                            wordBreak: 'break-word',
+                                            fontFamily: 'monospace',
+                                        }}>
+                                            {item.info}
+                                        </p>
+                                        <button
+                                            onClick={() => handleChannelClick(item)}
+                                            style={{
+                                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                color: 'white',
+                                                padding: '0.875rem 1.75rem',
+                                                border: 'none',
+                                                borderRadius: '0.5rem',
+                                                cursor: 'pointer',
+                                                fontWeight: '600',
+                                                fontSize: '0.95rem',
+                                                transition: 'all 0.3s ease',
+                                                width: '100%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.boxShadow = isDarkMode
+                                                    ? '0 6px 16px rgba(102, 126, 234, 0.4)'
+                                                    : '0 6px 16px rgba(102, 126, 234, 0.35)';
+                                                e.currentTarget.style.transform = 'scale(1.03)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.boxShadow = 'none';
+                                                e.currentTarget.style.transform = 'scale(1)';
+                                            }}
+                                        >
+                                            <span>→</span>
+                                            {item.action}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Important Notice - Enhanced */}
                 <div style={{
-                    marginTop: '2rem',
-                    background: isDarkMode ? '#3a3a1a' : '#fef3c7',
-                    border: `1px solid ${isDarkMode ? '#665a00' : '#fcd34d'}`,
-                    borderRadius: '0.75rem',
-                    padding: '1.5rem',
+                    marginTop: '3rem',
+                    background: isDarkMode
+                        ? 'linear-gradient(135deg, #3a3a1a 0%, #4a3a2a 100%)'
+                        : 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)',
+                    border: `2px solid ${isDarkMode ? '#665a00' : '#f59e0b'}`,
+                    borderRadius: '1rem',
+                    padding: '2rem',
                     display: 'flex',
                     alignItems: 'flex-start',
-                    gap: '1rem',
+                    gap: '1.5rem',
                 }}>
-                    <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-                    <div>
+                    <span style={{ fontSize: '2rem', flexShrink: 0 }}>⚠️</span>
+                    <div style={{ flex: 1 }}>
                         <h3 style={{
-                            fontWeight: '600',
+                            fontWeight: '700',
+                            fontSize: '1.1rem',
                             color: isDarkMode ? '#fbbf24' : '#92400e',
-                            marginBottom: '0.5rem',
+                            marginBottom: '0.75rem',
+                            margin: 0,
                         }}>
                             {t('important_notice')}
                         </h3>
@@ -502,11 +713,74 @@ function Support({ user }) {
                             color: isDarkMode ? '#d1a825' : '#b45309',
                             margin: 0,
                             fontSize: '0.95rem',
-                            lineHeight: '1.5',
+                            lineHeight: '1.6',
                         }}>
                             {t('important_notice_text')}
                         </p>
                     </div>
+                </div>
+
+                {/* Support CTA Section */}
+                <div style={{
+                    marginTop: '3rem',
+                    background: isDarkMode
+                        ? 'linear-gradient(135deg, #2d2d3d 0%, #3a3a4a 100%)'
+                        : 'linear-gradient(135deg, #f0f4ff 0%, #f5f3ff 100%)',
+                    borderRadius: '1rem',
+                    padding: '2.5rem',
+                    textAlign: 'center',
+                    border: `1px solid ${borderColor}`,
+                }}>
+                    <h2 style={{
+                        fontSize: '1.5rem',
+                        fontWeight: '700',
+                        color: textColor,
+                        marginBottom: '1rem',
+                        margin: '0 0 1rem 0',
+                    }}>
+                        {t('still_need_help') || 'Still Need Help?'}
+                    </h2>
+                    <p style={{
+                        color: textSecondary,
+                        fontSize: '1rem',
+                        marginBottom: '1.5rem',
+                        lineHeight: '1.6',
+                        maxWidth: '600px',
+                        margin: '0 auto 1.5rem auto',
+                    }}>
+                        {t('support_message') || 'Our support team is available 24/7 to assist you. Don\'t hesitate to reach out through any of the channels above.'}
+                    </p>
+                    <button
+                        onClick={() => setActiveTab('contact')}
+                        style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            padding: '1rem 2.5rem',
+                            border: 'none',
+                            borderRadius: '0.5rem',
+                            cursor: 'pointer',
+                            fontWeight: '700',
+                            fontSize: '1rem',
+                            transition: 'all 0.3s ease',
+                            boxShadow: isDarkMode
+                                ? '0 8px 20px rgba(102, 126, 234, 0.3)'
+                                : '0 8px 20px rgba(102, 126, 234, 0.25)',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                            e.currentTarget.style.boxShadow = isDarkMode
+                                ? '0 12px 28px rgba(102, 126, 234, 0.4)'
+                                : '0 12px 28px rgba(102, 126, 234, 0.35)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = isDarkMode
+                                ? '0 8px 20px rgba(102, 126, 234, 0.3)'
+                                : '0 8px 20px rgba(102, 126, 234, 0.25)';
+                        }}
+                    >
+                        {t('contact_us_now') || 'Contact Us Now'} →
+                    </button>
                 </div>
             </div>
         </div>

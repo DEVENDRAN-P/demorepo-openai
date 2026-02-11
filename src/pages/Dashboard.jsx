@@ -117,8 +117,11 @@ function Dashboard({ user, setUser }) {
     if (bills.filter(b => !b.filed).length > 0) {
       newReminders.push({
         type: 'warning',
-        title: 'GSTR-3B Filing Due',
-        message: `You have ${bills.filter(b => !b.filed).length} unconfirmed bills. File by ${new Date(currentYear, currentMonth + 1, 20).toLocaleDateString()}`,
+        title: t('gstr3b_filing_due'),
+        message: t('unconfirmed_bills_msg', {
+          count: bills.filter(b => !b.filed).length,
+          date: new Date(currentYear, currentMonth + 1, 20).toLocaleDateString()
+        }),
       });
     }
     if (bills.length === 0) {
@@ -458,7 +461,7 @@ function Dashboard({ user, setUser }) {
               💰 {t('cost_savings_earned')}
             </h2>
             <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '1rem' }}>
-              See how much you're saving with GST Buddy vs. hiring an accountant
+              {t('see_how_much_saving')}
             </p>
           </div>
 
@@ -478,13 +481,13 @@ function Dashboard({ user, setUser }) {
               boxShadow: '0 10px 30px rgba(34, 197, 94, 0.2)',
             }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 600, opacity: 0.95, marginBottom: '0.75rem' }}>
-                Total Savings So Far
+                {t('total_savings_so_far')}
               </div>
               <div style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.5rem' }}>
                 ₹{stats.costSavings.toLocaleString()}
               </div>
               <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                From {stats.totalBills} bills • 6% automation rate
+                {t('from_bills_automation', { count: stats.totalBills, rate: 6 })}
               </div>
             </div>
 
@@ -498,13 +501,13 @@ function Dashboard({ user, setUser }) {
               boxShadow: '0 10px 30px rgba(239, 68, 68, 0.2)',
             }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 600, opacity: 0.95, marginBottom: '0.75rem' }}>
-                Traditional Accountant Fee
+                {t('traditional_accountant_fee')}
               </div>
               <div style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.5rem' }}>
                 ₹3,000
               </div>
               <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                Per month (typical market rate)
+                {t('per_month_typical')}
               </div>
             </div>
 
@@ -518,13 +521,13 @@ function Dashboard({ user, setUser }) {
               boxShadow: '0 10px 30px rgba(139, 92, 246, 0.2)',
             }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 600, opacity: 0.95, marginBottom: '0.75rem' }}>
-                GST Buddy Monthly Cost
+                {t('gst_buddy_monthly_cost')}
               </div>
               <div style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.5rem' }}>
                 ₹500
               </div>
               <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                or ₹0 for free tier
+                {t('or_free_tier')}
               </div>
             </div>
           </div>
@@ -536,7 +539,7 @@ function Dashboard({ user, setUser }) {
             border: '2px solid rgba(34, 197, 94, 0.2)',
           }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-              Monthly Comparison
+              {t('Monthly Comparison')}
             </h3>
 
             <div style={{
@@ -552,7 +555,7 @@ function Dashboard({ user, setUser }) {
                 borderLeft: '4px solid #ef4444',
               }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  Accountant Fee
+                  {t('accountant_fee')}
                 </div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#dc2626' }}>
                   ₹3,000
@@ -567,7 +570,7 @@ function Dashboard({ user, setUser }) {
                 borderLeft: '4px solid #8b5cf6',
               }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  GST Buddy Cost
+                  {t('gst_buddy_cost')}
                 </div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#7c3aed' }}>
                   ₹500
@@ -582,10 +585,10 @@ function Dashboard({ user, setUser }) {
                 borderLeft: '4px solid #22c55e',
               }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--neutral-600)', marginBottom: '0.5rem' }}>
-                  Monthly Savings
+                  {t('monthly_savings')}
                 </div>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#16a34a' }}>
-                  ₹2,500
+                  {t('monthly_savings_amount')}
                 </div>
               </div>
             </div>
@@ -600,7 +603,7 @@ function Dashboard({ user, setUser }) {
               textAlign: 'center',
             }}>
               <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                If you use GST Buddy for a full year:
+                {t('if_use_full_year')}
               </p>
               <div style={{
                 fontSize: '2rem',
@@ -608,10 +611,10 @@ function Dashboard({ user, setUser }) {
                 color: '#16a34a',
                 marginBottom: '0.5rem',
               }}>
-                ₹30,000 saved annually
+                ₹30,000 {t('saved_annually')}
               </div>
               <p style={{ color: isDarkMode ? '#e5e7eb' : 'var(--neutral-600)', fontSize: '0.875rem', margin: 0 }}>
-                Plus ₹{(stats.costSavings * 12).toLocaleString()} from automation efficiency based on your current upload rate
+                {t('plus_automation_efficiency', { amount: (stats.costSavings * 12).toLocaleString() })}
               </p>
             </div>
           </div>

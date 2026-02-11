@@ -47,6 +47,14 @@ const IconChat = ({ active }) => (
     <circle cx="15" cy="10" r="1" />
   </svg>
 );
+const IconSupport = ({ active }) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={active ? 'var(--primary-700)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 21H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2z" />
+    <path d="M10 5V3h4v2" />
+    <path d="M12 13v1" />
+    <path d="M9 12a3 3 0 0 0 6 0" />
+  </svg>
+);
 const IconGlobe = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -182,6 +190,7 @@ function Navbar({ user }) {
     { path: '/gst-forms', label: t('gst_forms'), icon: (a) => <IconClipboard active={a} /> },
     { path: '/reports', label: t('reports'), icon: (a) => <IconChart active={a} /> },
     { path: '/chat', label: t('ai_assistant'), icon: (a) => <IconChat active={a} /> },
+    { path: '/support', label: t('support'), icon: (a) => <IconSupport active={a} /> },
   ];
 
   const handleNavClick = (path) => {
@@ -307,7 +316,7 @@ function Navbar({ user }) {
                 cursor: 'pointer',
                 padding: '0.625rem',
               }}
-              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDarkMode ? t('switch_to_light_mode') : t('switch_to_dark_mode')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-secondary)';
                 e.currentTarget.style.transform = 'scale(1.1)';
@@ -333,7 +342,7 @@ function Navbar({ user }) {
                 color: '#25D366',
                 transition: 'all 0.2s ease',
               }}
-              title="Join our WhatsApp group"
+              title={t('join_whatsapp_group')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(37, 211, 102, 0.1)';
                 e.currentTarget.style.transform = 'scale(1.1)';
@@ -345,7 +354,7 @@ function Navbar({ user }) {
             >
               <IconWhatsApp />
               <span style={{ fontSize: '0.8rem', fontWeight: 600, display: 'none' }} className="whatsapp-label">
-                Chat
+                {t('chat')}
               </span>
             </a>
 

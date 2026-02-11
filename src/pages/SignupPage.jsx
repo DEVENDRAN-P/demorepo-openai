@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { signup, signupWithGoogle } from '../services/authService';
 import { perf } from '../services/perfService';
 
 function SignupPage() {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -319,12 +321,10 @@ function SignupPage() {
       {/* Signup Card */}
       <div style={{
         background: 'white',
-        borderRadius: '24px',
-        padding: '3rem',
+        borderRadius: '20px',
+        padding: '2rem',
         width: '100%',
-        maxWidth: '550px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
+        maxWidth: '480px',
         boxShadow: '0 25px 70px rgba(30, 60, 114, 0.2)',
         position: 'relative',
         zIndex: 10,
@@ -332,19 +332,19 @@ function SignupPage() {
         border: '1px solid rgba(255, 255, 255, 0.6)'
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '80px',
-            height: '80px',
-            borderRadius: '16px',
+            width: '60px',
+            height: '60px',
+            borderRadius: '12px',
             background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
             boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-            marginBottom: '1.5rem'
+            marginBottom: '0.8rem'
           }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="8.5" cy="7" r="4" />
               <line x1="20" y1="8" x2="20" y2="14" />
@@ -352,23 +352,23 @@ function SignupPage() {
             </svg>
           </div>
           <h1 style={{
-            fontSize: '2.5rem',
+            fontSize: '2rem',
             fontWeight: '700',
             color: '#1e3c72',
-            marginBottom: '0.5rem',
+            marginBottom: '0.25rem',
             letterSpacing: '-0.02em'
           }}>
             Create Account
           </h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>
-            Join AI IN BUSINESS today
+          <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+            Join to get started
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-4 animate-fade-in">
+        <form onSubmit={handleSignup} className="space-y-3" style={{ marginTop: '1.2rem' }}>
           {/* Name Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div style={{ marginBottom: '0.8rem' }}>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
               <span>👤</span> Full Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -376,8 +376,8 @@ function SignupPage() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="John Doe"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+              placeholder={t('placeholder_full_name')}
+              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
                 }`}
               onFocus={(e) => {
                 if (!fieldErrors.name) {
@@ -393,15 +393,15 @@ function SignupPage() {
               }}
             />
             {fieldErrors.name && (
-              <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                 <span>⚠️</span> {fieldErrors.name}
               </p>
             )}
           </div>
 
           {/* Email Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div style={{ marginBottom: '0.8rem' }}>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
               <span>✉️</span> Email Address <span className="text-red-500">*</span>
             </label>
             <input
@@ -409,8 +409,8 @@ function SignupPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="you@example.com"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+              placeholder={t('placeholder_email')}
+              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
                 }`}
               onFocus={(e) => {
                 if (!fieldErrors.email) {
@@ -426,15 +426,15 @@ function SignupPage() {
               }}
             />
             {fieldErrors.email && (
-              <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                 <span>⚠️</span> {fieldErrors.email}
               </p>
             )}
           </div>
 
           {/* GSTIN Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div style={{ marginBottom: '0.8rem' }}>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
               <span>📋</span> GSTIN <span className="text-red-500">*</span>
             </label>
             <input
@@ -442,9 +442,9 @@ function SignupPage() {
               name="gstin"
               value={formData.gstin}
               onChange={handleChange}
-              placeholder="27AAHCT5055K1Z0"
+              placeholder={t('placeholder_gstin')}
               maxLength="15"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
                 }`}
               onFocus={(e) => {
                 if (!fieldErrors.gstin) {
@@ -468,8 +468,8 @@ function SignupPage() {
           </div>
 
           {/* Password Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div style={{ marginBottom: '0.8rem' }}>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
               <span>🔐</span> Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -478,8 +478,8 @@ function SignupPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
-                className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 pr-12 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
+                placeholder={t('placeholder_password')}
+                className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm pr-10 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
                   }`}
                 onFocus={(e) => {
                   if (!fieldErrors.password) {
@@ -497,21 +497,21 @@ function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-3.5 text-gray-500 hover:text-purple-600 transition text-xl hover:scale-110 active:scale-95"
+                className="absolute right-3 top-2 text-gray-500 text-lg"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
             {fieldErrors.password && (
-              <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                 <span>⚠️</span> {fieldErrors.password}
               </p>
             )}
 
             {/* Password Strength Indicator */}
             {formData.password && (
-              <div className="mt-3 animate-fade-in">
-                <div className="flex items-center justify-between mb-2">
+              <div style={{ marginTop: '0.5rem' }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: '0.4rem' }}>
                   <p className="text-xs text-gray-600 font-semibold">Strength:</p>
                   <span className={`text-xs font-bold ${getStrengthTextColor(passwordStrength)}`}>
                     {passwordStrength}
@@ -523,16 +523,13 @@ function SignupPage() {
                     style={{ width: `${getStrengthPercentage(passwordStrength)}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  💡 Mix uppercase, lowercase, numbers, and special characters for very strong password
-                </p>
               </div>
             )}
           </div>
 
           {/* Confirm Password Field */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <div style={{ marginBottom: '0.8rem' }}>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
               <span>✓</span> Confirm Password <span className="text-red-500">*</span>
             </label>
             <input
@@ -540,9 +537,19 @@ function SignupPage() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="••••••••"
-              className={`w-full px-4 py-3 border-2 rounded-lg outline-none transition transform focus:scale-105 ${fieldErrors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              placeholder={t('placeholder_password')}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                border: fieldErrors.confirmPassword ? '2px solid #ef4444' : '2px solid #d1d5db',
+                borderRadius: '0.5rem',
+                backgroundColor: fieldErrors.confirmPassword ? '#fef2f2' : '#f9fafb',
+                color: '#1f2937',
+                fontSize: '0.875rem',
+                outline: 'none',
+                transition: 'all 0.2s ease'
+              }}
+              className="hover:bg-white"
               onFocus={(e) => {
                 if (!fieldErrors.confirmPassword) {
                   e.target.style.borderColor = '#1e3c72';
@@ -557,12 +564,12 @@ function SignupPage() {
               }}
             />
             {fieldErrors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                 <span>⚠️</span> {fieldErrors.confirmPassword}
               </p>
             )}
             {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-              <p className="text-green-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
+              <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
                 <span>✅</span> Passwords match
               </p>
             )}
@@ -647,9 +654,9 @@ function SignupPage() {
         </form>
 
         {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '2rem 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', margin: '1.2rem 0' }}>
           <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
-          <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '600' }}>OR</span>
+          <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600' }}>OR</span>
           <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)' }}></div>
         </div>
 
@@ -660,19 +667,19 @@ function SignupPage() {
           disabled={loading}
           style={{
             width: '100%',
-            padding: '1.1rem',
+            padding: '0.9rem',
             borderRadius: '12px',
             border: '2px solid #e2e8f0',
             background: 'white',
             color: '#1e3c72',
-            fontSize: '1.05rem',
+            fontSize: '0.95rem',
             fontWeight: '600',
             cursor: loading ? 'not-allowed' : 'pointer',
             transition: 'all 0.3s ease',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.75rem',
+            gap: '0.6rem',
             opacity: loading ? 0.6 : 1,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
           }}
@@ -689,17 +696,17 @@ function SignupPage() {
             e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           </svg>
-          {loading ? 'Creating account with Google...' : 'Sign Up with Google'}
+          {loading ? 'Signing up...' : 'Google'}
         </button>
 
         {/* Login Link */}
-        <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.95rem', marginTop: '1.5rem' }}>
+        <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.9rem', marginTop: '0.9rem', marginBottom: '0.8rem' }}>
           Already have an account?{' '}
           <Link to="/login" style={{
             color: '#3b82f6',
@@ -718,18 +725,17 @@ function SignupPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.5rem',
-          marginTop: '1.5rem',
-          padding: '0.75rem 1.25rem',
+          gap: '0.4rem',
+          padding: '0.6rem 0.9rem',
           background: '#f8fafc',
           border: '1px solid #e2e8f0',
           borderRadius: '8px',
-          fontSize: '0.8rem',
+          fontSize: '0.75rem',
           color: '#64748b',
           fontWeight: '500',
           textAlign: 'center'
         }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           Secured with Firebase
