@@ -12,16 +12,7 @@ function ForgotPasswordPage() {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [emailError, setEmailError] = useState('');
-    const [isDarkMode, setIsDarkMode] = useState(false);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const checkDarkMode = setInterval(() => {
-            setIsDarkMode(localStorage.getItem('darkMode') === 'true');
-        }, 500);
-
-        return () => clearInterval(checkDarkMode);
-    }, []);
 
     // Real-time email validation
     const validateEmail = (value) => {

@@ -35,7 +35,7 @@ function AIAssistant({ user }) {
         text: getWelcomeMessage(),
       },
     ]);
-  }, [i18n.language]);
+  }, [i18n.language, getWelcomeMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

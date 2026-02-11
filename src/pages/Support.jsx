@@ -139,7 +139,6 @@ function Support({ user }) {
     const textColor = isDarkMode ? '#e5e7eb' : '#1f2937';
     const textSecondary = isDarkMode ? '#a3a3a3' : '#6b7280';
     const borderColor = isDarkMode ? '#404040' : '#e5e7eb';
-    const hoverBg = isDarkMode ? '#3a3a3a' : '#f3f4f6';
 
     // Handler functions for contact actions
     const handleEmailClick = (email) => {
