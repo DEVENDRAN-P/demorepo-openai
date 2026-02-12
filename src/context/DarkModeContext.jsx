@@ -4,7 +4,12 @@ const DarkModeContext = createContext();
 
 export function DarkModeProvider({ children }) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        return localStorage.getItem('darkMode') === 'true';
+        // Check if we have a stored preference and user has logged in before
+        const storedPreference = localStorage.getItem('darkMode');
+        if (storedPreference !== null) {
+            return storedPreference === 'true';
+        }
+        return false;
     });
 
     const applyDarkMode = useCallback((isDark) => {
@@ -42,16 +47,31 @@ export function DarkModeProvider({ children }) {
         localStorage.setItem('darkMode', isDark);
     }, []);
 
-    useEffect(() => {
-        applyDarkMode(isDarkMode);
-    }, [isDarkMode, applyDarkMode]);
+    const resetTheme = useCallback(() => {
+        setIsDarkMode(false);
+        applyDarkMode(false);
+        localStorage.removeItem('darkMode');
+    }, [applyDarkMode]);
 
     const toggleDarkMode = useCallback(() => {
         setIsDarkMode(prev => !prev);
     }, []);
 
+    // Check if user is logged in (has user in localStorage or auth state)
+    const isAuthenticated = localStorage.getItem('user') !== null;
+
+    useEffect(() => {
+        // Always apply light mode if not authenticated
+        if (!isAuthenticated) {
+            applyDarkMode(false);
+            setIsDarkMode(false);
+        } else {
+            applyDarkMode(isDarkMode);
+        }
+    }, [isAuthenticated, isDarkMode, applyDarkMode]);
+
     return (
-        <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, applyDarkMode }}>
+        <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, applyDarkMode, resetTheme, isAuthenticated }}>
             {children}
         </DarkModeContext.Provider>
     );

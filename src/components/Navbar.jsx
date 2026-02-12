@@ -108,7 +108,7 @@ const THEMES = {
 
 function Navbar({ user }) {
   const { t, i18n } = useTranslation();
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { isDarkMode, toggleDarkMode, resetTheme } = useDarkMode();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -161,6 +161,7 @@ function Navbar({ user }) {
       try {
         await logout();
         localStorage.removeItem('user');
+        resetTheme();
         navigate('/login');
       } catch (error) {
         console.error('Logout error:', error);

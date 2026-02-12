@@ -82,18 +82,25 @@ function App() {
       <I18nextProvider i18n={i18n}>
         <AuthProvider>
           <DarkModeProvider>
-            <Router
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <AppRoutes />
-            </Router>
+            <AppContent />
           </DarkModeProvider>
         </AuthProvider>
       </I18nextProvider>
     </ErrorBoundary>
+  );
+}
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+  return (
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <AppRoutes />
+    </Router>
   );
 }
 

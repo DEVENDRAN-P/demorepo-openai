@@ -40,6 +40,8 @@ function Support({ user }) {
         const tab = searchParams.get('tab');
         if (tab === 'contact' || tab === 'faq') {
             setActiveTab(tab);
+        } else {
+            setActiveTab('helpdesk');
         }
     }, [searchParams]);
     const [expandedFAQ, setExpandedFAQ] = useState(null);
@@ -173,6 +175,10 @@ function Support({ user }) {
         }
     };
 
+    const handleHelpdeskClick = (phone) => {
+        window.location.href = `tel:${phone}`;
+    };
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -272,6 +278,7 @@ function Support({ user }) {
                                     transition: 'all 0.3s ease',
                                     cursor: 'pointer',
                                 }}
+                                onClick={() => handleHelpdeskClick(item.number)}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.boxShadow = isDarkMode
                                         ? '0 8px 20px rgba(102, 126, 234, 0.15)'
@@ -305,6 +312,9 @@ function Support({ user }) {
                                     padding: '1rem',
                                     borderRadius: '0.5rem',
                                     marginBottom: '0.75rem',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                 }}>
                                     <p style={{
                                         fontSize: '1.5rem',
@@ -314,6 +324,37 @@ function Support({ user }) {
                                     }}>
                                         {item.number}
                                     </p>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleHelpdeskClick(item.number);
+                                        }}
+                                        style={{
+                                            background: 'var(--primary-600)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            width: '44px',
+                                            height: '44px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'var(--primary-700)';
+                                            e.currentTarget.style.transform = 'scale(1.1)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'var(--primary-600)';
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                        }}
+                                    >
+                                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                        </svg>
+                                    </button>
                                 </div>
                                 <p style={{
                                     color: textSecondary,
@@ -442,6 +483,8 @@ function Support({ user }) {
                                     color: textSecondary,
                                     marginBottom: '1rem',
                                     fontSize: '0.95rem',
+                                    wordBreak: 'break-all',
+                                    overflowWrap: 'break-word',
                                 }}>
                                     {item.info}
                                 </p>
