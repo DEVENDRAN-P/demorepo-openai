@@ -179,7 +179,7 @@ const Home = () => {
                         {/* Feature 1: Bill Upload */}
                         <div
                             style={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
                                 padding: '2rem',
                                 borderRadius: '15px',
                                 color: 'white',
@@ -335,7 +335,7 @@ const Home = () => {
 
                     {/* Quick Start Guide */}
                     <div style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
                         padding: '3rem',
                         borderRadius: '20px',
                         color: 'white',

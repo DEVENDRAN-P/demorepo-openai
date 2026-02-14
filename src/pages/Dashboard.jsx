@@ -326,7 +326,7 @@ function Dashboard({ user, setUser }) {
                   to="/reports"
                   className="card"
                   style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    background: 'linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%)',
                     color: 'white',
                     textAlign: 'center',
                     padding: '2rem 1.5rem',

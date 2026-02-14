@@ -1,6 +1,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
+/* Profile Page Styles */
+.profile-hover-overlay {
+  opacity: 0 !important;
+}
+
+div:hover > .profile-hover-overlay {
+  opacity: 1 !important;
+}
+
+/* Mobile responsive adjustments for Profile page */
+@media (max-width: 640px) {
+  .profile-card {
+    padding: 1.5rem !important;
+    gap: 1.5rem !important;
+  }
+  
+  .profile-info {
+    min-width: 100% !important;
+    padding-left: 0 !important;
+    text-align: center;
+  }
+  
+  .profile-name {
+    font-size: 1.5rem !important;
+  }
+  
+  .profile-details {
+    justify-content: center !important;
+    gap: 1rem !important;
+  }
+}
+
 :root {
+  /* Theme Colors - Indigo (Primary), Teal (Secondary), Amber (Accent) */
+  --theme-primary: #667eea;
+  --theme-primary-dark: #5a6fd6;
+  --theme-primary-light: #764ba2;
+  --theme-secondary: #14b8a6;
+  --theme-secondary-dark: #0d9488;
+  --theme-secondary-light: #2dd4bf;
+  --theme-accent: #f59e0b;
+  --theme-accent-dark: #d97706;
+  --theme-accent-light: #fbbf24;
+
   /* Brand Colors */
   --primary-50: #f5f3ff;
   --primary-100: #ede9fe;
@@ -42,6 +85,7 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-theme: 0 10px 40px rgba(102, 126, 234, 0.3);
 
   /* Spacing */
   --radius-sm: 0.375rem;
@@ -75,6 +119,20 @@
   --border-color: #404040;
   --navbar-bg: #1a1a1a;
   --card-bg: #2d2d2d;
+  
+  /* Dark Mode Theme Colors - Adjusted for dark backgrounds */
+  --theme-primary: #818cf8;
+  --theme-primary-dark: #6366f1;
+  --theme-primary-light: #a5b4fc;
+  --theme-secondary: #2dd4bf;
+  --theme-secondary-dark: #14b8a6;
+  --theme-secondary-light: #5eead4;
+  --theme-accent: #fbbf24;
+  --theme-accent-dark: #f59e0b;
+  --theme-accent-light: #fcd34d;
+  
+  /* Dark mode shadows */
+  --shadow-theme: 0 10px 40px rgba(129, 140, 248, 0.2);
 }
 
 /* Light Mode (explicit) */
@@ -88,6 +146,20 @@
   --border-color: #e5e7eb;
   --navbar-bg: #ffffff;
   --card-bg: #ffffff;
+  
+  /* Light Mode Theme Colors */
+  --theme-primary: #667eea;
+  --theme-primary-dark: #5a6fd6;
+  --theme-primary-light: #764ba2;
+  --theme-secondary: #14b8a6;
+  --theme-secondary-dark: #0d9488;
+  --theme-secondary-light: #2dd4bf;
+  --theme-accent: #f59e0b;
+  --theme-accent-dark: #d97706;
+  --theme-accent-light: #fbbf24;
+  
+  /* Light mode shadows */
+  --shadow-theme: 0 10px 40px rgba(102, 126, 234, 0.3);
 }
 
 * {

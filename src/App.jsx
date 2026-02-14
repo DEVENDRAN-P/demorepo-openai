@@ -91,7 +91,6 @@ function App() {
 }
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
   return (
     <Router
       future={{

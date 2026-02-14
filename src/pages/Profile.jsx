@@ -13,7 +13,7 @@ function Profile({ user, setUser }) {
   const [previewPic, setPreviewPic] = useState(user?.profilePic || null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [profileColor, setProfileColor] = useState(localStorage.getItem('profileColor') || 'indigo');
+  const [profileColor] = useState(localStorage.getItem('profileColor') || 'indigo');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -28,9 +28,17 @@ function Profile({ user, setUser }) {
   const handleProfilePicChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage('❌ File size must be less than 5MB');
+      // Validate file type (JPG, JPEG, PNG only)
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setMessage('❌ Only JPG, JPEG, and PNG files are allowed');
+        setTimeout(() => setMessage(''), 3000);
+        return;
+      }
+
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage('❌ File size must be less than 2MB');
         setTimeout(() => setMessage(''), 3000);
         return;
       }
@@ -60,21 +68,18 @@ function Profile({ user, setUser }) {
     const colors = {
       teal: isDarkMode
         ? 'linear-gradient(135deg, #0d6b6b 0%, #0a4d4d 100%)'
-        : 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+        : 'linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%)',
       indigo: isDarkMode
-        ? 'linear-gradient(135deg, #355c7d 0%, #2d5a7d 100%)'
-        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
+        : 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
       amber: isDarkMode
         ? 'linear-gradient(135deg, #b45309 0%, #92400e 100%)'
-        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+        : 'linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%)',
     };
     return colors[profileColor] || colors.indigo;
   };
 
-  const getTextColor = () => {
-    return profileColor === 'amber' ? '#1f2937' : 'white';
-  };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -124,41 +129,44 @@ function Profile({ user, setUser }) {
         marginTop: '1rem',
       }}>
         {/* Profile Header Card */}
-        <div style={{
-          background: getProfileGradient(),
-          borderRadius: '1rem',
-          padding: '2rem',
-          color: getTextColor(),
-          marginBottom: '2rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2rem',
-          flexWrap: 'wrap',
-        }}>
+        <div 
+          className="profile-card"
+          style={{
+            background: getProfileGradient(),
+            borderRadius: '1rem',
+            padding: '2rem',
+            color: '#FFFFFF',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2.5rem',
+            flexWrap: 'wrap',
+            boxShadow: 'var(--shadow-theme)',
+          }}>
           <div style={{ flex: '0 0 auto' }}>
             <div
               onClick={() => fileInputRef.current?.click()}
               style={{
-                width: '120px',
-                height: '120px',
+                width: '140px',
+                height: '140px',
                 borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                border: '3px solid rgba(255, 255, 255, 0.5)',
+                border: '4px solid rgba(255, 255, 255, 0.6)',
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 position: 'relative',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.border = '3px solid white';
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
+                e.currentTarget.style.border = '4px solid rgba(255, 255, 255, 0.9)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.border = '3px solid rgba(255, 255, 255, 0.5)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.border = '4px solid rgba(255, 255, 255, 0.6)';
               }}
             >
               {previewPic ? (
@@ -180,86 +188,145 @@ function Profile({ user, setUser }) {
                   justifyContent: 'center',
                   height: '100%',
                   width: '100%',
-                  gap: '0.25rem',
+                  gap: '0.5rem',
                 }}>
-                  <div style={{ fontSize: '2.5rem' }}>📸</div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)' }}>Add Photo</div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)' }}>Add Photo</div>
                 </div>
               )}
+              {/* Hover overlay with text */}
               <div style={{
                 position: 'absolute',
-                bottom: 0,
+                top: 0,
+                left: 0,
                 right: 0,
-                background: 'rgba(0,0,0,0.5)',
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0,
+                transition: 'opacity 0.3s ease',
+                borderRadius: '50%',
+              }} className="profile-hover-overlay">
+                <span style={{ color: 'white', fontWeight: '600', fontSize: '0.85rem' }}>Update Profile Photo</span>
+              </div>
+              {/* Camera edit icon overlay */}
+              <div style={{
+                position: 'absolute',
+                bottom: '4px',
+                right: '4px',
+                background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
                 padding: '0.5rem',
                 borderRadius: '50%',
-                fontSize: '0.9rem',
+                border: '2px solid white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'var(--shadow-md)',
               }}>
-                📷
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               </div>
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png"
               onChange={handleProfilePicChange}
               style={{ display: 'none' }}
             />
-            {previewPic && (
+            {/* Change Photo and Remove buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              marginTop: '1rem',
+              justifyContent: 'center',
+            }}>
               <button
-                onClick={handleRemoveProfilePic}
+                onClick={() => fileInputRef.current?.click()}
                 style={{
-                  marginTop: '0.75rem',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#ef4444',
+                  padding: '0.6rem 1.25rem',
+                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.5rem',
                   cursor: 'pointer',
-                  fontSize: '0.875rem',
+                  fontSize: '0.85rem',
                   fontWeight: '600',
                   transition: 'all 0.3s ease',
+                  boxShadow: 'var(--shadow-lg)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc2626';
-                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#ef4444';
-                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
                 }}
               >
-                🗑️ Remove Picture
+                Change Photo
               </button>
-            )}
+              {previewPic && (
+                <button
+                  onClick={handleRemoveProfilePic}
+                  style={{
+                    padding: '0.6rem 1.25rem',
+                    background: 'transparent',
+                    color: '#fca5a5',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: '500',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#fee2e2';
+                    e.currentTarget.style.color = '#dc2626';
+                    e.currentTarget.style.borderColor = '#dc2626';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#fca5a5';
+                    e.currentTarget.style.borderColor = '#fca5a5';
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <h1 style={{
-              fontSize: '1.75rem',
+          <div style={{ flex: 1, minWidth: '250px', paddingLeft: '0.5rem' }} className="profile-info">
+            <h1 className="profile-name" style={{
+              fontSize: '1.875rem',
               fontWeight: 'bold',
               margin: '0 0 0.5rem 0',
+              color: '#FFFFFF',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}>
               {formData.name || 'User Profile'}
             </h1>
             <p style={{
-              fontSize: '1.05rem',
+              fontSize: '1.1rem',
               opacity: 0.9,
-              margin: '0 0 0.75rem 0',
+              margin: '0 0 1rem 0',
+              color: '#FFFFFF',
             }}>
               {formData.shopName || 'Your Shop'}
             </p>
-            <div style={{
+            <div className="profile-details" style={{
               display: 'flex',
-              gap: '1.5rem',
+              gap: '2rem',
               flexWrap: 'wrap',
             }}>
               <div>
-                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.8, fontSize: '0.85rem' }}>Email</p>
-                <p style={{ margin: 0, fontWeight: '600' }}>{formData.email}</p>
+                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.75, fontSize: '0.8rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
+                <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem', color: '#FFFFFF' }}>{formData.email}</p>
               </div>
               <div>
-                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.8, fontSize: '0.85rem' }}>GSTIN</p>
-                <p style={{ margin: 0, fontWeight: '600' }}>{formData.gstin || 'Not listed'}</p>
+                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.75, fontSize: '0.8rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTIN</p>
+                <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem', color: '#FFFFFF' }}>{formData.gstin || 'Not listed'}</p>
               </div>
             </div>
           </div>
@@ -279,66 +346,6 @@ function Profile({ user, setUser }) {
           </div>
         )}
 
-        {/* Profile Color Selector */}
-        <div style={{
-          background: isDarkMode ? '#2a2a2a' : 'white',
-          color: isDarkMode ? '#e5e7eb' : '#000',
-          borderRadius: '1rem',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        }}>
-          <h3 style={{
-            fontSize: '1rem',
-            fontWeight: '600',
-            marginBottom: '1rem',
-            color: isDarkMode ? '#d1d5db' : '#374151',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}>
-            🎨 {t('profile_color_theme')}
-          </h3>
-          <div style={{
-            display: 'flex',
-            gap: '1rem',
-            flexWrap: 'wrap',
-          }}>
-            {[
-              { name: t('color_teal'), color: 'teal', bgColor: '#14b8a6' },
-              { name: t('color_indigo'), color: 'indigo', bgColor: '#667eea' },
-              { name: t('color_amber'), color: 'amber', bgColor: '#f59e0b' },
-            ].map((option) => (
-              <button
-                key={option.color}
-                onClick={() => {
-                  setProfileColor(option.color);
-                  localStorage.setItem('profileColor', option.color);
-                }}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  border: profileColor === option.color ? '3px solid var(--primary-600)' : `2px solid ${option.bgColor}`,
-                  background: option.bgColor,
-                  color: option.color === 'amber' ? '#1f2937' : 'white',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontWeight: profileColor === option.color ? '600' : '500',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                {option.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Profile Form Card */}
         <div style={{
           background: isDarkMode ? '#2a2a2a' : 'white',
@@ -356,7 +363,7 @@ function Profile({ user, setUser }) {
             gap: '0.75rem',
             color: isDarkMode ? '#e5e7eb' : '#1f2937',
           }}>
-            <span>✏️</span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></span>
             {t('edit_profile_information')}
           </h2>
 
@@ -376,7 +383,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                <span>👤</span> Personal Information
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Personal Information
               </h3>
               <div style={{
                 display: 'grid',
@@ -407,7 +414,7 @@ function Profile({ user, setUser }) {
                       background: isDarkMode ? '#3a3a3a' : '#fff',
                       color: isDarkMode ? '#e5e7eb' : '#000',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#444' : '#d1d5db'}
                     required
                   />
@@ -463,7 +470,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     placeholder={t('enter_mobile_number')}
                   />
@@ -485,7 +492,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                <span>🏢</span> Business Information
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></span> Business Information
               </h3>
               <div style={{
                 display: 'grid',
@@ -514,7 +521,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     required
                   />
@@ -541,7 +548,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     required
                   />
@@ -570,7 +577,7 @@ function Profile({ user, setUser }) {
                       resize: 'vertical',
                       fontFamily: 'inherit',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     placeholder={t('enter_business_address')}
                   />
@@ -592,7 +599,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                <span>⚙️</span> Preferences
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Preferences
               </h3>
               <div style={{
                 display: 'grid',
@@ -621,7 +628,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   >
                     <option value="en">🇬🇧 English</option>
@@ -643,7 +650,7 @@ function Profile({ user, setUser }) {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
                   color: 'white',
                   padding: '0.875rem 2.5rem',
                   fontSize: '1rem',
@@ -671,7 +678,7 @@ function Profile({ user, setUser }) {
                   }
                 }}
               >
-                {loading ? '💾 Saving...' : '💾 Save Changes'}
+                {loading ? ' Saving...' : ' Save Changes'}
               </button>
             </div>
           </form>

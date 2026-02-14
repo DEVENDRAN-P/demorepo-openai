@@ -5,6 +5,85 @@ import { useAuth } from '../hooks/useAuth';
 import { signup, signupWithGoogle } from '../services/authService';
 import { perf } from '../services/perfService';
 
+// Professional SVG Icons
+const IconUser = ({ size = 18, color = "#3b82f6" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const IconMail = ({ size = 18, color = "#3b82f6" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+
+const IconClipboard = ({ size = 18, color = "#3b82f6" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+  </svg>
+);
+
+const IconLock = ({ size = 18, color = "#3b82f6" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const IconUnlock = ({ size = 18, color = "#3b82f6" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+  </svg>
+);
+
+const IconCheck = ({ size = 14, color = "#22c55e" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const IconAlert = ({ size = 14, color = "#ef4444" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
+const IconEye = ({ size = 18, color = "#6b7280" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const IconEyeOff = ({ size = 18, color = "#6b7280" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+);
+
+const IconAlertCircle = ({ size = 24, color = "#ef4444" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
+const IconCheckCircle = ({ size = 24, color = "#22c55e" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+
 function SignupPage() {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
@@ -322,29 +401,30 @@ function SignupPage() {
       <div style={{
         background: 'white',
         borderRadius: '20px',
-        padding: '2rem',
+        padding: '2.5rem',
         width: '100%',
         maxWidth: '480px',
         boxShadow: '0 25px 70px rgba(30, 60, 114, 0.2)',
         position: 'relative',
         zIndex: 10,
         backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.6)'
+        border: '1px solid rgba(255, 255, 255, 0.6)',
+        color: '#000'
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '60px',
-            height: '60px',
-            borderRadius: '12px',
+            width: '80px',
+            height: '80px',
+            borderRadius: '16px',
             background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%)',
             boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-            marginBottom: '0.8rem'
+            marginBottom: '1.5rem'
           }}>
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="8.5" cy="7" r="4" />
               <line x1="20" y1="8" x2="20" y2="14" />
@@ -352,24 +432,33 @@ function SignupPage() {
             </svg>
           </div>
           <h1 style={{
-            fontSize: '2rem',
+            fontSize: '2.5rem',
             fontWeight: '700',
             color: '#1e3c72',
-            marginBottom: '0.25rem',
+            marginBottom: '0.5rem',
             letterSpacing: '-0.02em'
           }}>
             Create Account
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>
             Join to get started
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-3" style={{ marginTop: '1.2rem' }}>
+        <form onSubmit={handleSignup} style={{ marginTop: '2rem' }}>
           {/* Name Field */}
-          <div style={{ marginBottom: '0.8rem' }}>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-              <span>👤</span> Full Name <span className="text-red-500">*</span>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#1e3c72',
+              marginBottom: '0.6rem',
+              letterSpacing: '0.01em'
+            }}>
+              <IconUser size={18} /> Full Name <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -377,32 +466,60 @@ function SignupPage() {
               value={formData.name}
               onChange={handleChange}
               placeholder={t('placeholder_full_name')}
-              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              required
+              style={{
+                width: '100%',
+                padding: '1rem 1.2rem',
+                border: fieldErrors.name ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                outline: 'none',
+                transition: 'all 0.3s ease',
+                backgroundColor: fieldErrors.name ? '#fef2f2' : 'white',
+                color: '#000',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+              }}
               onFocus={(e) => {
                 if (!fieldErrors.name) {
-                  e.target.style.borderColor = '#1e3c72';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
                 }
               }}
               onBlur={(e) => {
                 if (!fieldErrors.name) {
-                  e.target.style.borderColor = '#d1d5db';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
                 }
               }}
             />
             {fieldErrors.name && (
-              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                <span>⚠️</span> {fieldErrors.name}
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#ef4444',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconAlert size={14} /> {fieldErrors.name}
               </p>
             )}
           </div>
 
           {/* Email Field */}
-          <div style={{ marginBottom: '0.8rem' }}>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-              <span>✉️</span> Email Address <span className="text-red-500">*</span>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#1e3c72',
+              marginBottom: '0.6rem',
+              letterSpacing: '0.01em'
+            }}>
+              <IconMail size={18} /> Email Address <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="email"
@@ -410,32 +527,60 @@ function SignupPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder={t('placeholder_email')}
-              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              required
+              style={{
+                width: '100%',
+                padding: '1rem 1.2rem',
+                border: fieldErrors.email ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                outline: 'none',
+                transition: 'all 0.3s ease',
+                backgroundColor: fieldErrors.email ? '#fef2f2' : 'white',
+                color: '#000',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+              }}
               onFocus={(e) => {
                 if (!fieldErrors.email) {
-                  e.target.style.borderColor = '#1e3c72';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
                 }
               }}
               onBlur={(e) => {
                 if (!fieldErrors.email) {
-                  e.target.style.borderColor = '#d1d5db';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
                 }
               }}
             />
             {fieldErrors.email && (
-              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                <span>⚠️</span> {fieldErrors.email}
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#ef4444',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconAlert size={14} /> {fieldErrors.email}
               </p>
             )}
           </div>
 
           {/* GSTIN Field */}
-          <div style={{ marginBottom: '0.8rem' }}>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-              <span>📋</span> GSTIN <span className="text-red-500">*</span>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#1e3c72',
+              marginBottom: '0.6rem',
+              letterSpacing: '0.01em'
+            }}>
+              <IconClipboard size={18} /> GSTIN <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -444,67 +589,118 @@ function SignupPage() {
               onChange={handleChange}
               placeholder={t('placeholder_gstin')}
               maxLength="15"
-              className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm ${fieldErrors.gstin ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                }`}
+              required
+              style={{
+                width: '100%',
+                padding: '1rem 1.2rem',
+                border: fieldErrors.gstin ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                outline: 'none',
+                transition: 'all 0.3s ease',
+                backgroundColor: fieldErrors.gstin ? '#fef2f2' : 'white',
+                color: '#000',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+              }}
               onFocus={(e) => {
                 if (!fieldErrors.gstin) {
-                  e.target.style.borderColor = '#1e3c72';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
                 }
               }}
               onBlur={(e) => {
                 if (!fieldErrors.gstin) {
-                  e.target.style.borderColor = '#d1d5db';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
                 }
               }}
             />
             {fieldErrors.gstin && (
-              <p className="text-red-500 text-xs mt-2 flex items-center gap-1 animate-fade-in">
-                <span>⚠️</span> {fieldErrors.gstin}
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#ef4444',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconAlert size={14} /> {fieldErrors.gstin}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">Format: 27AAHCT5055K1Z0</p>
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}>Format: 27AAHCT5055K1Z0</p>
           </div>
 
           {/* Password Field */}
           <div style={{ marginBottom: '0.8rem' }}>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-              <span>🔐</span> Password <span className="text-red-500">*</span>
+            <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+              <IconLock size={18} /> Password <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder={t('placeholder_password')}
-                className={`w-full px-3 py-2 border-2 rounded-lg outline-none transition text-sm pr-10 ${fieldErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-white'
-                  }`}
+                style={{
+                  width: '100%',
+                  padding: '1rem 3rem 1rem 1.2rem',
+                  border: fieldErrors.password ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  color: '#1f2937',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                  backgroundColor: fieldErrors.password ? '#fef2f2' : 'white',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                }}
                 onFocus={(e) => {
                   if (!fieldErrors.password) {
-                    e.target.style.borderColor = '#1e3c72';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
                   }
                 }}
                 onBlur={(e) => {
                   if (!fieldErrors.password) {
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.boxShadow = 'none';
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
                   }
                 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2 text-gray-500 text-lg"
-              >
-                {showPassword ? '🙈' : '👁️'}
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: 0.6,
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}>
+                {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
               </button>
             </div>
             {fieldErrors.password && (
-              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                <span>⚠️</span> {fieldErrors.password}
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#ef4444',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconAlert size={14} /> {fieldErrors.password}
               </p>
             )}
 
@@ -528,9 +724,18 @@ function SignupPage() {
           </div>
 
           {/* Confirm Password Field */}
-          <div style={{ marginBottom: '0.8rem' }}>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
-              <span>✓</span> Confirm Password <span className="text-red-500">*</span>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#1e3c72',
+              marginBottom: '0.6rem',
+              letterSpacing: '0.01em'
+            }}>
+              <IconUnlock size={18} /> Confirm Password <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="password"
@@ -538,39 +743,56 @@ function SignupPage() {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder={t('placeholder_password')}
+              required
               style={{
                 width: '100%',
-                padding: '0.5rem 0.75rem',
-                border: fieldErrors.confirmPassword ? '2px solid #ef4444' : '2px solid #d1d5db',
-                borderRadius: '0.5rem',
-                backgroundColor: fieldErrors.confirmPassword ? '#fef2f2' : '#f9fafb',
-                color: '#1f2937',
-                fontSize: '0.875rem',
+                padding: '1rem 1.2rem',
+                border: fieldErrors.confirmPassword ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '1rem',
                 outline: 'none',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.3s ease',
+                backgroundColor: fieldErrors.confirmPassword ? '#fef2f2' : 'white',
+                color: '#1f2937',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
               }}
-              className="hover:bg-white"
               onFocus={(e) => {
                 if (!fieldErrors.confirmPassword) {
-                  e.target.style.borderColor = '#1e3c72';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(30,60,114,0.1)';
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)';
                 }
               }}
               onBlur={(e) => {
                 if (!fieldErrors.confirmPassword) {
-                  e.target.style.borderColor = '#d1d5db';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
                 }
               }}
             />
             {fieldErrors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                <span>⚠️</span> {fieldErrors.confirmPassword}
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#ef4444',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconAlert size={14} /> {fieldErrors.confirmPassword}
               </p>
             )}
             {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-              <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
-                <span>✅</span> Passwords match
+              <p style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: '#22c55e',
+                fontSize: '0.85rem',
+                marginTop: '0.5rem',
+                fontWeight: '500'
+              }}>
+                <IconCheck size={14} /> Passwords match
               </p>
             )}
           </div>
@@ -578,7 +800,7 @@ function SignupPage() {
           {/* Error Alert */}
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg text-sm flex items-start gap-3 animate-slide-in-up">
-              <span className="text-2xl flex-shrink-0">🚨</span>
+              <IconAlertCircle size={24} color="#ef4444" />
               <div>
                 <p className="font-semibold text-red-700">{error}</p>
               </div>
@@ -588,7 +810,7 @@ function SignupPage() {
           {/* Success Message */}
           {successMessage && (
             <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg text-sm flex items-start gap-3 animate-slide-in-up">
-              <span className="text-2xl flex-shrink-0 animate-checkmark">✅</span>
+              <IconCheckCircle size={24} color="#22c55e" />
               <div>
                 <p className="font-semibold text-green-700">{successMessage}</p>
               </div>

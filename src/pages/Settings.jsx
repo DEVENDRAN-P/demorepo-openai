@@ -123,7 +123,7 @@ function Settings({ user }) {
                         width: '60px',
                         height: '60px',
                         borderRadius: '12px',
-                        background: `linear-gradient(135deg, ${accentColor} 0%, #764ba2 100%)`,
+                        background: `linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-primary-light) 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -558,7 +558,7 @@ function Settings({ user }) {
                         onClick={handleSaveSettings}
                         disabled={loading}
                         style={{
-                            background: loading ? '#9ca3af' : `linear-gradient(135deg, ${accentColor} 0%, #764ba2 100%)`,
+                            background: loading ? '#9ca3af' : `linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-primary-light) 100%)`,
                             color: 'white',
                             padding: '1rem 3rem',
                             fontSize: '1.05rem',
