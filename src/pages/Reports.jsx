@@ -104,7 +104,7 @@ function Reports({ user, setUser }) {
           <div className="card-header">
             <h1 className="card-title">
               <div className="card-title-icon">📊</div>
-              <span>Analytics & Reports</span>
+              <span>{t('Analytics & Reports')}</span>
             </h1>
           </div>
 
@@ -135,7 +135,7 @@ function Reports({ user, setUser }) {
             </div>
             <div className="card" style={{ background: 'var(--primary-50)', borderColor: 'var(--primary-200)', textAlign: 'center' }}>
               <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-700)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Net Payable
+                {t('net_payable')}
               </p>
               <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-700)' }}>
                 ₹{summary.netPayable.toLocaleString()}
@@ -205,7 +205,7 @@ function Reports({ user, setUser }) {
               <div className="card-header">
                 <h2 className="card-title">
                   <div className="card-title-icon">📊</div>
-                  <span>Monthly Comparison</span>
+                  <span>{t('Monthly Comparison')}</span>
                 </h2>
               </div>
               <ResponsiveContainer width="100%" height={300}>

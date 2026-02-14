@@ -47,6 +47,14 @@ const IconChat = ({ active }) => (
     <circle cx="15" cy="10" r="1" />
   </svg>
 );
+const IconSupport = ({ active }) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={active ? 'var(--primary-700)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 21H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2z" />
+    <path d="M10 5V3h4v2" />
+    <path d="M12 13v1" />
+    <path d="M9 12a3 3 0 0 0 6 0" />
+  </svg>
+);
 const IconGlobe = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -62,6 +70,42 @@ const IconPalette = () => (
     <circle cx="16.5" cy="10.5" r="1.5" />
   </svg>
 );
+const IconUser = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const IconSettings = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+const IconPhone = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </svg>
+);
+
+const IconHelp = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
+const IconLogOut = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 const IconMenu = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="3" y1="6" x2="21" y2="6" />
@@ -183,6 +227,7 @@ function Navbar({ user }) {
     { path: '/gst-forms', label: t('gst_forms'), icon: (a) => <IconClipboard active={a} /> },
     { path: '/reports', label: t('reports'), icon: (a) => <IconChart active={a} /> },
     { path: '/chat', label: t('ai_assistant'), icon: (a) => <IconChat active={a} /> },
+    { path: '/support', label: t('support'), icon: (a) => <IconSupport active={a} /> },
   ];
 
   const handleNavClick = (path) => {
@@ -308,7 +353,7 @@ function Navbar({ user }) {
                 cursor: 'pointer',
                 padding: '0.625rem',
               }}
-              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDarkMode ? t('switch_to_light_mode') : t('switch_to_dark_mode')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--bg-secondary)';
                 e.currentTarget.style.transform = 'scale(1.1)';
@@ -334,7 +379,7 @@ function Navbar({ user }) {
                 color: '#25D366',
                 transition: 'all 0.2s ease',
               }}
-              title="Join our WhatsApp group"
+              title={t('join_whatsapp_group')}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(37, 211, 102, 0.1)';
                 e.currentTarget.style.transform = 'scale(1.1)';
@@ -346,7 +391,7 @@ function Navbar({ user }) {
             >
               <IconWhatsApp />
               <span style={{ fontSize: '0.8rem', fontWeight: 600, display: 'none' }} className="whatsapp-label">
-                Chat
+                {t('chat')}
               </span>
             </a>
 
@@ -520,7 +565,8 @@ function Navbar({ user }) {
                   position: 'absolute',
                   right: 0,
                   marginTop: '0.5rem',
-                  width: '200px',
+                  width: '280px',
+                  minWidth: 'max-content',
                   background: 'var(--bg-primary)',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-xl)',
@@ -549,6 +595,9 @@ function Navbar({ user }) {
                       margin: 0,
                       marginTop: '0.125rem',
                       transition: 'color 0.3s ease',
+                      wordBreak: 'break-all',
+                      overflowWrap: 'anywhere',
+                      lineHeight: '1.4',
                     }}>
                       {user?.email}
                     </p>
@@ -570,7 +619,7 @@ function Navbar({ user }) {
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span>👤</span>
+                    <IconUser size={18} />
                     <span>{t('profile')}</span>
                   </Link>
                   <Link
@@ -590,7 +639,7 @@ function Navbar({ user }) {
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span>⚙️</span>
+                    <IconSettings size={18} />
                     <span>{t('settings')}</span>
                   </Link>
                   <Link
@@ -610,7 +659,7 @@ function Navbar({ user }) {
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span>📞</span>
+                    <IconPhone size={18} />
                     <span>Contact Us</span>
                   </Link>
                   <Link
@@ -630,7 +679,7 @@ function Navbar({ user }) {
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span>❓</span>
+                    <IconHelp size={18} />
                     <span>{t('help')}</span>
                   </Link>
                   <button
@@ -654,7 +703,7 @@ function Navbar({ user }) {
                     onMouseEnter={(e) => e.currentTarget.style.background = 'var(--error-light)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span>🚪</span>
+                    <IconLogOut size={18} />
                     <span>{t('logout')}</span>
                   </button>
                 </div>

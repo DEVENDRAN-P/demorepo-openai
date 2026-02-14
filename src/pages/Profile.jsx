@@ -13,6 +13,7 @@ function Profile({ user, setUser }) {
   const [previewPic, setPreviewPic] = useState(user?.profilePic || null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [profileColor, setProfileColor] = useState(localStorage.getItem('profileColor') || 'indigo');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -29,7 +30,7 @@ function Profile({ user, setUser }) {
     if (file) {
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setMessage('✕ File size must be less than 5MB');
+        setMessage('❌ File size must be less than 5MB');
         setTimeout(() => setMessage(''), 3000);
         return;
       }
@@ -55,7 +56,24 @@ function Profile({ user, setUser }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const getProfileGradient = () => {
+    const colors = {
+      teal: isDarkMode
+        ? 'linear-gradient(135deg, #0d6b6b 0%, #0a4d4d 100%)'
+        : 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+      indigo: isDarkMode
+        ? 'linear-gradient(135deg, #355c7d 0%, #2d5a7d 100%)'
+        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      amber: isDarkMode
+        ? 'linear-gradient(135deg, #b45309 0%, #92400e 100%)'
+        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    };
+    return colors[profileColor] || colors.indigo;
+  };
 
+  const getTextColor = () => {
+    return profileColor === 'amber' ? '#1f2937' : 'white';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,11 +102,11 @@ function Profile({ user, setUser }) {
       i18n.changeLanguage(formData.language);
       localStorage.setItem('language', formData.language);
 
-      setMessage('✓ Profile updated successfully!');
+      setMessage('✅ Profile updated successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setMessage('✕ Error updating profile');
+      setMessage('❌ Error updating profile');
       setTimeout(() => setMessage(''), 3000);
     } finally {
       setLoading(false);
@@ -107,12 +125,10 @@ function Profile({ user, setUser }) {
       }}>
         {/* Profile Header Card */}
         <div style={{
-          background: isDarkMode
-            ? 'linear-gradient(135deg, #355c7d 0%, #2d5a7d 100%)'
-            : 'linear-gradient(135deg, var(--primary-600) 0%, #764ba2 100%)',
+          background: getProfileGradient(),
           borderRadius: '1rem',
           padding: '2rem',
-          color: 'white',
+          color: getTextColor(),
           marginBottom: '2rem',
           display: 'flex',
           alignItems: 'center',
@@ -166,7 +182,7 @@ function Profile({ user, setUser }) {
                   width: '100%',
                   gap: '0.25rem',
                 }}>
-                  <div style={{ fontSize: '2rem' }}>+</div>
+                  <div style={{ fontSize: '2.5rem' }}>📸</div>
                   <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)' }}>Add Photo</div>
                 </div>
               )}
@@ -179,7 +195,7 @@ function Profile({ user, setUser }) {
                 borderRadius: '50%',
                 fontSize: '0.9rem',
               }}>
-                ●
+                📷
               </div>
             </div>
             <input
@@ -213,7 +229,7 @@ function Profile({ user, setUser }) {
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                Remove Picture
+                🗑️ Remove Picture
               </button>
             )}
           </div>
@@ -257,11 +273,71 @@ function Profile({ user, setUser }) {
             padding: '1rem',
             borderRadius: '0.5rem',
             marginBottom: '1.5rem',
-            border: `1px solid ${message.includes('✓') ? '#a7f3d0' : '#fca5a5'}`,
+            border: `1px solid ${message.includes('✅') ? '#a7f3d0' : '#fca5a5'}`,
           }}>
             {message}
           </div>
         )}
+
+        {/* Profile Color Selector */}
+        <div style={{
+          background: isDarkMode ? '#2a2a2a' : 'white',
+          color: isDarkMode ? '#e5e7eb' : '#000',
+          borderRadius: '1rem',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        }}>
+          <h3 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            marginBottom: '1rem',
+            color: isDarkMode ? '#d1d5db' : '#374151',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}>
+            🎨 {t('profile_color_theme')}
+          </h3>
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}>
+            {[
+              { name: t('color_teal'), color: 'teal', bgColor: '#14b8a6' },
+              { name: t('color_indigo'), color: 'indigo', bgColor: '#667eea' },
+              { name: t('color_amber'), color: 'amber', bgColor: '#f59e0b' },
+            ].map((option) => (
+              <button
+                key={option.color}
+                onClick={() => {
+                  setProfileColor(option.color);
+                  localStorage.setItem('profileColor', option.color);
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  border: profileColor === option.color ? '3px solid var(--primary-600)' : `2px solid ${option.bgColor}`,
+                  background: option.bgColor,
+                  color: option.color === 'amber' ? '#1f2937' : 'white',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontWeight: profileColor === option.color ? '600' : '500',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                {option.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Profile Form Card */}
         <div style={{
@@ -280,7 +356,8 @@ function Profile({ user, setUser }) {
             gap: '0.75rem',
             color: isDarkMode ? '#e5e7eb' : '#1f2937',
           }}>
-            Edit Profile Information
+            <span>✏️</span>
+            {t('edit_profile_information')}
           </h2>
 
           <form onSubmit={handleSubmit} style={{
@@ -299,7 +376,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                Personal Information
+                <span>👤</span> Personal Information
               </h3>
               <div style={{
                 display: 'grid',
@@ -330,7 +407,7 @@ function Profile({ user, setUser }) {
                       background: isDarkMode ? '#3a3a3a' : '#fff',
                       color: isDarkMode ? '#e5e7eb' : '#000',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#444' : '#d1d5db'}
                     required
                   />
@@ -386,9 +463,9 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                    placeholder="Enter your mobile number"
+                    placeholder={t('enter_mobile_number')}
                   />
                 </div>
               </div>
@@ -408,7 +485,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                Business Information
+                <span>🏢</span> Business Information
               </h3>
               <div style={{
                 display: 'grid',
@@ -437,7 +514,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     required
                   />
@@ -464,7 +541,7 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     required
                   />
@@ -493,9 +570,9 @@ function Profile({ user, setUser }) {
                       resize: 'vertical',
                       fontFamily: 'inherit',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                    placeholder="Enter your business address"
+                    placeholder={t('enter_business_address')}
                   />
                 </div>
               </div>
@@ -515,7 +592,7 @@ function Profile({ user, setUser }) {
                 alignItems: 'center',
                 gap: '0.5rem',
               }}>
-                Preferences
+                <span>⚙️</span> Preferences
               </h3>
               <div style={{
                 display: 'grid',
@@ -544,12 +621,12 @@ function Profile({ user, setUser }) {
                       outline: 'none',
                       transition: 'all 0.3s ease',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-600)'}
+                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   >
-                    <option value="en"> English</option>
-                    <option value="ta"> Tamil (தமிழ்)</option>
-                    <option value="hi"> Hindi (हिंदी)</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                    <option value="hi">🇮🇳 Hindi (हिंदी)</option>
                   </select>
                 </div>
               </div>
@@ -566,7 +643,7 @@ function Profile({ user, setUser }) {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: 'linear-gradient(135deg, var(--primary-600) 0%, #764ba2 100%)',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   color: 'white',
                   padding: '0.875rem 2.5rem',
                   fontSize: '1rem',
@@ -594,7 +671,7 @@ function Profile({ user, setUser }) {
                   }
                 }}
               >
-                {loading ? ' Saving...' : ' Save Changes'}
+                {loading ? '💾 Saving...' : '💾 Save Changes'}
               </button>
             </div>
           </form>
@@ -603,8 +680,8 @@ function Profile({ user, setUser }) {
         {/* Tips Card */}
         <div style={{
           marginTop: '2rem',
-          background: 'var(--primary-50)',
-          border: '1px solid var(--primary-200)',
+          background: '#f0f4ff',
+          border: '1px solid #c7d2fe',
           borderRadius: '0.75rem',
           padding: '1.5rem',
         }}>
@@ -612,24 +689,24 @@ function Profile({ user, setUser }) {
             fontSize: '1rem',
             fontWeight: '600',
             marginBottom: '0.75rem',
-            color: 'var(--primary-700)',
+            color: '#4338ca',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
           }}>
-            Pro Tips
+            <span>💡</span> {t('pro_tips')}
           </h3>
           <ul style={{
             margin: 0,
             paddingLeft: '1.5rem',
-            color: 'var(--primary-700)',
+            color: '#4338ca',
             lineHeight: '1.6',
             fontSize: '0.95rem',
           }}>
-            <li>Keep your profile information up to date for accurate GST reports</li>
-            <li>Your GSTIN is important for GST filing and cannot be easily changed</li>
-            <li>Upload a professional profile picture for better identification</li>
-            <li>Choose your preferred language to get all notifications in that language</li>
+            <li>{t('tip_profile_updated')}</li>
+            <li>{t('tip_gstin_important')}</li>
+            <li>{t('tip_profile_pic')}</li>
+            <li>{t('tip_language_preference')}</li>
           </ul>
         </div>
       </div>

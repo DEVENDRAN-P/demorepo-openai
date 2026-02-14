@@ -82,7 +82,33 @@ REACT_APP_SEND_REMINDER_EMAIL_FUNCTION_URL=https://us-central1-finalopenai-fc9c5
 ```
 
 ---
+🎨 Profile Color Theme
+Teal
+Indigo
+Amber
+✏️
+Edit Profile Information
+👤
+Personal Information
+பெயர் *
+Devendran P
+மின்னஞ்சல் *
+devendranprabhakar2007@gmail.com
+Email cannot be changed
 
+மொபைல் எண்
+உங்கள் மொபைல் எண்ணை உள்ளிடவும்
+🏢
+Business Information
+கடை பெயர் *
+homigo
+GSTIN *
+ 27ABCDE1234F2Z
+Shop Address
+உங்கள் வணிக முகவரியை உள்ளிடவும்
+⚙️
+Preferences
+மொழி
 ## 📧 STEP 2: Verify SendGrid Sender Email
 
 SendGrid requires sender email verification to prevent spam:

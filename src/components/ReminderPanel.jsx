@@ -29,12 +29,13 @@ const IconSavings = () => (
 );
 
 function ReminderPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isDarkMode } = useDarkMode();
   const [reminders, setReminders] = useState([]);
   const [guidanceTips, setGuidanceTips] = useState([]);
   const [costSavings, setCostSavings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showTips, setShowTips] = useState(false);
 
   useEffect(() => {
     const loadRemindersAndGuidance = async () => {
@@ -155,7 +156,7 @@ function ReminderPanel() {
     const interval = setInterval(loadRemindersAndGuidance, 5 * 60 * 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [i18n.language]);
 
   const handleDismissReminder = async (reminderId) => {
     try {
@@ -204,7 +205,7 @@ function ReminderPanel() {
               <div className="card-title-icon" style={{ background: 'var(--warning-light)' }}>
                 <IconBell />
               </div>
-              <span>🔔 Reminders</span>
+              <span>{t('reminders_emoji')}</span>
             </h2>
             <span className="badge badge-warning">{reminders.length}</span>
           </div>
@@ -277,39 +278,45 @@ function ReminderPanel() {
 
       {/* Guidance Tips */}
       <div className="card">
-        <div className="card-header">
+        <div className="card-header" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => setShowTips(!showTips)}>
           <h2 className="card-title">
             <div className="card-title-icon" style={{ background: 'var(--primary-50)' }}>
               <IconLightbulb />
             </div>
             <span>💡 {t('compliance_tips')}</span>
           </h2>
+          <span style={{ fontSize: '1.2rem', transition: 'transform 0.3s ease', transform: showTips ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            ▼
+          </span>
         </div>
 
-        <div>
-          {guidanceTips.map((tip) => (
-            <div
-              key={tip.id}
-              style={{
-                padding: '0.875rem',
-                background: 'var(--neutral-50)',
-                borderRadius: 'var(--radius-lg)',
-                display: 'flex',
-                gap: '0.75rem',
-              }}
-            >
-              <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{tip.icon}</span>
-              <div>
-                <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--neutral-900)', marginBottom: '0.25rem' }}>
-                  {tip.title}
-                </p>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--neutral-600)', lineHeight: 1.5 }}>
-                  {tip.description}
-                </p>
+        {showTips && (
+          <div>
+            {guidanceTips.map((tip) => (
+              <div
+                key={tip.id}
+                style={{
+                  padding: '0.875rem',
+                  background: 'var(--neutral-50)',
+                  borderRadius: 'var(--radius-lg)',
+                  display: 'flex',
+                  gap: '0.75rem',
+                  marginBottom: tip.id === guidanceTips.length ? '0' : '0.5rem',
+                }}
+              >
+                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{tip.icon}</span>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--neutral-900)', marginBottom: '0.25rem' }}>
+                    {tip.title}
+                  </p>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--neutral-600)', lineHeight: 1.5 }}>
+                    {tip.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Cost Savings */}
@@ -326,13 +333,13 @@ function ReminderPanel() {
 
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
             <p style={{ fontSize: '0.875rem', color: isDarkMode ? '#ffffff' : '#166534', marginBottom: '0.5rem' }}>
-              You've saved so far:
+              {t('youve_saved_so_far')}
             </p>
             <p style={{ fontSize: '2.5rem', fontWeight: 800, color: isDarkMode ? '#ffffff' : '#166534', marginBottom: '0.5rem' }}>
               ₹{costSavings.totalSaved.toLocaleString()}
             </p>
             <p style={{ fontSize: '0.8125rem', color: isDarkMode ? '#ffffff' : '#166534' }}>
-              vs. hiring an accountant (₹{costSavings.monthlyAccountantFee.toLocaleString()}/month)
+              {t('vs_hiring_accountant', { amount: costSavings.monthlyAccountantFee.toLocaleString() })}
             </p>
           </div>
 
@@ -344,15 +351,15 @@ function ReminderPanel() {
             color: isDarkMode ? '#ffffff' : '#166534',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span>Monthly app cost:</span>
+              <span>{t('monthly_app_cost')}</span>
               <span style={{ fontWeight: 600 }}>₹{costSavings.monthlyAppCost}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span>Typical accountant fee:</span>
+              <span>{t('typical_accountant_fee')}</span>
               <span style={{ fontWeight: 600 }}>₹{costSavings.monthlyAccountantFee}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: `1px solid ${isDarkMode ? '#4ade80' : '#86efac'}` }}>
-              <span style={{ fontWeight: 700 }}>Monthly savings:</span>
+              <span style={{ fontWeight: 700 }}>{t('monthly_savings')}:</span>
               <span style={{ fontWeight: 800, color: isDarkMode ? '#86efac' : '#15803d' }}>₹{costSavings.monthlySavings}</span>
             </div>
           </div>
