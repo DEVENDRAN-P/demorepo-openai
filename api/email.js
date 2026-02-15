@@ -1,22 +1,22 @@
 /**
  * Vercel Serverless Function for Sending Emails via Brevo SMTP
- * 
+ *
  * This function is deployed to Vercel and handles email sending for the GST Buddy app.
- * 
+ *
  * Environment Variables (set on Vercel):
  * - BREVO_API_KEY: Your Brevo SMTP password/API key
  * - EMAIL_FROM: Sender email address
- * 
+ *
  * Usage:
  * POST /api/email
  * Content-Type: application/json
- * 
+ *
  * {
  *   "subject": "Email subject",
  *   "body": "Email body text",
  *   "email": "recipient@example.com"
  * }
- * 
+ *
  * Response:
  * {
  *   "success": true,
@@ -54,8 +54,7 @@ export default async (req, res) => {
     // Validate input
     if (!subject || !body || !email) {
       return res.status(400).json({
-        error:
-          "Missing required fields: subject, body, email",
+        error: "Missing required fields: subject, body, email",
       });
     }
 
@@ -74,7 +73,7 @@ export default async (req, res) => {
 
     if (!brevoSmtpKey || !emailFrom) {
       console.error(
-        "❌ Missing environment variables: BREVO_API_KEY or EMAIL_FROM"
+        "❌ Missing environment variables: BREVO_API_KEY or EMAIL_FROM",
       );
       return res.status(500).json({
         error:
@@ -108,7 +107,7 @@ export default async (req, res) => {
     });
 
     console.log(
-      `✅ Email sent successfully to ${email} via Brevo SMTP (MessageId: ${info.messageId})`
+      `✅ Email sent successfully to ${email} via Brevo SMTP (MessageId: ${info.messageId})`,
     );
 
     return res.status(200).json({
