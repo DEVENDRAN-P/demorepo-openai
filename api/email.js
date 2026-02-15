@@ -73,11 +73,26 @@ export default async (req, res) => {
 
     if (!brevoSmtpKey || !emailFrom) {
       console.error(
-        "❌ Missing environment variables: BREVO_API_KEY or EMAIL_FROM",
+        "❌ Missing Brevo environment variables on Vercel:",
       );
+      console.error("BREVO_API_KEY:", brevoSmtpKey ? "SET" : "❌ NOT SET");
+      console.error("EMAIL_FROM:", emailFrom ? "SET" : "❌ NOT SET");
+      console.error("");
+      console.error("⚠️ TO FIX: Set environment variables on Vercel:");
+      console.error("1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables");
+      console.error("2. Add: BREVO_API_KEY = xsmtpsib-a8cfdcda7d6e...");
+      console.error("3. Add: EMAIL_FROM = your_verified_email@domain.com");
+      console.error("4. Redeploy the project");
+      
       return res.status(500).json({
         error:
-          "Email service not configured - missing Brevo credentials on server",
+          "Email service not configured - BREVO_API_KEY or EMAIL_FROM missing on Vercel",
+        details:
+          "Set these in Vercel Dashboard: Settings → Environment Variables",
+        missingVariables: {
+          BREVO_API_KEY: !brevoSmtpKey,
+          EMAIL_FROM: !emailFrom,
+        },
       });
     }
 
