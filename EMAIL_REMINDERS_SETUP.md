@@ -49,10 +49,10 @@ Follow the setup in [BREVO_EMAIL_SETUP.md](BREVO_EMAIL_SETUP.md) for:
 
 ## Legacy Approaches (Deprecated)
 
-   ```bash
-   firebase functions:config:set sendgrid.api_key="YOUR_SENDGRID_API_KEY"
-   firebase functions:config:set email.from="noreply@yourdomain.com"
-   ```
+```bash
+firebase functions:config:set sendgrid.api_key="YOUR_SENDGRID_API_KEY"
+firebase functions:config:set email.from="noreply@yourdomain.com"
+```
 
 4. Create `functions/index.js` with code from `api/emailReminders.js`
 

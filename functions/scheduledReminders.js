@@ -1,11 +1,11 @@
 /**
  * DEPRECATED: Scheduled Reminder Functions
- * 
+ *
  * This file is DEPRECATED. The application now uses:
  * - api/server.js (Express.js server)
  * - Brevo SMTP for email delivery
  * - On-demand email sending (not scheduled)
- * 
+ *
  * See BREVO_EMAIL_SETUP.md for current setup.
  * Do not deploy new versions of these functions.
  */

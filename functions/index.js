@@ -1,13 +1,13 @@
 /**
  * DEPRECATED: Firebase Cloud Functions for GSTBuddy
- * 
+ *
  * This directory contains deprecated Firebase Cloud Functions that use SendGrid.
- * 
+ *
  * Current approach:
  * - Use api/server.js (Express.js) instead
  * - Use Brevo SMTP for email delivery
  * - See BREVO_EMAIL_SETUP.md
- * 
+ *
  * These functions are kept for backward compatibility only.
  * Do not deploy new versions of these functions.
  */

@@ -5,6 +5,7 @@
 This project uses **Brevo SMTP** (formerly Sendinblue) for automatic GST filing email reminders.
 
 **Features:**
+
 - ✅ Automatic reminder emails on bill upload
 - ✅ Urgency-based email subjects
 - ✅ Reliable SMTP delivery
@@ -36,7 +37,7 @@ EMAIL_FROM=your_registered_email@domain.com
 REACT_APP_EMAIL_FROM=your_registered_email@domain.com
 REACT_APP_SEND_EMAIL_API=http://localhost:5000/api/sendEmail
 
-# api/.env  
+# api/.env
 BREVO_API_KEY=your_brevo_smtp_key_here
 EMAIL_FROM=your_registered_email@domain.com
 ```
@@ -81,13 +82,13 @@ Email sent successfully
 
 ## Email Urgency Levels
 
-| Days Remaining | Symbol | Subject |
-|---|---|---|
-| Past deadline | 🚨 | "OVERDUE ALERT: GST Filing Required..." |
-| 0 days | ⏰ | "FINAL REMINDER: GST Filing Due TODAY..." |
-| 1 day | ⚠️ | "CRITICAL: GST Filing Due Tomorrow..." |
-| 2-3 days | ⚡ | "Urgent: GST Filing Due in X Days..." |
-| 4-7 days | 📌 | "GST Filing Reminder..." |
+| Days Remaining | Symbol | Subject                                   |
+| -------------- | ------ | ----------------------------------------- |
+| Past deadline  | 🚨     | "OVERDUE ALERT: GST Filing Required..."   |
+| 0 days         | ⏰     | "FINAL REMINDER: GST Filing Due TODAY..." |
+| 1 day          | ⚠️     | "CRITICAL: GST Filing Due Tomorrow..."    |
+| 2-3 days       | ⚡     | "Urgent: GST Filing Due in X Days..."     |
+| 4-7 days       | 📌     | "GST Filing Reminder..."                  |
 
 ---
 
@@ -96,18 +97,21 @@ Email sent successfully
 ### Email Not Sending
 
 **Check 1**: Verify Brevo SMTP username
+
 ```bash
 # Should be: username@smtp-brevo.com
 # NOT: your_email@domain.com
 ```
 
 **Check 2**: Verify SMTP key is correct
+
 ```bash
 # Go to Brevo → Settings → SMTP & API
 # Copy password from SMTP section
 ```
 
 **Check 3**: Check Express server logs
+
 ```bash
 # Terminal running: node api/server.js
 # Look for error messages like:
@@ -116,6 +120,7 @@ Email sent successfully
 ```
 
 **Check 4**: Verify sender email
+
 ```bash
 # EMAIL_FROM must match your Brevo account email
 # Go to Brevo Dashboard to verify registered email
@@ -159,6 +164,7 @@ curl -X POST http://localhost:5000/api/sendEmail \
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -174,6 +180,7 @@ Expected response:
 ## Support
 
 For issues:
+
 1. Check [Brevo Documentation](https://www.brevo.com/help/)
 2. Verify SMTP settings in Brevo Dashboard
 3. Check Express server logs for connection errors

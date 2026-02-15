@@ -1,12 +1,12 @@
 /**
  * DEPRECATED: Firebase Cloud Function with SendGrid
- * 
+ *
  * This file is DEPRECATED. The application now uses:
  * - api/server.js (Express.js server)
  * - Brevo SMTP for email delivery
- * 
+ *
  * See BREVO_EMAIL_SETUP.md for the current email setup.
- * 
+ *
  * This file remains for backward compatibility only.
  * Do not use for new implementations.
  */

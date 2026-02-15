@@ -37,6 +37,7 @@ These commands are no longer needed with the current Brevo SMTP approach:
 ```
 
 **If you need to use Firebase Functions:**
+
 - See [EMAIL_REMINDERS_SETUP.md](EMAIL_REMINDERS_SETUP.md) for legacy approaches
 - Consider migrating to Brevo SMTP for simplicity
 
@@ -45,18 +46,21 @@ These commands are no longer needed with the current Brevo SMTP approach:
 ## Quick Deploy Steps (Brevo)
 
 1. **Get Brevo Credentials**
+
    ```bash
    # Go to: https://www.brevo.com/
    # Settings → SMTP → Copy SMTP credentials
    ```
 
 2. **Update .env**
+
    ```bash
    BREVO_API_KEY=your_brevo_smtp_key
    EMAIL_FROM=your_email@domain.com
    ```
 
 3. **Start Email Server**
+
    ```bash
    cd api
    npm install
@@ -68,7 +72,7 @@ These commands are no longer needed with the current Brevo SMTP approach:
    curl -X POST http://localhost:5000/api/sendEmail \
      -H "Content-Type: application/json" \
      -d '{
-       "subject": "Test", 
+       "subject": "Test",
        "body": "Test email",
        "email": "test@example.com"
      }'

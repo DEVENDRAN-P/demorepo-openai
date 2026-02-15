@@ -1,16 +1,16 @@
 /**
  * DEPRECATED: Firebase Cloud Function with Scheduled Bill Reminders
- * 
+ *
  * This file is DEPRECATED. The application now uses:
  * - api/server.js (Express.js server)
  * - Brevo SMTP for email delivery
  * - On-demand email sending rather than scheduled tasks
- * 
+ *
  * See BREVO_EMAIL_SETUP.md for the current email setup.
- * 
+ *
  * Email reminders are now sent immediately when bills are uploaded,
  * not through scheduled tasks.
- * 
+ *
  * This file remains for backward compatibility only.
  * Do not use for new implementations.
  */

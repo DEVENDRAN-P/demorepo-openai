@@ -1,12 +1,12 @@
 /**
  * Email Reminder Functions
- * 
+ *
  * NOTE: This file is deprecated. Email sending is now handled by:
  * - api/server.js (Express.js server with Brevo SMTP)
  * - src/services/emailReminderService.js (frontend integration)
- * 
+ *
  * See BREVO_EMAIL_SETUP.md for current email configuration.
- * 
+ *
  * These exported functions remain for backward compatibility with existing code.
  */
 
@@ -23,7 +23,7 @@ const getEmailServiceURL = () => {
 
 /**
  * Callable Function: Send reminder email
- * 
+ *
  * DEPRECATED: Use express server instead.
  * Calls: POST /api/sendEmail endpoint
  */
@@ -63,14 +63,11 @@ exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
     }
 
     // Call Express server
-    const response = await axios.post(
-      getEmailServiceURL(),
-      {
-        subject,
-        body,
-        email: userEmail,
-      }
-    );
+    const response = await axios.post(getEmailServiceURL(), {
+      subject,
+      body,
+      email: userEmail,
+    });
 
     const info = response.data;
     console.log(`✅ Email sent: ${info.messageId}`);
@@ -164,14 +161,11 @@ exports.sendManualReminder = functions.https.onCall(async (data, context) => {
     const emailContent = generateEmailForBill(bill, daysUntilDue);
 
     // Call Express server
-    const response = await axios.post(
-      getEmailServiceURL(),
-      {
-        subject: emailContent.subject,
-        body: emailContent.text,
-        email: userEmail,
-      }
-    );
+    const response = await axios.post(getEmailServiceURL(), {
+      subject: emailContent.subject,
+      body: emailContent.text,
+      email: userEmail,
+    });
 
     const info = response.data;
 
