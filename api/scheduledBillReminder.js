@@ -1,20 +1,18 @@
 /**
- * Firebase Cloud Function: Scheduled Bill Reminder System
- * Runs daily at 9 AM IST to check bills with upcoming due dates and send email reminders
- *
- * Deployment:
- * 1. Place this in functions/index.js (or separate file)
- * 2. firebase deploy --only functions
- *
- * Firestore Structure Expected:
- * users/{userId}/bills/{billId}
- *   - dueDate: "2026-02-15" (ISO format)
- *   - email: "user@example.com"
- *   - amount: 1200
- *   - invoiceNumber: "INV-001"
- *   - supplierName: "BSNL"
- *   - reminderSent: false (tracks if reminder already sent)
- *   - reminderSentDate: null
+ * DEPRECATED: Firebase Cloud Function with Scheduled Bill Reminders
+ * 
+ * This file is DEPRECATED. The application now uses:
+ * - api/server.js (Express.js server)
+ * - Brevo SMTP for email delivery
+ * - On-demand email sending rather than scheduled tasks
+ * 
+ * See BREVO_EMAIL_SETUP.md for the current email setup.
+ * 
+ * Email reminders are now sent immediately when bills are uploaded,
+ * not through scheduled tasks.
+ * 
+ * This file remains for backward compatibility only.
+ * Do not use for new implementations.
  */
 
 const functions = require("firebase-functions");
@@ -29,7 +27,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// Configure email transporter
+// DEPRECATED: Configure SendGrid transporter (use Brevo SMTP instead)
 const transporter = nodemailer.createTransport(
   sgTransport({
     auth: {

@@ -1,7 +1,13 @@
 /**
- * Scheduled Reminder Functions
- *
- * Runs daily at 9 AM IST to check bills and send automatic reminders
+ * DEPRECATED: Scheduled Reminder Functions
+ * 
+ * This file is DEPRECATED. The application now uses:
+ * - api/server.js (Express.js server)
+ * - Brevo SMTP for email delivery
+ * - On-demand email sending (not scheduled)
+ * 
+ * See BREVO_EMAIL_SETUP.md for current setup.
+ * Do not deploy new versions of these functions.
  */
 
 const functions = require("firebase-functions");
@@ -11,7 +17,7 @@ const sgTransport = require("nodemailer-sendgrid-transport");
 
 const db = admin.firestore();
 
-// Configure email transporter
+// DEPRECATED: Configure SendGrid transporter (use Brevo SMTP instead)
 const getTransporter = () => {
   return nodemailer.createTransport(
     sgTransport({

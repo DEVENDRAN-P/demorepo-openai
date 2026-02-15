@@ -1,36 +1,31 @@
 /**
  * Email Reminder Functions
- * Callable and manual email sending for bill reminders
+ * 
+ * NOTE: This file is deprecated. Email sending is now handled by:
+ * - api/server.js (Express.js server with Brevo SMTP)
+ * - src/services/emailReminderService.js (frontend integration)
+ * 
+ * See BREVO_EMAIL_SETUP.md for current email configuration.
+ * 
+ * These exported functions remain for backward compatibility with existing code.
  */
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const nodemailer = require("nodemailer");
-const sgTransport = require("nodemailer-sendgrid-transport");
+const axios = require("axios");
 
 const db = admin.firestore();
 
-// Configure email transporter
-const getTransporter = () => {
-  return nodemailer.createTransport(
-    sgTransport({
-      auth: {
-        api_key: process.env.SENDGRID_API_KEY,
-      },
-    }),
-  );
+// Configure: Call Express server for email sending
+const getEmailServiceURL = () => {
+  return process.env.EMAIL_SERVICE_URL || "http://localhost:5000/api/sendEmail";
 };
 
 /**
  * Callable Function: Send reminder email
- * Call from client-side:
- *
- * const sendReminder = firebase.functions().httpsCallable('sendReminderEmail');
- * await sendReminder({
- *   billId: "bill-123",
- *   subject: "Bill Due Tomorrow",
- *   body: "Your bill is due tomorrow..."
- * });
+ * 
+ * DEPRECATED: Use express server instead.
+ * Calls: POST /api/sendEmail endpoint
  */
 exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
   try {
@@ -67,17 +62,17 @@ exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
       );
     }
 
-    const transporter = getTransporter();
+    // Call Express server
+    const response = await axios.post(
+      getEmailServiceURL(),
+      {
+        subject,
+        body,
+        email: userEmail,
+      }
+    );
 
-    // Send email
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "noreplygstbuddy@gmail.com",
-      to: userEmail,
-      subject: subject,
-      html: formatEmailHTML(body),
-      text: body,
-    });
-
+    const info = response.data;
     console.log(`✅ Email sent: ${info.messageId}`);
 
     // Update bill status if billId provided
@@ -110,7 +105,7 @@ exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
 
 /**
  * Callable Function: Send manual reminder to a specific user
- * Used for testing and manual reminders
+ * DEPRECATED: Use express server instead.
  */
 exports.sendManualReminder = functions.https.onCall(async (data, context) => {
   try {
@@ -167,16 +162,18 @@ exports.sendManualReminder = functions.https.onCall(async (data, context) => {
 
     // Generate email content
     const emailContent = generateEmailForBill(bill, daysUntilDue);
-    const transporter = getTransporter();
 
-    // Send email
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "noreplygstbuddy@gmail.com",
-      to: userEmail,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
-    });
+    // Call Express server
+    const response = await axios.post(
+      getEmailServiceURL(),
+      {
+        subject: emailContent.subject,
+        body: emailContent.text,
+        email: userEmail,
+      }
+    );
+
+    const info = response.data;
 
     // Update bill
     await db
@@ -221,82 +218,12 @@ function generateEmailForBill(bill, daysUntilDue) {
   else if (daysUntilDue === 1) urgency = "⏰ FINAL REMINDER";
   else if (daysUntilDue <= 3) urgency = "⚠️ IMPORTANT";
 
-  const html = formatEmailHTML(`
-    <h2>${urgency}</h2>
-    <p>Your <strong>${bill.supplierName || "bill"}</strong> payment reminder.</p>
-    
-    <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
-      <p><strong>Invoice:</strong> ${bill.invoiceNumber || "N/A"}</p>
-      <p><strong>Amount:</strong> ₹${(bill.amount || 0).toFixed(2)}</p>
-      <p><strong>Due Date:</strong> ${deadlineStr}</p>
-      <p><strong>Days Left:</strong> ${daysUntilDue}</p>
-    </div>
-    
-    <p>Please ensure payment is made on time.</p>
-  `);
+  const text = `${urgency}\n\n${bill.supplierName} - ₹${(bill.amount || 0).toFixed(2)}\nDue: ${deadlineStr}\nDays left: ${daysUntilDue}`;
 
   return {
     subject: `${urgency}: ${bill.supplierName || "Payment"} Due ${deadlineStr}`,
-    html,
-    text: `${urgency}\n\n${bill.supplierName} - ₹${(bill.amount || 0).toFixed(2)}\nDue: ${deadlineStr}\nDays left: ${daysUntilDue}`,
+    text,
   };
-}
-
-/**
- * Helper: Format email HTML template
- */
-function formatEmailHTML(content) {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          color: #333;
-          background-color: #f9f9f9;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          background-color: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h2 {
-          color: #667eea;
-          margin-top: 0;
-        }
-        a {
-          color: #667eea;
-          text-decoration: none;
-        }
-        a:hover {
-          text-decoration: underline;
-        }
-        .footer {
-          border-top: 1px solid #eee;
-          padding-top: 20px;
-          font-size: 12px;
-          color: #999;
-          text-align: center;
-          margin-top: 30px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        ${content}
-        <div class="footer">
-          <p>GSTBuddy - Bill Reminder System</p>
-          <p><a href="https://gstbuddy.app">Visit Dashboard</a></p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
 }
 
 module.exports = {

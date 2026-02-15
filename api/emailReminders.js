@@ -1,14 +1,14 @@
 /**
- * Firebase Cloud Function: Send Reminder Email via SendGrid
- * This function sends email reminders for upcoming GST filing deadlines
- *
- * To deploy this function:
- * 1. Install Firebase CLI: npm install -g firebase-tools
- * 2. Initialize functions: firebase init functions
- * 3. Copy this code to functions/index.js
- * 4. Set SendGrid API key: firebase functions:config:set sendgrid.api_key="YOUR_KEY"
- * 5. Install dependencies: npm install nodemailer nodemailer-sendgrid-transport
- * 6. Deploy: firebase deploy --only functions
+ * DEPRECATED: Firebase Cloud Function with SendGrid
+ * 
+ * This file is DEPRECATED. The application now uses:
+ * - api/server.js (Express.js server)
+ * - Brevo SMTP for email delivery
+ * 
+ * See BREVO_EMAIL_SETUP.md for the current email setup.
+ * 
+ * This file remains for backward compatibility only.
+ * Do not use for new implementations.
  */
 
 const functions = require("firebase-functions");
@@ -19,7 +19,7 @@ const sgTransport = require("nodemailer-sendgrid-transport");
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Configure SendGrid transporter
+// DEPRECATED: SendGrid transporter
 const transporter = nodemailer.createTransport(
   sgTransport({
     auth: {
@@ -30,8 +30,8 @@ const transporter = nodemailer.createTransport(
 );
 
 /**
- * Callable Cloud Function to send reminder email
- * Call from client: firebase.functions().httpsCallable('sendReminderEmail')
+ * DEPRECATED: Callable Cloud Function to send reminder email via SendGrid
+ * Use api/server.js with Brevo SMTP instead
  */
 exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
   try {
@@ -79,8 +79,8 @@ exports.sendReminderEmail = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * HTTP Callable Function to send reminder email via SendGrid
- * Used from client applications
+ * DEPRECATED: HTTP Callable Function to send reminder email via SendGrid
+ * Use api/server.js with Brevo SMTP instead
  */
 exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
   try {
@@ -116,7 +116,7 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // Send email via SendGrid
+    // Send email (DEPRECATED: was SendGrid, use Brevo SMTP now)
     const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM || "noreply@gstbuddy.app",
       to: email,
@@ -127,12 +127,12 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
         `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${body.replace(/\n/g, "<br>").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`,
     });
 
-    console.log("Email sent via SendGrid:", info.messageId);
+    console.log("Email sent (DEPRECATED SendGrid):", info.messageId);
 
     res.status(200).json({
       success: true,
       messageId: info.messageId,
-      message: "Email sent successfully via SendGrid",
+      message: "Email sent (DEPRECATED: Use Brevo SMTP via api/server.js)",
     });
   } catch (error) {
     console.error("Error sending email:", error);

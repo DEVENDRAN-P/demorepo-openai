@@ -1,14 +1,15 @@
 /**
- * Firebase Cloud Functions for GSTBuddy
- *
- * Deploy with: firebase deploy --only functions
- *
- * Environment variables needed:
- * - SENDGRID_API_KEY: Your SendGrid API key
- * - EMAIL_FROM: From email address (e.g., noreplygstbuddy@gmail.com)
- *
- * Set with: firebase functions:config:set sendgrid.api_key="YOUR_KEY" email.from="noreplygstbuddy@gmail.com"
- * Or in .env.local for emulator
+ * DEPRECATED: Firebase Cloud Functions for GSTBuddy
+ * 
+ * This directory contains deprecated Firebase Cloud Functions that use SendGrid.
+ * 
+ * Current approach:
+ * - Use api/server.js (Express.js) instead
+ * - Use Brevo SMTP for email delivery
+ * - See BREVO_EMAIL_SETUP.md
+ * 
+ * These functions are kept for backward compatibility only.
+ * Do not deploy new versions of these functions.
  */
 
 const functions = require("firebase-functions");
@@ -23,13 +24,13 @@ if (!admin.apps.length) {
 const emailReminders = require("./emailReminders");
 const scheduledReminders = require("./scheduledReminders");
 
-// Export all functions
+// Export all functions (DEPRECATED - do not use)
 module.exports = {
-  // Email reminder functions
+  // Email reminder functions (DEPRECATED)
   sendReminderEmail: emailReminders.sendReminderEmail,
   sendManualReminder: emailReminders.sendManualReminder,
 
-  // Scheduled reminder functions
+  // Scheduled reminder functions (DEPRECATED)
   scheduledBillReminder: scheduledReminders.scheduledBillReminder,
   triggerBillReminders: scheduledReminders.triggerBillReminders,
 };

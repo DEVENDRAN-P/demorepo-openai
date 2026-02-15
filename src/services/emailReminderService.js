@@ -14,11 +14,14 @@ import axios from "axios";
  * Email Reminder Service
  * Sends automatic email notifications to users when GST filing deadlines are approaching
  *
- * This service integrates with Firebase Cloud Functions to send emails.
- * To enable email sending, you need to:
- * 1. Set up a Cloud Function that sends emails (using SendGrid, Nodemailer, or similar)
- * 2. Or use Firebase Extensions (Email extension)
- * 3. Update sendReminderEmail() with your actual email service endpoint
+ * This service integrates with a backend Express.js server that uses Brevo SMTP
+ * for reliable email delivery. See BREVO_EMAIL_SETUP.md for configuration details.
+ *
+ * Email flow:
+ * 1. Frontend calls sendBillUploadReminder() when bill is uploaded
+ * 2. Service calculates deadline urgency
+ * 3. Sends POST to backend: http://localhost:5000/api/sendEmail
+ * 4. Express server uses Brevo SMTP to deliver email
  */
 
 const db = getFirestore();
@@ -554,7 +557,7 @@ VISIT: Your dashboard to generate and submit forms.
 
 /**
  * Test function to send a test email
- * Call this once to verify SendGrid integration is working
+ * Verifies Brevo SMTP integration is working
  */
 export const sendTestEmail = async (userEmail) => {
   try {

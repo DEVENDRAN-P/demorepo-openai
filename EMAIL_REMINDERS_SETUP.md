@@ -1,6 +1,12 @@
 # Email Reminder System Setup Guide
 
-This guide explains how to set up automatic email reminders for upcoming GST filing deadlines.
+## ⚠️ IMPORTANT: Use Brevo SMTP
+
+This project now uses **Brevo SMTP** with Express.js for email delivery.
+
+**See [BREVO_EMAIL_SETUP.md](BREVO_EMAIL_SETUP.md) for the current setup guide.**
+
+---
 
 ## Overview
 
@@ -12,61 +18,36 @@ The email reminder system sends automatic emails to users when GST filing deadli
 - **Today**: Critical reminder
 - **After deadline**: Overdue reminder
 
-## Architecture
+## Architecture (Current)
 
 The system consists of three main components:
 
 1. **Frontend Service** (`src/services/emailReminderService.js`)
    - Checks bills for upcoming deadlines
    - Formats email content
-   - Calls backend endpoint to send emails
+   - Calls Express.js backend to send emails
 
-2. **Cloud Function** (`api/emailReminders.js`)
+2. **Backend Express Server** (`api/server.js`)
    - Receives email requests from client
-   - Sends actual emails via email service
-   - Runs daily schedule to check and send reminders
+   - Sends actual emails via Brevo SMTP
+   - No Firebase Functions needed
 
 3. **Firestore Database**
-   - Stores email reminder history to avoid duplicates
+   - Stores email reminder history
    - Records sent emails in `users/{uid}/emailReminders` collection
 
-## Setup Instructions
+## Quick Start
 
-### Step 1: Choose Your Email Service
+Follow the setup in [BREVO_EMAIL_SETUP.md](BREVO_EMAIL_SETUP.md) for:
 
-You have several options to send emails:
+1. Creating a Brevo account
+2. Getting SMTP credentials
+3. Setting up Express.js server
+4. Testing email sending
 
-#### Option A: Firebase Email Extension (Recommended - No Code Required)
+---
 
-1. Go to Firebase Console → Extensions
-2. Search for "Firestore Send Email"
-3. Click Install
-4. Follow the setup wizard:
-   - Choose Cloud Storage bucket
-   - Enter SMTP or SendGrid credentials
-   - Authorize Firebase
-
-**Pros:** No code needed, built-in Firebase
-**Cons:** Less customizable
-
-#### Option B: Firebase Cloud Functions with SendGrid
-
-1. Install Firebase CLI:
-
-   ```bash
-   npm install -g firebase-tools
-   firebase login
-   firebase init functions
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   cd functions
-   npm install nodemailer nodemailer-sendgrid-transport
-   ```
-
-3. Set SendGrid API key:
+## Legacy Approaches (Deprecated)
 
    ```bash
    firebase functions:config:set sendgrid.api_key="YOUR_SENDGRID_API_KEY"

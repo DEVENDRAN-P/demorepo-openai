@@ -4,49 +4,75 @@
 
 ---
 
-## Commands in Order
+## ⚠️ Current Email Setup: Brevo SMTP
+
+The codebase now uses **Brevo SMTP** with Express.js instead of Firebase Functions + SendGrid.
+
+**See [BREVO_EMAIL_SETUP.md](BREVO_EMAIL_SETUP.md) for current setup.**
+
+---
+
+## Email Server Commands (Current)
 
 ```powershell
-# 1. Install Firebase CLI (if not done)
-npm install -g firebase-tools
-
-# 2. Navigate to project
-cd c:\Users\LENOVO\openaiacademy
-
-# 3. Login to Firebase
-firebase login
-
-# 4. Select project
-firebase use --add
-
-# 5. Install function dependencies
-cd functions
+# Start backend email server
+cd api
 npm install
-cd ..
-
-# 6. Set SendGrid API Key (replace xxxxx)
-firebase functions:config:set sendgrid.api_key="SG.xxxxxxxxxxxxxxxxxxxxx"
-
-# 7. Set email from address
-firebase functions:config:set email.from="noreplygstbuddy@gmail.com"
-
-# 8. Verify config
-firebase functions:config:get
-
-# 9. Deploy functions
-firebase deploy --only functions
-
-# 10. List deployed functions
-firebase functions:list
-
-# 11. View logs
-firebase functions:log
-
-# 12. View real-time logs
-firebase functions:log --follow
+node server.js
+# Server runs on http://localhost:5000/api/sendEmail
 ```
 
 ---
+
+## Legacy: Firebase Functions Deployment (Deprecated)
+
+These commands are no longer needed with the current Brevo SMTP approach:
+
+```powershell
+# DEPRECATED - Only use if maintaining legacy code
+# The following Firebase Functions commands are no longer needed:
+
+# firebase functions:config:set sendgrid.api_key="SG.xxxxxxxxxxxxxxxxxxxxx"
+# firebase deploy --only functions
+```
+
+**If you need to use Firebase Functions:**
+- See [EMAIL_REMINDERS_SETUP.md](EMAIL_REMINDERS_SETUP.md) for legacy approaches
+- Consider migrating to Brevo SMTP for simplicity
+
+---
+
+## Quick Deploy Steps (Brevo)
+
+1. **Get Brevo Credentials**
+   ```bash
+   # Go to: https://www.brevo.com/
+   # Settings → SMTP → Copy SMTP credentials
+   ```
+
+2. **Update .env**
+   ```bash
+   BREVO_API_KEY=your_brevo_smtp_key
+   EMAIL_FROM=your_email@domain.com
+   ```
+
+3. **Start Email Server**
+   ```bash
+   cd api
+   npm install
+   node server.js
+   ```
+
+4. **Test Sending**
+   ```bash
+   curl -X POST http://localhost:5000/api/sendEmail \
+     -H "Content-Type: application/json" \
+     -d '{
+       "subject": "Test", 
+       "body": "Test email",
+       "email": "test@example.com"
+     }'
+   ```
 
 ## Files You Created
 
