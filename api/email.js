@@ -45,7 +45,7 @@ export default async (req, res) => {
   if (req.method === "GET") {
     const brevoKey = process.env.BREVO_API_KEY;
     const emailFrom = process.env.EMAIL_FROM;
-    
+
     return res.status(200).json({
       status: "Email API Running",
       environment: "production",
@@ -57,8 +57,7 @@ export default async (req, res) => {
         "GET /api/email": "This diagnostic endpoint",
         "POST /api/email": "Send email (requires BREVO_API_KEY and EMAIL_FROM)",
       },
-      note:
-        "If env vars show NOT SET, configure them in Vercel Settings → Environment Variables",
+      note: "If env vars show NOT SET, configure them in Vercel Settings → Environment Variables",
     });
   }
 
@@ -209,8 +208,7 @@ export default async (req, res) => {
       success: false,
       error: error.message || "Email sending failed",
       message:
-        error.message ||
-        "An unexpected error occurred while sending email",
+        error.message || "An unexpected error occurred while sending email",
       code: error.code || "UNKNOWN",
       type: error.name,
       details: error.toString(),

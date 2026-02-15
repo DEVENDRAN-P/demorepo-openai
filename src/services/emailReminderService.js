@@ -144,7 +144,7 @@ export const sendReminderEmail = async (emailData) => {
     if (apiError) {
       // If API returned structured error, use it
       errorMessage = apiError.message || apiError.error || error.message;
-      
+
       if (apiError.code === "EAUTH") {
         errorMessage = `❌ Brevo Authentication Failed\n${apiError.help || "Check BREVO_API_KEY in Vercel Environment Variables"}`;
       } else if (apiError.code === "ECONNREFUSED") {
@@ -153,7 +153,8 @@ export const sendReminderEmail = async (emailData) => {
         errorMessage = `${apiError.message}\n\n${apiError.help}`;
       }
     } else if (error.code === "ERR_NETWORK") {
-      errorMessage = "❌ Network Error: Cannot reach email API\n\nFor production (Vercel): Check environment variables\nFor development: Ensure 'node api/server.js' is running";
+      errorMessage =
+        "❌ Network Error: Cannot reach email API\n\nFor production (Vercel): Check environment variables\nFor development: Ensure 'node api/server.js' is running";
     }
 
     console.warn("⚠️ Email sending failed:", errorMessage);
