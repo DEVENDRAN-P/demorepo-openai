@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ========================================
+    // USER DATA - STRICT USER ISOLATION
+    // ========================================
+    
+    // Main users collection - each user can ONLY access their own document
+    match /users/{uid} {
+      // User can read/write their own profile
+      allow read, write: if request.auth.uid == uid;
+      
+      // All subcollections inherit the same rule
+      // Bills, forms, reminders, settings, stats, documents, etc.
+      match /{document=**} {
+        allow read, write: if request.auth.uid == uid;
+      }
+    }
+
+    // ========================================
+    // REMINDERS - USER ISOLATED
+    // ========================================
+    match /reminders/{reminderId} {
+      // Users can only read reminders they own
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.userId;
+      
+      // Users can create reminders for themselves
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete their own reminders
+      allow update, delete: if request.auth != null && 
+                               request.auth.uid == resource.data.userId;
+    }
+
+    // ========================================
+    // BILLS - ROOT LEVEL (legacy support)
+    // ========================================
+    match /bills/{billId} {
+      // Users can only access bills they own
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
+    }
+
+    // ========================================
+    // DOCUMENTS - ROOT LEVEL (legacy support)
+    // ========================================
+    match /documents/{docId} {
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
+    }
+
+    // ========================================
+    // GST FORMS - ROOT LEVEL (legacy support)
+    // ========================================
+    match /gstForms/{formId} {
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
+    }
+
+    // ========================================
+    // REPORTS - ROOT LEVEL (legacy support)
+    // ========================================
+    match /reports/{reportId} {
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.userId;
+    }
+
+    // ========================================
+    // FIREBASE EMAIL EXTENSION - SMTP
+    // ========================================
+    // Users can create email documents
+    // Firebase Extension service account can read and update them
+    match /mail/{mailId} {
+      // Authenticated users can create email documents
+      allow create: if request.auth != null;
+      
+      // Firebase Extension service account can read and update (for delivery tracking)
+      allow read, update: if request.auth != null || 
+                             (request.auth.uid == null && 
+                              request.headers['Authorization'].matches('^Bearer .+$'));
+    }
+
+    // ========================================
+    // DENY ALL OTHER ACCESS
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
