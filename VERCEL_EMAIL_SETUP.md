@@ -1,6 +1,7 @@
 # ⚠️ Failed to Send Email: Vercel Setup Required
 
 ## Problem
+
 You're seeing: **❌ Failed to send email: true**
 
 This happens when the Brevo SMTP credentials are not configured on Vercel.
@@ -10,14 +11,17 @@ This happens when the Brevo SMTP credentials are not configured on Vercel.
 ## Solution - Set Environment Variables on Vercel
 
 ### Step 1: Go to Vercel Dashboard
+
 1. Visit [Vercel Dashboard](https://vercel.com/dashboard)
 2. Click on your **gstbuddy** project (or demorepo-openai)
 
 ### Step 2: Open Settings
+
 1. Click **Settings** (gear icon)
 2. Go to **Environment Variables** (left sidebar)
 
 ### Step 3: Add BREVO_API_KEY
+
 1. Click **Add New**
 2. **Name**: `BREVO_API_KEY`
 3. **Value**: Your Brevo SMTP password from [Brevo Dashboard SMTP Settings](https://dashboard.brevo.com/smtp)
@@ -25,6 +29,7 @@ This happens when the Brevo SMTP credentials are not configured on Vercel.
 5. Click **Save**
 
 ### Step 4: Add EMAIL_FROM
+
 1. Click **Add New**
 2. **Name**: `EMAIL_FROM`
 3. **Value**: `devendranp.it2024@citchennai.net`
@@ -32,6 +37,7 @@ This happens when the Brevo SMTP credentials are not configured on Vercel.
 5. Click **Save**
 
 ### Step 5: Redeploy
+
 1. Go to **Deployments** tab
 2. Click the **⋯** menu on the latest deployment
 3. Select **Redeploy**
@@ -72,12 +78,12 @@ After redeployment, test the app:
 
 ### Common Issues
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| 500 Error | Variables not set | Follow steps above |
-| EAUTH | Invalid API key | Verify in Brevo dashboard |
+| Error              | Cause             | Fix                                |
+| ------------------ | ----------------- | ---------------------------------- |
+| 500 Error          | Variables not set | Follow steps above                 |
+| EAUTH              | Invalid API key   | Verify in Brevo dashboard          |
 | Connection refused | Wrong SMTP server | Check server: smtp-relay.brevo.com |
-| 401 Unauthorized | Wrong credentials | Double-check key and username |
+| 401 Unauthorized   | Wrong credentials | Double-check key and username      |
 
 ---
 
@@ -90,7 +96,7 @@ If testing locally without Vercel, the app uses the Express server:
 cd api
 node server.js
 
-# Terminal 2: React app  
+# Terminal 2: React app
 npm start
 ```
 

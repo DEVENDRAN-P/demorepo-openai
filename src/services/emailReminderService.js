@@ -132,20 +132,39 @@ export const sendReminderEmail = async (emailData) => {
       recipient: emailData.email,
     };
   } catch (error) {
-    console.error("❌ Brevo email error:", error.message);
+    console.error("❌ Email API Error:");
+    console.error("Status:", error.response?.status);
+    console.error("Data:", error.response?.data);
+    console.error("Message:", error.message);
 
-    if (error.code === "ERR_NETWORK" || error.message.includes("net::")) {
-      console.warn(
-        "⚠️ API not reachable. Make sure Express server is running: node api/server.js (for development)",
-      );
+    // Extract detailed error from API response
+    const apiError = error.response?.data;
+    let errorMessage = error.message;
+
+    if (apiError) {
+      // If API returned structured error, use it
+      errorMessage = apiError.message || apiError.error || error.message;
+      
+      if (apiError.code === "EAUTH") {
+        errorMessage = `❌ Brevo Authentication Failed\n${apiError.help || "Check BREVO_API_KEY in Vercel Environment Variables"}`;
+      } else if (apiError.code === "ECONNREFUSED") {
+        errorMessage = `❌ Cannot Connect to Brevo Server\nCheck: https://status.brevo.com`;
+      } else if (apiError.help) {
+        errorMessage = `${apiError.message}\n\n${apiError.help}`;
+      }
+    } else if (error.code === "ERR_NETWORK") {
+      errorMessage = "❌ Network Error: Cannot reach email API\n\nFor production (Vercel): Check environment variables\nFor development: Ensure 'node api/server.js' is running";
     }
+
+    console.warn("⚠️ Email sending failed:", errorMessage);
 
     return {
       success: false,
       messageId: null,
-      message: `Brevo API error: ${error.message}`,
+      message: errorMessage,
       provider: "Brevo",
       error: true,
+      statusCode: error.response?.status,
     };
   }
 };

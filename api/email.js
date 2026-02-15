@@ -41,6 +41,27 @@ export default async (req, res) => {
     return;
   }
 
+  // GET endpoint for diagnostics
+  if (req.method === "GET") {
+    const brevoKey = process.env.BREVO_API_KEY;
+    const emailFrom = process.env.EMAIL_FROM;
+    
+    return res.status(200).json({
+      status: "Email API Running",
+      environment: "production",
+      brevoConfigured: {
+        BREVO_API_KEY: brevoKey ? "✅ SET" : "❌ NOT SET",
+        EMAIL_FROM: emailFrom ? `✅ SET (${emailFrom})` : "❌ NOT SET",
+      },
+      endpoints: {
+        "GET /api/email": "This diagnostic endpoint",
+        "POST /api/email": "Send email (requires BREVO_API_KEY and EMAIL_FROM)",
+      },
+      note:
+        "If env vars show NOT SET, configure them in Vercel Settings → Environment Variables",
+    });
+  }
+
   // Only allow POST requests
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -72,18 +93,18 @@ export default async (req, res) => {
     const emailFrom = process.env.EMAIL_FROM;
 
     if (!brevoSmtpKey || !emailFrom) {
-      console.error(
-        "❌ Missing Brevo environment variables on Vercel:",
-      );
+      console.error("❌ Missing Brevo environment variables on Vercel:");
       console.error("BREVO_API_KEY:", brevoSmtpKey ? "SET" : "❌ NOT SET");
       console.error("EMAIL_FROM:", emailFrom ? "SET" : "❌ NOT SET");
       console.error("");
       console.error("⚠️ TO FIX: Set environment variables on Vercel:");
-      console.error("1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables");
+      console.error(
+        "1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables",
+      );
       console.error("2. Add: BREVO_API_KEY = xsmtpsib-a8cfdcda7d6e...");
       console.error("3. Add: EMAIL_FROM = your_verified_email@domain.com");
       console.error("4. Redeploy the project");
-      
+
       return res.status(500).json({
         error:
           "Email service not configured - BREVO_API_KEY or EMAIL_FROM missing on Vercel",
@@ -134,26 +155,66 @@ export default async (req, res) => {
       statusCode: 200,
     });
   } catch (error) {
-    console.error("❌ Brevo SMTP error:", error.message);
+    console.error("❌ BREVO SMTP ERROR:");
+    console.error("Message:", error.message);
+    console.error("Code:", error.code);
+    console.error("Command:", error.command);
+    console.error("SMTP Response:", error.response);
 
-    // Return appropriate error based on error type
-    if (error.code === "EAUTH") {
+    // Check for authentication errors
+    if (
+      error.code === "EAUTH" ||
+      error.message.includes("Invalid login") ||
+      error.message.includes("authentication")
+    ) {
       return res.status(401).json({
-        error: "Authentication failed - check Brevo credentials",
+        success: false,
+        error: "Invalid Brevo Credentials",
+        message:
+          "SMTP authentication failed. Check BREVO_API_KEY in Vercel Settings.",
+        code: "EAUTH",
         details: error.message,
+        help: "1. Go to https://dashboard.brevo.com/smtp\n2. Copy SMTP Key (password) - should start with 'xsmtpsib-'\n3. Set BREVO_API_KEY in Vercel Environment Variables\n4. Redeploy",
       });
     }
 
-    if (error.code === "ECONNREFUSED") {
+    // Check for connection errors
+    if (
+      error.code === "ECONNREFUSED" ||
+      error.code === "EHOSTUNREACH" ||
+      error.code === "ETIMEDOUT"
+    ) {
       return res.status(503).json({
-        error: "Email service unavailable - SMTP connection failed",
+        success: false,
+        error: "Brevo Server Unreachable",
+        message:
+          "Cannot connect to smtp-relay.brevo.com. Check server status at https://status.brevo.com",
+        code: error.code,
         details: error.message,
       });
     }
 
+    // Check for invalid email
+    if (error.message.includes("Invalid email")) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid Email Address",
+        message: "Recipient email format is invalid",
+        code: "INVALID_EMAIL",
+      });
+    }
+
+    // Generic error - show all details
     return res.status(500).json({
-      error: `Failed to send email: ${error.message}`,
+      success: false,
+      error: error.message || "Email sending failed",
+      message:
+        error.message ||
+        "An unexpected error occurred while sending email",
+      code: error.code || "UNKNOWN",
+      type: error.name,
       details: error.toString(),
+      help: "Check Vercel logs for more details or contact support",
     });
   }
 };
