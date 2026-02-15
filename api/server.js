@@ -1,15 +1,17 @@
 /**
- * Local Express Server for Testing Email API
+ * Express Server for Testing Email API (Local Development)
+ *
+ * For production on Vercel, see: api/sendEmail.js (Vercel serverless function)
  *
  * Uses Brevo (formerly Sendinblue) SMTP for reliable email delivery
  *
  * Installation:
  * npm install express cors axios dotenv nodemailer
  *
- * Run:
+ * Run locally:
  * node api/server.js
  *
- * Then update .env:
+ * Then update .env for development:
  * REACT_APP_SEND_EMAIL_API=http://localhost:5000/api/sendEmail
  */
 

@@ -107,9 +107,8 @@ Thank you!
  */
 export const sendReminderEmail = async (emailData) => {
   try {
-    const apiUrl =
-      process.env.REACT_APP_SEND_EMAIL_API ||
-      "http://localhost:5000/api/sendEmail";
+    // Use relative path for API endpoint (works on both local and Vercel)
+    const apiUrl = "/api/email";
 
     console.log("📧 Sending email via Brevo:", {
       api: apiUrl,
@@ -137,7 +136,7 @@ export const sendReminderEmail = async (emailData) => {
 
     if (error.code === "ERR_NETWORK" || error.message.includes("net::")) {
       console.warn(
-        "⚠️ API not reachable. Make sure Express server is running: node api/server.js",
+        "⚠️ API not reachable. Make sure Express server is running: node api/server.js (for development)",
       );
     }
 
