@@ -48,7 +48,9 @@ cd api && npm install express cors axios dotenv && cd ..
 Check your `.env` file has:
 
 ```env
-SENDGRID_API_KEY=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
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+# Note: This project now uses Brevo SMTP instead of SendGrid
+# Update to: BREVO_API_KEY=your_brevo_smtp_key_here
 ```
 
 ### Step 3: Start Email API Server
@@ -122,7 +124,7 @@ vercel deploy
 
 ```bash
 vercel env add SENDGRID_API_KEY
-# Paste: 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
+# Paste: your_sendgrid_api_key_here
 
 vercel env add EMAIL_FROM
 # Paste: noreplygstbuddy@gmail.com
@@ -143,7 +145,7 @@ Or set via Vercel Dashboard:
 ```bash
 # Set SendGrid API Key
 vercel env add SENDGRID_API_KEY
-# Paste: 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
+# Paste: your_sendgrid_api_key_here
 
 vercel env add EMAIL_FROM
 # Paste: noreplygstbuddy@gmail.com
@@ -228,7 +230,7 @@ app.listen(3000);
 
 1. Go to Vercel Dashboard
 2. Select your project → Settings → Environment Variables
-3. Add `SENDGRID_API_KEY=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`
+3. Add `BREVO_API_KEY=your_brevo_smtp_key_here` (Project now uses Brevo SMTP)
 4. Redeploy with `vercel deploy`
 
 ### ❌ Emails Going to Spam
