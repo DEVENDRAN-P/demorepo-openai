@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Logo from './Logo';
 
 const BUSINESSES = [
   { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5' },
@@ -124,6 +125,26 @@ const iconMap = {
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   ),
+  penalty: (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  ),
+  pricing: (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <line x1="12" y1="4" x2="12" y2="20"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+    </svg>
+  ),
+  profile: (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
   support: (
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>
@@ -165,25 +186,21 @@ function Sidebar() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: iconMap.dashboard },
-    { name: 'AI Finance Agent', path: '/agent', icon: iconMap.agent },
+    { name: 'AI Accountant Agent', path: '/agent', icon: iconMap.agent },
     { name: 'Invoice Intelligence', path: '/bill-upload', icon: iconMap.upload },
     { name: 'Invoices', path: '/invoices', icon: iconMap.invoices },
+    { name: 'Document Assistant', path: '/documents', icon: iconMap.documents },
     { name: 'Compliance Center', path: '/compliance', icon: iconMap.compliance },
+    { name: 'Penalty Center', path: '/penalty', icon: iconMap.penalty },
     { name: 'Business Health', path: '/health', icon: iconMap.health },
-    { name: 'Audit Center', path: '/audit', icon: iconMap.audit },
-    { name: 'Tax Forecast', path: '/forecast', icon: iconMap.forecast },
     { name: 'Reports', path: '/reports', icon: iconMap.reports },
-    { name: 'AI Insights', path: '/insights', icon: iconMap.insights },
-    { name: 'Recommendations', path: '/recommendations', icon: iconMap.recommendations },
-    { name: 'Expense Analytics', path: '/expenses', icon: iconMap.expenses },
-    { name: 'Vendor Intelligence', path: '/vendors', icon: iconMap.vendors },
-    { name: 'Business Management', path: '/business', icon: iconMap.business },
+    { name: 'Analytics', path: '/expenses', icon: iconMap.expenses },
+    { name: 'Business Directory', path: '/business', icon: iconMap.business },
     { name: 'Notifications', path: '/notifications', icon: iconMap.notifications },
-    { name: 'Documents', path: '/documents', icon: iconMap.documents },
-    { name: 'AI Accountant', path: '/chat', icon: iconMap.chat },
-    { name: 'Search Workspace', path: '/search', icon: iconMap.search },
+    { name: 'Pricing & Billing', path: '/pricing', icon: iconMap.pricing },
     { name: 'Settings', path: '/settings', icon: iconMap.settings },
-    { name: 'Help & Support', path: '/support', icon: iconMap.support }
+    { name: 'Help', path: '/support', icon: iconMap.support },
+    { name: 'Profile', path: '/profile', icon: iconMap.profile }
   ];
 
   return (
@@ -203,27 +220,27 @@ function Sidebar() {
       
       {/* Brand Header */}
       <div style={{
-        padding: '1.25rem 1.5rem',
+        padding: collapsed ? '1.25rem 0.5rem' : '1.25rem 1.5rem',
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        overflow: 'hidden'
+        justifyContent: collapsed ? 'center' : 'space-between',
+        overflow: 'hidden',
+        gap: '0.5rem'
       }}>
-        {!collapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>💼</span>
-            <span style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, var(--theme-primary-light) 0%, var(--theme-secondary-light) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              GST Buddy AI
-            </span>
-          </div>
+        {collapsed ? (
+          <Logo variant="icon" size="28px" onClick={() => setCollapsed(false)} style={{ cursor: 'pointer' }} />
+        ) : (
+          <Logo variant="sidebar" size="145px" />
         )}
-        <button 
-          onClick={() => setCollapsed(!collapsed)}
-          style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem' }}
-        >
-          {collapsed ? '➡️' : '⬅️'}
-        </button>
+        {!collapsed && (
+          <button 
+            onClick={() => setCollapsed(true)}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem' }}
+          >
+            ⬅️
+          </button>
+        )}
       </div>
 
       {/* Entity Switcher */}

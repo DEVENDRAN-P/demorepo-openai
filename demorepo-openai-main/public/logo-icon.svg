@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background Shape (Hexagon) -->
+  <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="url(#brand-grad)" opacity="0.1" stroke="url(#brand-grad)" stroke-width="1.5" />
+  <polygon points="50,12 83,31 83,69 50,88 17,69 17,31" fill="none" stroke="url(#brand-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Stylized G + Upward Arrow (Finance & GST) -->
+  <path d="M 40,65 L 60,65 A 15,15 0 0,0 68,52 L 68,48 L 52,48 M 52,48 L 68,32 M 52,48 L 52,32" fill="none" stroke="url(#brand-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path d="M 32,45 C 32,35 40,30 50,30" fill="none" stroke="url(#brand-grad)" stroke-width="6" stroke-linecap="round" />
+
+  <!-- AI Nodes -->
+  <circle cx="68" cy="32" r="4.5" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5" />
+  <circle cx="52" cy="32" r="4.5" fill="#6366f1" stroke="#ffffff" stroke-width="1.5" />
+  <circle cx="52" cy="48" r="4.5" fill="#ffffff" stroke="url(#brand-grad)" stroke-width="2" />
+</svg>

@@ -13,6 +13,7 @@ import { DarkModeProvider } from './context/DarkModeContext';
 // Components - Import directly (not lazy)
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollToTop from './components/ScrollToTop';
 
 // Pages - Import commonly used pages directly
 import LoginPage from './pages/LoginPage';
@@ -41,10 +42,13 @@ const AIInsights = lazy(() => import('./pages/AIInsights'));
 const Recommendations = lazy(() => import('./pages/Recommendations'));
 const ExpenseAnalytics = lazy(() => import('./pages/ExpenseAnalytics'));
 const VendorIntelligence = lazy(() => import('./pages/VendorIntelligence'));
-const BusinessManagement = lazy(() => import('./pages/BusinessManagement'));
+const BusinessDirectory = lazy(() => import('./pages/BusinessDirectory'));
 const NotificationCenter = lazy(() => import('./pages/NotificationCenter'));
-const Documents = lazy(() => import('./pages/Documents'));
+const DocumentAssistant = lazy(() => import('./pages/DocumentAssistant'));
 const GlobalSearch = lazy(() => import('./pages/GlobalSearch'));
+const PenaltyCenter = lazy(() => import('./pages/PenaltyCenter'));
+const PricingBilling = lazy(() => import('./pages/PricingBilling'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 // Loading Component
 function LoadingScreen() {
@@ -90,12 +94,15 @@ function AppRoutes() {
             <Route path="/gst-forms" element={<GSTForms user={user} />} />
             <Route path="/expenses" element={<ExpenseAnalytics user={user} />} />
             <Route path="/vendors" element={<VendorIntelligence user={user} />} />
-            <Route path="/business" element={<BusinessManagement user={user} />} />
+            <Route path="/business" element={<BusinessDirectory user={user} />} />
             <Route path="/notifications" element={<NotificationCenter user={user} />} />
-            <Route path="/documents" element={<Documents user={user} />} />
+            <Route path="/documents" element={<DocumentAssistant user={user} />} />
             <Route path="/chat" element={<ChatPage user={user} />} />
             <Route path="/search" element={<GlobalSearch user={user} />} />
             <Route path="/settings" element={<Settings user={user} />} />
+            <Route path="/penalty" element={<PenaltyCenter user={user} />} />
+            <Route path="/pricing" element={<PricingBilling user={user} />} />
+            <Route path="/payment-success" element={<PaymentSuccess user={user} />} />
             <Route path="/support" element={<Support user={user} />} />
             <Route path="/profile" element={<Profile user={user} />} />
           </Route>
@@ -130,6 +137,7 @@ function AppContent() {
         v7_relativeSplatPath: true,
       }}
     >
+      <ScrollToTop />
       <AppRoutes />
     </Router>
   );

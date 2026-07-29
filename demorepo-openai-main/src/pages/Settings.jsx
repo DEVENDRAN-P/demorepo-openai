@@ -1,1046 +1,537 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import i18n from '../i18n/config';
 import { useDarkMode } from '../context/DarkModeContext';
-import { db } from '../config/firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { getUserProfile, saveUserProfile } from '../services/firebaseDataService';
 
 function Settings({ user }) {
-    const { t } = useTranslation();
-    const { isDarkMode } = useDarkMode();
-    const [settings, setSettings] = useState({
-        emailNotifications: true,
-        billingReminders: true,
-        gstFilingReminders: true,
-        invoiceReminders: true,
-        businessType: 'retail',
-        currency: 'INR',
-        financialYear: 'april-march',
-        language: 'en',
-    });
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [selectedPlan, setSelectedPlan] = useState(() => {
-        return localStorage.getItem('saas_active_plan') || 'free';
-    });
-    const [checkoutPlan, setCheckoutPlan] = useState(null);
-    const [paymentMethod, setPaymentMethod] = useState('upi');
-    const [transactionId, setTransactionId] = useState('');
-    const [isVerifying, setIsVerifying] = useState(false);
-    const [billingHistory, setBillingHistory] = useState(() => {
-        const saved = localStorage.getItem('saas_billing_history');
-        return saved ? JSON.parse(saved) : [
-            { id: 'TXN-9021', date: '2026-06-26', plan: 'Free Plan', amount: '₹0', status: 'Success', utr: 'System Preset' }
-        ];
-    });
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [activeTab, setActiveTab] = useState('business');
 
-    const handleSelectPlan = (plan) => {
-        if (plan === 'free') {
-            setSelectedPlan(plan);
-            localStorage.setItem('saas_active_plan', plan);
-            setMessage(`✅ SaaS subscription successfully set to Free Plan!`);
-            window.dispatchEvent(new Event('planChanged'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => setMessage(''), 4000);
-        } else {
-            setCheckoutPlan(plan);
-        }
-    };
+  // Form states & dirty checking
+  const [isDirty, setIsDirty] = useState(false);
+  const [saveIndicator, setSaveIndicator] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const handleCompletePayment = () => {
-        if (paymentMethod === 'upi' && !transactionId.trim()) {
-            alert('Please enter a valid 12-digit UPI UTR Transaction ID');
-            return;
-        }
-        setIsVerifying(true);
-        setTimeout(() => {
-            setIsVerifying(false);
-            const newPlan = checkoutPlan;
-            setSelectedPlan(newPlan);
-            localStorage.setItem('saas_active_plan', newPlan);
+  // Form Data States
+  const [profile, setProfile] = useState({
+    name: '',
+    shopName: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: 'Karnataka',
+    pincode: '',
+    gstin: '',
+    filingFrequency: 'monthly',
+    companyRegistrationNo: 'U72200KA2024PTC182390',
+    directorDIN: 'DIN-09823122, DIN-08723910'
+  });
 
-            const newTxn = {
-                id: `TXN-${Math.floor(1000 + Math.random() * 9000)}`,
-                date: new Date().toISOString().split('T')[0],
-                plan: newPlan === 'pro' ? 'Pro Plan' : 'Business Plan',
-                amount: newPlan === 'pro' ? '₹399' : '₹1,499',
-                status: 'Success',
-                utr: paymentMethod === 'upi' ? transactionId : `RPAY-${Math.floor(100000 + Math.random() * 900000)}`
-            };
-            const updatedHistory = [newTxn, ...billingHistory];
-            setBillingHistory(updatedHistory);
-            localStorage.setItem('saas_billing_history', JSON.stringify(updatedHistory));
+  // AI & Automation States
+  const [aiConfig, setAiConfig] = useState({
+    confidenceThreshold: 85,
+    autoApproveHighConfidence: true,
+    ocrEngine: 'tesseract-v5',
+    reminderSchedule: '3days_before'
+  });
 
-            setCheckoutPlan(null);
-            setTransactionId('');
-            setMessage(`✅ Payment verified! SaaS subscription upgraded to ${newPlan === 'pro' ? 'Pro Plan' : 'Business Plan'}!`);
-            window.dispatchEvent(new Event('planChanged'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => setMessage(''), 4000);
-        }, 1500);
-    };
+  // API Key State
+  const [apiKeys, setApiKeys] = useState([
+    { name: 'Production Client Token', key: 'gst_live_8fbc2e309ad9211ec189283f', status: 'Active', created: '2026-06-15' }
+  ]);
+  const [showNewKeyModal, setShowNewKeyModal] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
 
-    const downloadReceipt = (txn) => {
-        const content = `=========================================
-          GST BUDDY AI - SUBSCRIPTION RECEIPT
-=========================================
-Receipt Ref    : ${txn.id}
-User Profile   : ${user?.name || 'Active User'}
-Billing Account: ${user?.email || 'admin@gstbuddy.ai'}
-Date Created   : ${txn.date}
-Plan Name      : ${txn.plan}
-Amount Paid    : ${txn.amount}
-Filing Status  : Active
-UTR Identifier : ${txn.utr || 'N/A'}
-=========================================
-Thank you for choosing GST Buddy AI!`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `receipt-${txn.id}.txt`;
-        link.click();
-        URL.revokeObjectURL(url);
-    };
+  // 2FA Security states
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-    useEffect(() => {
-        loadSettings();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
-
-    const loadSettings = async () => {
-        if (!user?.uid) return;
-        try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists() && userDoc.data().settings) {
-                const loadedSettings = userDoc.data().settings;
-                setSettings(loadedSettings);
-            }
-        } catch (error) {
-            console.error('Error loading settings:', error);
-        }
-    };
-
-    const handleToggle = (key) => {
-        setSettings(prev => ({
+  useEffect(() => {
+    if (!user?.uid) return;
+    setLoading(true);
+    getUserProfile()
+      .then(prof => {
+        if (prof) {
+          setProfile(prev => ({
             ...prev,
-            [key]: !prev[key]
-        }));
-    };
-
-    const handleSelectChange = (key, value) => {
-        setSettings(prev => ({
-            ...prev,
-            [key]: value
-        }));
-        // If language changed, update i18n immediately
-        if (key === 'language') {
-            i18n.changeLanguage(value);
-            localStorage.setItem('language', value);
+            name: prof.name || '',
+            shopName: prof.shopName || '',
+            phone: prof.phone || '',
+            address: prof.address || '',
+            city: prof.city || '',
+            state: prof.state || 'Karnataka',
+            pincode: prof.pincode || '',
+            gstin: prof.gstin || ''
+          }));
         }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, [user?.uid]);
+
+  const handleInputChange = (field, value) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    setSaveIndicator('Saving settings profile changes...');
+    try {
+      await saveUserProfile({
+        name: profile.name,
+        shopName: profile.shopName,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        pincode: profile.pincode,
+        gstin: profile.gstin
+      });
+      setIsDirty(false);
+      setSaveIndicator('✅ Profile settings updated successfully!');
+      setTimeout(() => setSaveIndicator(''), 4000);
+    } catch (err) {
+      console.error(err);
+      setSaveIndicator('❌ Error updating settings profile.');
+      setTimeout(() => setSaveIndicator(''), 4000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateApiKey = () => {
+    if (!newKeyName.trim()) return;
+    const randomHex = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    const newKey = {
+      name: newKeyName,
+      key: `gst_live_${randomHex}`,
+      status: 'Active',
+      created: new Date().toISOString().split('T')[0]
     };
+    setApiKeys([...apiKeys, newKey]);
+    setNewKeyName('');
+    setShowNewKeyModal(false);
+    setSaveIndicator('✅ New API Access Token generated!');
+    setTimeout(() => setSaveIndicator(''), 3000);
+  };
 
-    const handleSaveSettings = async () => {
-        setLoading(true);
-        try {
-            const userRef = doc(db, 'users', user.uid);
+  const handleDeleteApiKey = (keyToDelete) => {
+    if (window.confirm('Revoke this API Key immediately? All integrations calling this token will fail.')) {
+      setApiKeys(apiKeys.filter(k => k.key !== keyToDelete));
+      setSaveIndicator('ℹ️ API Token revoked successfully.');
+      setTimeout(() => setSaveIndicator(''), 3000);
+    }
+  };
 
-            // Try to update, if fails then set
-            try {
-                await updateDoc(userRef, {
-                    settings: settings,
-                });
-            } catch (error) {
-                if (error.code === 'not-found') {
-                    await setDoc(userRef, {
-                        settings: settings,
-                    }, { merge: true });
-                } else {
-                    throw error;
-                }
-            }
+  const tabItems = [
+    { id: 'business', label: '🏢 Business & GST Registry' },
+    { id: 'appearance', label: '🎨 Appearance & Branding' },
+    { id: 'security', label: '🔒 Security & 2FA' },
+    { id: 'automation', label: '⚡ AI & Automation Rules' },
+    { id: 'api', label: '🔑 API Access & Integration' }
+  ];
 
-            setMessage('✅ ' + t('settings_saved'));
-            setTimeout(() => setMessage(''), 3000);
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            setMessage('❌ ' + t('error_saving_settings'));
-            setTimeout(() => setMessage(''), 3000);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const cardBg = 'var(--bg-secondary)';
-    const textColor = 'var(--text-primary)';
-    const textSecondary = 'var(--text-secondary)';
-    const borderColor = 'var(--border-color)';
-    const accentColor = 'var(--theme-primary)';
-
-    return (
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      
+      {/* Toast Save Notifications */}
+      {saveIndicator && (
         <div style={{
-            minHeight: '100vh',
-            color: textColor,
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: saveIndicator.includes('❌') ? 'var(--error)' : saveIndicator.includes('✅') ? 'var(--success)' : 'var(--theme-primary)',
+          color: 'white',
+          padding: '0.85rem 1.5rem',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-lg)',
+          zIndex: 9999,
+          fontWeight: 600,
+          animation: 'slideIn 0.3s ease'
         }}>
-            <div style={{
-                maxWidth: '1100px',
-                margin: '0 auto',
-            }}>
-                {/* Header */}
-                <div style={{
-                    marginBottom: '3rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                }}>
-                    <div style={{
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '12px',
-                        background: `linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-primary-light) 100%)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '24px',
-                        fontFamily: 'Material Icons',
-                    }}>
-                        <span style={{ fontFamily: 'Material Icons' }}>settings</span>
-                    </div>
-                    <div>
-                        <h1 style={{
-                            fontSize: '2.5rem',
-                            fontWeight: '800',
-                            margin: '0 0 0.25rem 0',
-                            color: textColor,
-                        }}>
-                            {t('settings')}
-                        </h1>
-                        <p style={{
-                            fontSize: '0.95rem',
-                            color: textSecondary,
-                            margin: '0',
-                        }}>
-                            {t('customize_preferences')}
-                        </p>
-                    </div>
-                </div>
-
-                {message && (
-                    <div style={{
-                        background: message.includes('✅')
-                            ? isDarkMode ? '#1e5631' : '#d1fae5'
-                            : isDarkMode ? '#5a1f1f' : '#fee2e2',
-                        color: message.includes('✅')
-                            ? isDarkMode ? '#90ee90' : '#065f46'
-                            : isDarkMode ? '#ff6b6b' : '#991b1b',
-                        padding: '1rem 1.25rem',
-                        borderRadius: '0.75rem',
-                        marginBottom: '2rem',
-                        fontSize: '0.95rem',
-                        border: `1px solid ${message.includes('✅') ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                    }}>
-                        <span style={{ fontSize: '1.25rem' }}>
-                            {message.includes('✅') ? '✓' : '!'}
-                        </span>
-                        {message}
-                    </div>
-                )}
-
-                <div style={{
-                    display: 'grid',
-                    gap: '2rem',
-                }}>
-                    {/* Notifications Section */}
-                    <div style={{
-                        background: cardBg,
-                        borderRadius: '1rem',
-                        padding: '2rem',
-                        border: `1px solid ${borderColor}`,
-                        boxShadow: isDarkMode ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            marginBottom: '2rem',
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'rgba(102, 126, 234, 0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: accentColor,
-                                fontSize: '24px',
-                                fontFamily: 'Material Icons',
-                            }}>
-                                <span style={{ fontFamily: 'Material Icons' }}>notifications</span>
-                            </div>
-                            <h2 style={{
-                                fontSize: '1.5rem',
-                                fontWeight: '700',
-                                margin: '0',
-                                color: textColor,
-                            }}>
-                                {t('notifications')}
-                            </h2>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                            {/* Email Notifications */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '1.25rem 1.5rem',
-                                background: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                borderRadius: '0.75rem',
-                                border: `1px solid ${borderColor}`,
-                                transition: 'all 0.3s ease',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                                    <div style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '8px',
-                                        background: 'rgba(59, 130, 246, 0.1)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#3b82f6',
-                                        fontFamily: 'Material Icons',
-                                    }}>
-                                        <span style={{ fontFamily: 'Material Icons' }}>mail</span>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: '600', color: textColor, marginBottom: '0.25rem' }}>
-                                            {t('email_notifications')}
-                                        </div>
-                                        <p style={{ fontSize: '0.85rem', color: textSecondary, margin: '0' }}>
-                                            {t('enable_notifications_info')}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleToggle('emailNotifications')}
-                                    style={{
-                                        width: '56px',
-                                        height: '32px',
-                                        borderRadius: '16px',
-                                        border: 'none',
-                                        background: settings.emailNotifications ? accentColor : '#d1d5db',
-                                        cursor: 'pointer',
-                                        position: 'relative',
-                                        transition: 'background 0.3s ease',
-                                        boxShadow: settings.emailNotifications ? '0 2px 8px var(--primary-600)' : 'none',
-                                    }}
-                                >
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '3px',
-                                        left: settings.emailNotifications ? '28px' : '3px',
-                                        width: '26px',
-                                        height: '26px',
-                                        borderRadius: '50%',
-                                        background: 'white',
-                                        transition: 'left 0.3s ease',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                    }} />
-                                </button>
-                            </div>
-
-                            {/* Conditional Notification Options */}
-                            {settings.emailNotifications && (
-                                <>
-                                    {[
-                                        { key: 'billingReminders', label: t('billing_reminders'), icon: 'payment', color: '#f59e0b' },
-                                        { key: 'gstFilingReminders', label: t('gst_filing_reminders'), icon: 'description', color: '#3b82f6' },
-                                        { key: 'invoiceReminders', label: t('invoice_reminders'), icon: 'receipt', color: '#10b981' },
-                                    ].map(({ key, label, icon, color }) => (
-                                        <div key={key} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '1.25rem 1.5rem 1.25rem calc(4rem + 1.5rem)',
-                                            background: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                            borderRadius: '0.75rem',
-                                            border: `1px solid ${borderColor}`,
-                                            transition: 'all 0.3s ease',
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                                                <div style={{
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    borderRadius: '6px',
-                                                    background: `rgba(${color === '#f59e0b' ? '245, 158, 11' : color === '#3b82f6' ? '59, 130, 246' : '16, 185, 129'}, 0.1)`,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: color,
-                                                    fontFamily: 'Material Icons',
-                                                    fontSize: '18px',
-                                                }}>
-                                                    <span style={{ fontFamily: 'Material Icons' }}>{icon}</span>
-                                                </div>
-                                                <div style={{ fontWeight: '500', color: textColor }}>
-                                                    {label}
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleToggle(key)}
-                                                style={{
-                                                    width: '52px',
-                                                    height: '28px',
-                                                    borderRadius: '14px',
-                                                    border: 'none',
-                                                    background: settings[key] ? accentColor : '#d1d5db',
-                                                    cursor: 'pointer',
-                                                    position: 'relative',
-                                                    transition: 'background 0.3s ease',
-                                                    boxShadow: settings[key] ? '0 2px 6px var(--primary-600)' : 'none',
-                                                }}
-                                            >
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: '2px',
-                                                    left: settings[key] ? '26px' : '2px',
-                                                    width: '24px',
-                                                    height: '24px',
-                                                    borderRadius: '50%',
-                                                    background: 'white',
-                                                    transition: 'left 0.3s ease',
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                                }} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Business Settings Section */}
-                    <div style={{
-                        background: cardBg,
-                        borderRadius: '1rem',
-                        padding: '2rem',
-                        border: `1px solid ${borderColor}`,
-                        boxShadow: isDarkMode ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            marginBottom: '2rem',
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'rgba(251, 146, 60, 0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#fb923c',
-                                fontSize: '24px',
-                                fontFamily: 'Material Icons',
-                            }}>
-                                <span style={{ fontFamily: 'Material Icons' }}>business</span>
-                            </div>
-                            <h2 style={{
-                                fontSize: '1.5rem',
-                                fontWeight: '700',
-                                margin: '0',
-                                color: textColor,
-                            }}>
-                                {t('business_settings')}
-                            </h2>
-                        </div>
-
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                            gap: '1.5rem',
-                        }}>
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontWeight: '600',
-                                    marginBottom: '0.75rem',
-                                    fontSize: '0.9rem',
-                                    color: textColor,
-                                }}>
-                                    {t('business_type')}
-                                </label>
-                                <select
-                                    value={settings.businessType}
-                                    onChange={(e) => handleSelectChange('businessType', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        border: `1px solid ${borderColor}`,
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.95rem',
-                                        cursor: 'pointer',
-                                        backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                        color: textColor,
-                                        transition: 'all 0.3s ease',
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = accentColor;
-                                        e.target.style.boxShadow = `0 0 0 3px rgba(102, 126, 234, 0.1)`;
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = borderColor;
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <option value="retail">{t('retail')}</option>
-                                    <option value="wholesale">{t('wholesale')}</option>
-                                    <option value="manufacturing">{t('manufacturing')}</option>
-                                    <option value="service">{t('service')}</option>
-                                    <option value="online">{t('online')}</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontWeight: '600',
-                                    marginBottom: '0.75rem',
-                                    fontSize: '0.9rem',
-                                    color: textColor,
-                                }}>
-                                    {t('currency')}
-                                </label>
-                                <select
-                                    value={settings.currency}
-                                    disabled
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        border: `1px solid ${borderColor}`,
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.95rem',
-                                        cursor: 'not-allowed',
-                                        backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                        color: textColor,
-                                        transition: 'all 0.3s ease',
-                                    }}
-                                >
-                                    <option value="INR">{t('inr')}</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontWeight: '600',
-                                    marginBottom: '0.75rem',
-                                    fontSize: '0.9rem',
-                                    color: textColor,
-                                }}>
-                                    {t('financial_year')}
-                                </label>
-                                <select
-                                    value={settings.financialYear}
-                                    onChange={(e) => handleSelectChange('financialYear', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        border: `1px solid ${borderColor}`,
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.95rem',
-                                        cursor: 'pointer',
-                                        backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                        color: textColor,
-                                        transition: 'all 0.3s ease',
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = accentColor;
-                                        e.target.style.boxShadow = `0 0 0 3px rgba(102, 126, 234, 0.1)`;
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = borderColor;
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <option value="april-march">{t('april_march')}</option>
-                                    <option value="jan-dec">{t('jan_dec')}</option>
-                                    <option value="fiscal-custom">{t('custom_fiscal')}</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontWeight: '600',
-                                    marginBottom: '0.75rem',
-                                    fontSize: '0.9rem',
-                                    color: textColor,
-                                }}>
-                                    {t('language')}
-                                </label>
-                                <select
-                                    value={settings.language}
-                                    onChange={(e) => handleSelectChange('language', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem 1rem',
-                                        border: `1px solid ${borderColor}`,
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.95rem',
-                                        cursor: 'pointer',
-                                        backgroundColor: isDarkMode ? '#1f1f1f' : '#f9fafb',
-                                        color: textColor,
-                                        transition: 'all 0.3s ease',
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = accentColor;
-                                        e.target.style.boxShadow = `0 0 0 3px rgba(102, 126, 234, 0.1)`;
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = borderColor;
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <option value="en">{t('english')}</option>
-                                    <option value="hi">{t('hindi')}</option>
-                                    <option value="ta">{t('tamil')}</option>
-                                    <option value="ml">{t('malayalam')}</option>
-                                    <option value="kn">{t('kannada')}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    {/* SaaS Subscription Plans Section */}
-                    <div style={{
-                        background: cardBg,
-                        borderRadius: '1rem',
-                        padding: '2rem',
-                        border: `1px solid ${borderColor}`,
-                        boxShadow: isDarkMode ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                        marginTop: '2rem'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            marginBottom: '2rem',
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#10b981',
-                                fontSize: '24px',
-                            }}>
-                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <rect x="2" y="5" width="20" height="14" rx="2"/>
-                                  <line x1="2" y1="10" x2="22" y2="10"/>
-                                  <path d="M6 14h.01M10 14h.01"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 style={{
-                                    fontSize: '1.5rem',
-                                    fontWeight: '700',
-                                    margin: '0',
-                                    color: textColor,
-                                }}>
-                                    SaaS Subscription Tiers
-                                </h2>
-                                <p style={{ fontSize: '0.85rem', color: textSecondary, margin: '0.25rem 0 0 0' }}>
-                                    Select the subscription level that matches your operational and filing requirements.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
-                            
-                            {/* Free Plan */}
-                            <div className="glass-panel" style={{
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '1.5rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                border: `1px solid ${selectedPlan === 'free' ? '#10b981' : borderColor}`,
-                                background: selectedPlan === 'free' ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
-                                transition: 'all 0.3s ease'
-                            }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: textSecondary, textTransform: 'uppercase' }}>Starter</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0', color: textColor }}>Free Plan</h3>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.25rem', color: textColor }}>
-                                    ₹0 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: textSecondary }}>/ month</span>
-                                </div>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', fontSize: '0.825rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#10b981', fontWeight: 800 }}>✓</span> 10 invoice scans / month</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#10b981', fontWeight: 800 }}>✓</span> Basic dashboard overview</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#10b981', fontWeight: 800 }}>✓</span> Basic AI Accountant response</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#10b981', fontWeight: 800 }}>✓</span> Basic GSTR tax reports</li>
-                                </ul>
-                                <button 
-                                    onClick={() => handleSelectPlan('free')}
-                                    className={`btn ${selectedPlan === 'free' ? 'btn-primary' : 'btn-outline'}`}
-                                    style={{ marginTop: 'auto', width: '100%', padding: '0.625rem', cursor: 'pointer' }}
-                                >
-                                    {selectedPlan === 'free' ? '✓ Active Plan' : 'Select Plan'}
-                                </button>
-                            </div>
-
-                            {/* Pro Plan */}
-                            <div className="glass-panel" style={{
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '1.5rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                border: `1px solid ${selectedPlan === 'pro' ? 'var(--theme-primary-light)' : borderColor}`,
-                                background: selectedPlan === 'pro' ? 'rgba(102, 126, 234, 0.05)' : 'transparent',
-                                transition: 'all 0.3s ease'
-                            }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-primary-light)', textTransform: 'uppercase' }}>Professional</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0', color: textColor }}>Pro Plan</h3>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.25rem', color: textColor }}>
-                                    ₹399 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: textSecondary }}>/ month</span>
-                                </div>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', fontSize: '0.825rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: 'var(--theme-primary-light)', fontWeight: 800 }}>✓</span> Unlimited invoice processing</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: 'var(--theme-primary-light)', fontWeight: 800 }}>✓</span> AI Finance Agent workspace</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: 'var(--theme-primary-light)', fontWeight: 800 }}>✓</span> Real-time compliance monitoring</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: 'var(--theme-primary-light)', fontWeight: 800 }}>✓</span> Priority AI insights & recommendations</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: 'var(--theme-primary-light)', fontWeight: 800 }}>✓</span> Recharts-based tax forecasting</li>
-                                </ul>
-                                <button 
-                                    onClick={() => handleSelectPlan('pro')}
-                                    className={`btn ${selectedPlan === 'pro' ? 'btn-primary' : 'btn-outline'}`}
-                                    style={{ marginTop: 'auto', width: '100%', padding: '0.625rem', cursor: 'pointer' }}
-                                >
-                                    {selectedPlan === 'pro' ? '✓ Active Plan' : 'Select Plan'}
-                                </button>
-                            </div>
-
-                            {/* Business Plan */}
-                            <div className="glass-panel" style={{
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '1.5rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                border: `1px solid ${selectedPlan === 'business' ? '#14b8a6' : borderColor}`,
-                                background: selectedPlan === 'business' ? 'rgba(20, 184, 166, 0.05)' : 'transparent',
-                                transition: 'all 0.3s ease'
-                            }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#14b8a6', textTransform: 'uppercase' }}>Enterprise</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0', color: textColor }}>Business Plan</h3>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.25rem', color: textColor }}>
-                                    ₹1,499 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: textSecondary }}>/ month</span>
-                                </div>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', fontSize: '0.825rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#14b8a6', fontWeight: 800 }}>✓</span> Multiple users & members</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#14b8a6', fontWeight: 800 }}>✓</span> Multiple business entities registry</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#14b8a6', fontWeight: 800 }}>✓</span> Advanced audit logs & summaries</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#14b8a6', fontWeight: 800 }}>✓</span> CA Multi-tenant setup & tools</li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: textColor }}><span style={{ color: '#14b8a6', fontWeight: 800 }}>✓</span> Future API Access integration</li>
-                                </ul>
-                                <button 
-                                    onClick={() => handleSelectPlan('business')}
-                                    className={`btn ${selectedPlan === 'business' ? 'btn-primary' : 'btn-outline'}`}
-                                    style={{ marginTop: 'auto', width: '100%', padding: '0.625rem', cursor: 'pointer' }}
-                                >
-                                    {selectedPlan === 'business' ? '✓ Active Plan' : 'Select Plan'}
-                                </button>
-                            </div>
-
-                    </div>
-
-                    {/* Billing & Invoice History Section */}
-                    <div style={{
-                        background: cardBg,
-                        borderRadius: '1rem',
-                        padding: '2rem',
-                        border: `1px solid ${borderColor}`,
-                        boxShadow: isDarkMode ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
-                        marginTop: '2rem'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            marginBottom: '1.5rem',
-                        }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '10px',
-                                background: 'rgba(59, 130, 246, 0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#3b82f6',
-                                fontSize: '24px',
-                            }}>
-                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path d="M9 12h6M9 16h6M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 style={{
-                                    fontSize: '1.5rem',
-                                    fontWeight: '700',
-                                    margin: '0',
-                                    color: textColor,
-                                }}>
-                                    Billing & Invoice History
-                                </h2>
-                                <p style={{ fontSize: '0.85rem', color: textSecondary, margin: '0.25rem 0 0 0' }}>
-                                    View and download formal payment receipts and transaction records.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: `2px solid ${borderColor}`, color: textSecondary, textAlign: 'left' }}>
-                                        <th style={{ padding: '0.75rem' }}>Transaction ID</th>
-                                        <th style={{ padding: '0.75rem' }}>Date</th>
-                                        <th style={{ padding: '0.75rem' }}>Plan</th>
-                                        <th style={{ padding: '0.75rem' }}>Amount</th>
-                                        <th style={{ padding: '0.75rem' }}>Status</th>
-                                        <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {billingHistory.map((txn, idx) => (
-                                        <tr key={idx} style={{ borderBottom: `1px solid ${borderColor}`, color: textColor }}>
-                                            <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>{txn.id}</td>
-                                            <td style={{ padding: '0.75rem' }}>{txn.date}</td>
-                                            <td style={{ padding: '0.75rem' }}>{txn.plan}</td>
-                                            <td style={{ padding: '0.75rem', fontWeight: 600 }}>{txn.amount}</td>
-                                            <td style={{ padding: '0.75rem' }}>
-                                                <span style={{ fontSize: '0.7rem', padding: '0.125rem 0.5rem', borderRadius: '4px', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', fontWeight: 700 }}>
-                                                    {txn.status}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                                                <button 
-                                                    onClick={() => downloadReceipt(txn)}
-                                                    className="btn btn-outline" 
-                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                >
-                                                    📥 Receipt
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-                {/* Save Button */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginTop: '3rem',
-                    paddingTop: '2rem',
-                }}>
-                    <button
-                        onClick={handleSaveSettings}
-                        disabled={loading}
-                        style={{
-                            background: loading ? '#9ca3af' : `linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-primary-light) 100%)`,
-                            color: 'white',
-                            padding: '1rem 3rem',
-                            fontSize: '1.05rem',
-                            fontWeight: '700',
-                            border: 'none',
-                            borderRadius: '0.75rem',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.3s ease',
-                            boxShadow: loading ? 'none' : '0 6px 20px rgba(102, 126, 234, 0.35)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            opacity: loading ? 0.6 : 1,
-                            transform: loading ? 'scale(0.98)' : 'scale(1)',
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!loading) {
-                                e.currentTarget.style.boxShadow = '0 8px 30px rgba(102, 126, 234, 0.5)';
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!loading) {
-                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.35)';
-                                e.currentTarget.style.transform = 'translateY(0)';
-                            }
-                        }}
-                    >
-                        <span style={{ fontFamily: 'Material Icons', fontSize: '20px' }}>
-                            {loading ? 'hourglass_empty' : 'check_circle'}
-                        </span>
-                        {loading ? t('saving') : t('save_settings')}
-                    </button>
-                </div>
-
-            {/* Subscription Checkout Modal Overlay */}
-            {checkoutPlan && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    backdropFilter: 'blur(8px)',
-                    zIndex: 2000,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '1.5rem',
-                }}>
-                    <div className="glass-panel" style={{
-                        background: cardBg,
-                        borderRadius: '1.25rem',
-                        padding: '2rem',
-                        maxWidth: '480px',
-                        width: '100%',
-                        border: `1px solid ${borderColor}`,
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                        position: 'relative',
-                        color: textColor
-                    }}>
-                        
-                        {/* Close button */}
-                        <button 
-                            onClick={() => setCheckoutPlan(null)}
-                            style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'transparent', border: 'none', color: textSecondary, fontSize: '1.25rem', cursor: 'pointer' }}
-                        >
-                            ✕
-                        </button>
-
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0', color: textColor }}>Complete Subscription Upgrade</h3>
-                        <p style={{ fontSize: '0.85rem', color: textSecondary, margin: '0 0 1.5rem 0' }}>
-                            You are subscribing to the <strong style={{ color: 'var(--theme-primary-light)' }}>{checkoutPlan === 'pro' ? 'Pro Plan' : 'Business Plan'}</strong>.
-                        </p>
-
-                        <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem', border: `1px solid ${borderColor}`, marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: textSecondary, fontWeight: 700 }}>Total Amount Due</span>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: textColor }}>{checkoutPlan === 'pro' ? '₹399' : '₹1,499'} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: textSecondary }}>/ month</span></div>
-                            </div>
-                            <span style={{ fontSize: '0.7rem', background: 'rgba(102, 126, 234, 0.1)', color: 'var(--theme-primary-light)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontWeight: 700 }}>TAX INCLUDED</span>
-                        </div>
-
-                        {/* Payment Method Selector */}
-                        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                            <button 
-                                onClick={() => setPaymentMethod('upi')}
-                                className={paymentMethod === 'upi' ? 'btn btn-primary' : 'btn btn-outline'}
-                                style={{ flex: 1, padding: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.825rem', cursor: 'pointer' }}
-                            >
-                                📱 UPI QR Code
-                            </button>
-                            <button 
-                                onClick={() => setPaymentMethod('razorpay')}
-                                className={paymentMethod === 'razorpay' ? 'btn btn-primary' : 'btn btn-outline'}
-                                style={{ flex: 1, padding: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.825rem', cursor: 'pointer' }}
-                            >
-                                💳 Razorpay Checkout
-                            </button>
-                        </div>
-
-                        {paymentMethod === 'upi' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
-                                <p style={{ fontSize: '0.8rem', color: textSecondary, margin: 0 }}>
-                                    Scan the QR code using any UPI application (GPay, PhonePe, Paytm) to complete payment.
-                                </p>
-                                
-                                {/* QR Code Graphic */}
-                                <div style={{ background: 'white', padding: '0.5rem', borderRadius: '8px', border: `1px solid ${borderColor}` }}>
-                                    <svg width="140" height="140" viewBox="0 0 100 100">
-                                        <rect x="10" y="10" width="20" height="20" fill="#0f172a" />
-                                        <rect x="13" y="13" width="14" height="14" fill="white" />
-                                        <rect x="15" y="15" width="10" height="10" fill="#0f172a" />
-                                        
-                                        <rect x="70" y="10" width="20" height="20" fill="#0f172a" />
-                                        <rect x="73" y="13" width="14" height="14" fill="white" />
-                                        <rect x="75" y="15" width="10" height="10" fill="#0f172a" />
-                                        
-                                        <rect x="10" y="70" width="20" height="20" fill="#0f172a" />
-                                        <rect x="13" y="73" width="14" height="14" fill="white" />
-                                        <rect x="15" y="75" width="10" height="10" fill="#0f172a" />
-
-                                        <rect x="40" y="20" width="5" height="5" fill="#0f172a" />
-                                        <rect x="45" y="25" width="10" height="5" fill="#0f172a" />
-                                        <rect x="35" y="45" width="5" height="10" fill="#0f172a" />
-                                        <rect x="55" y="55" width="10" height="10" fill="#0f172a" />
-                                        <rect x="70" y="40" width="15" height="5" fill="#0f172a" />
-                                        <rect x="80" y="80" width="10" height="10" fill="#0f172a" />
-                                        <rect x="40" y="75" width="5" height="15" fill="#0f172a" />
-                                    </svg>
-                                </div>
-
-                                <div style={{ width: '100%', textAlign: 'left' }}>
-                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: textColor }}>UPI UTR / Transaction ID (12 Digits)</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="e.g. 618293028103" 
-                                        value={transactionId}
-                                        onChange={(e) => setTransactionId(e.target.value)}
-                                        style={{ width: '100%', padding: '0.625rem 1rem', background: 'var(--bg-primary)', border: `1px solid ${borderColor}`, color: textColor, borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }}
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                                <p style={{ fontSize: '0.85rem', color: textSecondary, marginBottom: '1.5rem' }}>
-                                    Pay securely using Razorpay gateway. Supports Card, Netbanking, Wallet, and international conversions.
-                                </p>
-                                <div style={{ border: `1px dashed ${borderColor}`, padding: '1rem', borderRadius: '0.75rem', background: 'var(--bg-secondary)', color: textSecondary, fontSize: '0.75rem' }}>
-                                    💳 Sandbox simulation activated
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Action buttons */}
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                            <button 
-                                onClick={() => setCheckoutPlan(null)}
-                                className="btn btn-outline" 
-                                style={{ flex: 1, padding: '0.75rem', cursor: 'pointer' }}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={handleCompletePayment}
-                                disabled={isVerifying}
-                                className="btn btn-primary" 
-                                style={{ flex: 1, padding: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                                {isVerifying ? 'Verifying payment...' : '⚡ Confirm Upgrade'}
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            )}
-            </div>
+          {saveIndicator}
         </div>
-    );
+      )}
+
+      {/* Unsaved Changes Banner */}
+      {isDirty && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid var(--theme-accent)',
+          padding: '0.75rem 1.5rem',
+          borderRadius: 'var(--radius-lg)',
+          marginBottom: '1.5rem',
+          fontSize: '0.825rem'
+        }}>
+          <span>⚠️ You have unsaved changes in your settings forms.</span>
+          <button onClick={handleSaveProfile} className="btn btn-primary" style={{ padding: '0.375rem 1rem', fontSize: '0.75rem', background: 'var(--theme-accent)', border: 'none' }}>
+            Save Changes
+          </button>
+        </div>
+      )}
+
+      {/* Title Header */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Enterprise Settings</h1>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+          Administer profile details, configure AI parsing filters, schedule automations, and manage API integrations.
+        </p>
+      </div>
+
+      {/* Layout Split: Tab menu vs Workspace */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '2.5rem', alignItems: 'start' }}>
+        
+        {/* Left Side Tab Navigation */}
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {tabItems.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                border: 'none',
+                background: activeTab === tab.id ? 'var(--bg-tertiary)' : 'transparent',
+                color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: activeTab === tab.id ? 700 : 500,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                outline: 'none',
+                borderLeft: activeTab === tab.id ? '3px solid var(--theme-secondary)' : '3px solid transparent'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Right Side Workspace Forms */}
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2.5rem' }}>
+          
+          {/* Tab 1: Business Profile & GST */}
+          {activeTab === 'business' && (
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Business Registry Information</h3>
+              
+              <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Owner Full Name</label>
+                  <input 
+                    type="text" 
+                    value={profile.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Business Shop Name</label>
+                  <input 
+                    type="text" 
+                    value={profile.shopName}
+                    onChange={(e) => handleInputChange('shopName', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>GSTIN Identifier ID</label>
+                  <input 
+                    type="text" 
+                    value={profile.gstin}
+                    onChange={(e) => handleInputChange('gstin', e.target.value.toUpperCase())}
+                    maxLength={15}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Filing Interval Frequency</label>
+                  <select 
+                    value={profile.filingFrequency} 
+                    onChange={(e) => handleInputChange('filingFrequency', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="monthly">Monthly returns (GSTR-1, GSTR-3B)</option>
+                    <option value="quarterly">Quarterly filing returns (QRMP scheme)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Company Corporate Reg Number (CIN)</label>
+                  <input 
+                    type="text" 
+                    value={profile.companyRegistrationNo}
+                    onChange={(e) => handleInputChange('companyRegistrationNo', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Director DIN identifiers</label>
+                  <input 
+                    type="text" 
+                    value={profile.directorDIN}
+                    onChange={(e) => handleInputChange('directorDIN', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3" style={{ gap: '1.25rem' }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Registered Office Address</label>
+                  <input 
+                    type="text" 
+                    value={profile.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Primary Phone</label>
+                  <input 
+                    type="text" 
+                    value={profile.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: 'fit-content', padding: '0.6rem 1.5rem', marginTop: '1rem', marginLeft: 'auto' }}>
+                Save Registry Profile
+              </button>
+            </form>
+          )}
+
+          {/* Tab 2: Appearance & Branding */}
+          {activeTab === 'appearance' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Appearance Settings</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Application Dark Theme</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Toggle theme rendering elements across the workspace.</span>
+                  </div>
+                  <button onClick={toggleDarkMode} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>
+                    {isDarkMode ? '🌞 Switch Light Mode' : '🌙 Switch Dark Mode'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Branding Options</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ display: 'block', fontSize: '0.9rem' }}>Upload Brand Custom Logo</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Replace the default sidebar and navbar logos.</span>
+                    </div>
+                    <button className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }} onClick={() => alert('Branding uploads require an Enterprise SaaS subscription tier.')}>Upload SVG</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Security & 2FA */}
+          {activeTab === 'security' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Two-Factor Authentication (2FA)</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Enable OTP Authentication</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Require a verification code sent to your phone at login.</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={twoFactorEnabled} 
+                    onChange={(e) => {
+                      setTwoFactorEnabled(e.target.checked);
+                      setSaveIndicator(e.target.checked ? '✅ Two-Factor Authentication enabled!' : 'ℹ️ Two-Factor Authentication disabled.');
+                      setTimeout(() => setSaveIndicator(''), 3000);
+                    }}
+                    style={{ width: '42px', height: '20px', cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Connected Devices & Sessions</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.25rem', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                    <div>
+                      <strong>Google Chrome (Windows 11) - Current Session</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>IP Address: 192.168.1.45 | Location: Bangalore, India</span>
+                    </div>
+                    <span className="badge-premium badge-excellent" style={{ alignSelf: 'center', fontSize: '0.65rem' }}>Active</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
+                    <div>
+                      <strong>Apple Safari (iPhone iOS 17)</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>IP Address: 103.45.22.112 | Location: Bangalore, India</span>
+                    </div>
+                    <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem', alignSelf: 'center' }} onClick={() => alert('Session terminated successfully.')}>Revoke</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: AI & Automation Rules */}
+          {activeTab === 'automation' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>AI Parsing Configuration</h3>
+              
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>OCR Confidence Threshold: {aiConfig.confidenceThreshold}%</label>
+                <input 
+                  type="range" 
+                  min={50} 
+                  max={99} 
+                  value={aiConfig.confidenceThreshold}
+                  onChange={(e) => {
+                    setAiConfig({ ...aiConfig, confidenceThreshold: parseInt(e.target.value) });
+                    setIsDirty(true);
+                  }}
+                  style={{ width: '100%', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>Invoices with extraction confidence scores below this limit will be flagged for manual vetting.</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.9rem' }}>Auto-Approve Vetted Invoices</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Automatically sync high-confidence items directly to the ledger database.</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={aiConfig.autoApproveHighConfidence} 
+                  onChange={(e) => {
+                    setAiConfig({ ...aiConfig, autoApproveHighConfidence: e.target.checked });
+                    setIsDirty(true);
+                  }}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Email Reminder Dispatch Schedule</label>
+                <select 
+                  value={aiConfig.reminderSchedule} 
+                  onChange={(e) => {
+                    setAiConfig({ ...aiConfig, reminderSchedule: e.target.value });
+                    setIsDirty(true);
+                  }}
+                  style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="5days_before">5 Days prior to filing due date</option>
+                  <option value="3days_before">3 Days prior to filing due date</option>
+                  <option value="1day_before">1 Day prior to filing due date (Urgent)</option>
+                </select>
+              </div>
+
+              <button onClick={() => {
+                setIsDirty(false);
+                setSaveIndicator('✅ AI and automation configurations saved!');
+                setTimeout(() => setSaveIndicator(''), 3000);
+              }} className="btn btn-primary" style={{ width: 'fit-content', marginLeft: 'auto', padding: '0.5rem 1rem' }}>
+                Save AI Rules
+              </button>
+            </div>
+          )}
+
+          {/* Tab 5: API Access & Integrations */}
+          {activeTab === 'api' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>API Access Tokens</h3>
+                  <button onClick={() => setShowNewKeyModal(true)} className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>+ Generate Token</button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
+                  {apiKeys.length === 0 ? (
+                    <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '1rem 0' }}>No API keys active in this workspace.</div>
+                  ) : (
+                    apiKeys.map(k => (
+                      <div key={k.key} style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', fontSize: '0.8rem', gap: '1rem' }}>
+                        <div>
+                          <strong style={{ display: 'block', fontSize: '0.85rem' }}>{k.name}</strong>
+                          <code style={{ display: 'block', fontSize: '0.725rem', color: 'var(--theme-secondary-light)', marginTop: '0.25rem' }}>{k.key}</code>
+                          <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Created: {k.created}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'center', marginLeft: 'auto' }}>
+                          <button onClick={() => { navigator.clipboard.writeText(k.key); alert('API Key copied!'); }} className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem' }}>Copy</button>
+                          <button onClick={() => handleDeleteApiKey(k.key)} className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem', borderColor: 'var(--error)', color: 'var(--error)' }}>Revoke</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Corporate Integrations</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '1.25rem', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                    <div>
+                      <strong>Tally Prime ERP Integration</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Auto-sync vetted invoices directly into accounting ledgers.</span>
+                    </div>
+                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center' }} onClick={() => alert('Tally Prime connection request initiated.')}>Connect</button>
+                  </div>
+                  <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
+                    <div>
+                      <strong>Zoho Books Workspace Sync</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Sync real-time tax credits between platforms.</span>
+                    </div>
+                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center' }} onClick={() => alert('Zoho Books connection request initiated.')}>Connect</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* New API Token Modal */}
+      {showNewKeyModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '1.5rem', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '400px', border: '1px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem' }}>Generate API Key</h3>
+            
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>API Key Name</label>
+            <input 
+              type="text" 
+              value={newKeyName} 
+              onChange={(e) => setNewKeyName(e.target.value)}
+              placeholder="e.g. Tally Sync Token"
+              style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1.25rem', outline: 'none' }}
+            />
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => { setShowNewKeyModal(false); setNewKeyName(''); }} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Cancel</button>
+              <button onClick={handleGenerateApiKey} className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Generate</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }
 
 export default Settings;

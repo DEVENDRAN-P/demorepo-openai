@@ -128,18 +128,18 @@ function Dashboard({ user }) {
   const totalInvoiceAmount = businessBills.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
   // Financial Metrics
-  const revenue = totalInvoiceAmount * 1.5 || 420000;
-  const expenses = totalInvoiceAmount || 280000;
-  const gstPayable = totalGSTAmount * 1.5 || 32400;
-  const inputTaxCredit = totalGSTAmount || 21600;
+  const revenue = totalInvoiceAmount * 1.5;
+  const expenses = totalInvoiceAmount;
+  const gstPayable = totalGSTAmount * 1.5;
+  const inputTaxCredit = totalGSTAmount;
   const netPayable = Math.max(0, gstPayable - inputTaxCredit);
-  const costSavings = Math.round(totalInvoiceAmount * 0.06) || 16800;
+  const costSavings = Math.round(totalInvoiceAmount * 0.06);
 
   // Business Health Score calculations
   const totalVerified = businessBills.filter(b => b.status === 'approved' || b.filed).length;
   const accuracyRate = totalBillsUploaded ? (totalVerified / totalBillsUploaded) : 1.0;
-  const healthScore = Math.round(75 + accuracyRate * 20); // 75 - 95 range
-  const complianceScore = Math.round(80 + (totalBillsUploaded - pendingFilings) / (totalBillsUploaded || 1) * 18);
+  const healthScore = totalBillsUploaded ? Math.round(75 + accuracyRate * 20) : 100;
+  const complianceScore = totalBillsUploaded ? Math.round(80 + (totalBillsUploaded - pendingFilings) / totalBillsUploaded * 18) : 100;
 
   const getScoreRating = (score) => {
     if (score >= 90) return { label: 'Excellent', class: 'badge-excellent' };

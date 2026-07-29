@@ -311,17 +311,40 @@ function Profile({ user, setUser }) {
               {formData.shopName || 'Your Shop'}
             </p>
             <div className="profile-details" style={{
-              display: 'flex',
-              gap: '2rem',
-              flexWrap: 'wrap',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '1.25rem',
+              marginTop: '1rem',
+              width: '100%',
+              fontSize: '0.85rem'
             }}>
               <div>
-                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.75, fontSize: '0.8rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
-                <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem', color: '#FFFFFF' }}>{formData.email}</p>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.email}</p>
               </div>
               <div>
-                <p style={{ margin: '0 0 0.25rem 0', opacity: 0.75, fontSize: '0.8rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTIN</p>
-                <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem', color: '#FFFFFF' }}>{formData.gstin || 'Not listed'}</p>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.mobileNumber || 'Not configured'}</p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>User Role</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>CFO & Administrator</p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Business</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.shopName || 'Apex Retailers'}</p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTIN Identifier</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF', fontFamily: 'monospace' }}>{formData.gstin || 'Not registered'}</p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SaaS Subscription</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF', textTransform: 'uppercase' }}>{(localStorage.getItem('saas_active_plan') || 'Free')} Tier</p>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Last Authentication</p>
+                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() + ' ' + new Date(user.lastLogin).toLocaleTimeString() : 'Today, 10:41 AM'}</p>
               </div>
             </div>
           </div>
@@ -677,6 +700,42 @@ function Profile({ user, setUser }) {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* User Activity Log */}
+        <div style={{
+          marginTop: '2rem',
+          background: isDarkMode ? '#2a2a2a' : 'white',
+          color: isDarkMode ? '#e5e7eb' : '#000',
+          borderRadius: '1rem',
+          padding: '2rem 1.5rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        }}>
+          <h3 style={{
+            fontSize: '1.1rem',
+            fontWeight: '600',
+            marginBottom: '1.25rem',
+            color: isDarkMode ? '#e5e7eb' : '#1f2937',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}>
+            <span>📋</span> Recent Workspace Activity
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+              <span>Uploaded B2B Purchase Invoice (INV-9821-20)</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Today, 10:24 AM</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+              <span>Generated PDF GSTR-1 Return Draft Summary</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Yesterday, 4:18 PM</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Completed UPI Subscription payment of ₹399</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Jul 26, 2026</span>
+            </div>
+          </div>
         </div>
 
         {/* Tips Card */}

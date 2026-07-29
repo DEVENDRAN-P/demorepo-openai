@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logout } from '../services/authService';
 import { useDarkMode } from '../context/DarkModeContext';
+import Logo from './Logo';
 
 // Inline SVG icons (clean, production-grade)
 const IconBriefcase = (props) => (
@@ -258,39 +259,11 @@ function Navbar({ user }) {
           <Link to="/dashboard" style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.875rem',
             textDecoration: 'none',
             minWidth: 0,
             flex: '0 1 auto',
           }}>
-            <div style={{
-              width: '2.5rem',
-              height: '2.5rem',
-              background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
-              borderRadius: 'var(--radius-lg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--shadow-sm)',
-              flexShrink: 0,
-            }}>
-              <IconBriefcase />
-            </div>
-            <div style={{ minWidth: 0 }} className="logo-text">
-              <h1 style={{
-                fontSize: '1.125rem',
-                fontWeight: 800,
-                margin: 0,
-                background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                letterSpacing: '-0.025em',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {t('app_name')}
-              </h1>
-            </div>
+            <Logo variant="main" size="160px" />
           </Link>
 
           {/* Nav Items - Desktop */}

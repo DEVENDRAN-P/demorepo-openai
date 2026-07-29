@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+  <defs>
+    <linearGradient id="brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <!-- Icon Portion -->
+  <g transform="translate(10, 10) scale(0.6)">
+    <polygon points="50,5 90,28 90,72 50,95 10,72 10,28" fill="url(#brand-grad)" opacity="0.1" stroke="url(#brand-grad)" stroke-width="1.5" />
+    <polygon points="50,12 83,31 83,69 50,88 17,69 17,31" fill="none" stroke="url(#brand-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 40,65 L 60,65 A 15,15 0 0,0 68,52 L 68,48 L 52,48 M 52,48 L 68,32 M 52,48 L 52,32" fill="none" stroke="url(#brand-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 32,45 C 32,35 40,30 50,30" fill="none" stroke="url(#brand-grad)" stroke-width="6" stroke-linecap="round" />
+    <circle cx="68" cy="32" r="4.5" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5" />
+    <circle cx="52" cy="32" r="4.5" fill="#6366f1" stroke="#ffffff" stroke-width="1.5" />
+    <circle cx="52" cy="48" r="4.5" fill="#ffffff" stroke="url(#brand-grad)" stroke-width="2" />
+  </g>
+  <!-- Text Portion -->
+  <text x="85" y="44" font-family="system-ui, -apple-system, sans-serif" font-size="22px" font-weight="800" fill="#000000" letter-spacing="-0.5px">GST Buddy <tspan fill="url(#brand-grad)">AI</tspan></text>
+  <text x="85" y="58" font-family="system-ui, -apple-system, sans-serif" font-size="11px" font-weight="600" fill="#6b7280" letter-spacing="1.5px">COMPLIANCE OS</text>
+</svg>
