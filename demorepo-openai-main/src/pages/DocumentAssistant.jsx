@@ -80,6 +80,10 @@ Analyze this official document, tax notice, contract, or government letter. Retu
 
       setProgress(85);
       if (!response.ok) throw new Error('Groq AI API request failed');
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
+      }
       const data = await response.json();
       const responseText = data.choices[0]?.message?.content || '';
 
@@ -144,6 +148,10 @@ Analyze this official document, tax notice, contract, or government letter image
 
       setProgress(85);
       if (!response.ok) throw new Error('Groq Vision AI API request failed');
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
+      }
       const data = await response.json();
       const responseText = data.choices[0]?.message?.content || '';
 

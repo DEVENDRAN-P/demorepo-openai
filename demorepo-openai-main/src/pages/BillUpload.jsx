@@ -111,6 +111,10 @@ Extract metadata from this Indian B2B invoice. Return ONLY a valid JSON object m
 
       setProgress(85);
       if (!response.ok) throw new Error(`Groq API Error: ${response.status}`);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
+      }
       const data = await response.json();
       const content = data.choices[0]?.message?.content || '';
 
@@ -197,6 +201,10 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
 
       setProgress(85);
       if (!response.ok) throw new Error(`Groq Vision API Error: ${response.status}`);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
+      }
       const data = await response.json();
       const content = data.choices[0]?.message?.content || '';
 
