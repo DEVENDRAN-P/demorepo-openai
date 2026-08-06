@@ -52,6 +52,16 @@ function PricingBilling({ user }) {
     });
   };
 
+  // Helper to parse JSON safely, falling back to clean text errors if the response is not JSON
+  const safeParseJson = async (response) => {
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const responseText = await response.text();
+      throw new Error(`Server returned non-JSON response (Status ${response.status}): ${responseText.substring(0, 180)}`);
+    }
+    return await response.json();
+  };
+
   // 2. Load Subscription Status and History on Component Mount
   const fetchSubscriptionAndBillingData = async () => {
     try {
@@ -67,19 +77,20 @@ function PricingBilling({ user }) {
       // Fetch active subscription status
       const statusRes = await fetch(getApiUrl('/api/subscription/status'), { headers });
       if (statusRes.ok) {
-        const statusData = await statusRes.json();
+        const statusData = await safeParseJson(statusRes);
         setActivePlan(statusData.subscriptionPlan);
         setSubscriptionStatus(statusData.subscriptionStatus);
         setSubscriptionStart(statusData.subscriptionStart);
         setSubscriptionExpiry(statusData.subscriptionExpiry);
       } else {
-        console.error('Failed to fetch subscription status from API.');
+        const errText = await statusRes.text().catch(() => "");
+        console.error('Failed to fetch subscription status from API.', statusRes.status, errText);
       }
 
       // Fetch payment history logs
       const historyRes = await fetch(getApiUrl('/api/payment/history'), { headers });
       if (historyRes.ok) {
-        const historyData = await historyRes.json();
+        const historyData = await safeParseJson(historyRes);
         const formattedHistory = historyData.map(txn => ({
           id: txn.paymentId,
           date: txn.createdAt.split('T')[0],
@@ -90,7 +101,8 @@ function PricingBilling({ user }) {
         }));
         setBillingHistory(formattedHistory);
       } else {
-        console.error('Failed to fetch payment history from API.');
+        const errText = await historyRes.text().catch(() => "");
+        console.error('Failed to fetch payment history from API.', historyRes.status, errText);
       }
     } catch (err) {
       console.error('Error fetching subscription/billing details:', err);
@@ -104,6 +116,7 @@ function PricingBilling({ user }) {
     fetchSubscriptionAndBillingData();
     // Preload Razorpay Checkout script in the background to ensure zero lag on button click
     loadRazorpayScript().catch(err => console.warn("Failed to preload Razorpay SDK:", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // 3. Initiate payment order and open Razorpay Checkout SDK
@@ -145,11 +158,11 @@ function PricingBilling({ user }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment transaction.');
+        const errorData = await safeParseJson(response);
+        throw new Error(errorData.error || errorData.message || 'Failed to create payment transaction.');
       }
 
-      const orderData = await response.json();
+      const orderData = await safeParseJson(response);
 
       // Detect if we have a dummy/placeholder key ID
       const keyId = orderData.key_id;
@@ -216,8 +229,8 @@ function PricingBilling({ user }) {
             });
 
             if (!verifyRes.ok) {
-              const verifyError = await verifyRes.json();
-              throw new Error(verifyError.error || 'Payment signature verification failed.');
+              const verifyError = await safeParseJson(verifyRes);
+              throw new Error(verifyError.error || verifyError.message || 'Payment signature verification failed.');
             }
 
             setSuccessMsg('Payment verified! Active subscription updated successfully.');
@@ -289,8 +302,8 @@ function PricingBilling({ user }) {
       });
       
       if (!verifyRes.ok) {
-        const verifyError = await verifyRes.json();
-        throw new Error(verifyError.error || 'Payment signature verification failed.');
+        const verifyError = await safeParseJson(verifyRes);
+        throw new Error(verifyError.error || verifyError.message || 'Payment signature verification failed.');
       }
       
       setSuccessMsg('Simulated payment verified! Active subscription updated successfully.');
