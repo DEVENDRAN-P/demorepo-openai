@@ -6,9 +6,7 @@ const crypto = require("crypto");
 const { 
   getUserSubscription, 
   updateUserSubscription, 
-  getUserPaymentHistory, 
-  savePaymentTransaction, 
-  checkDuplicateUTR 
+  getPaymentHistory 
 } = require("./database");
 
 // Initialize Firebase Admin
@@ -41,7 +39,7 @@ const handleStatus = async (req, res, decodedToken) => {
 const handleHistory = async (req, res, decodedToken) => {
   const uid = decodedToken.uid;
   try {
-    const transactions = await getUserPaymentHistory(uid);
+    const transactions = await getPaymentHistory(uid);
     return res.status(200).json({
       success: true,
       transactions: transactions
@@ -137,7 +135,9 @@ const handleVerify = async (req, res, decodedToken) => {
     const isDummyMode = razorpayKeyId === "rzp_test_dummykey123" || isDummyPayment === true;
 
     // 1. Prevent duplicate processing (double-spend check)
-    const isDuplicate = await checkDuplicateUTR(razorpay_payment_id);
+    // 1. Prevent duplicate processing (double-spend check)
+    const history = await getPaymentHistory(uid);
+    const isDuplicate = history.some(p => p.paymentId === razorpay_payment_id || p.razorpayPaymentId === razorpay_payment_id);
     if (isDuplicate) {
       console.warn(`⚠️ UTR ${razorpay_payment_id} already processed. Rejecting double-spend.`);
       return res.status(400).json({ error: "Transaction already processed" });
@@ -159,26 +159,19 @@ const handleVerify = async (req, res, decodedToken) => {
       console.log("✅ Razorpay payment signature verified successfully.");
     }
 
-    // 3. Update subscription state in database
-    const newSubscription = {
-      plan: planId,
-      status: "active",
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days active cycle
-    };
-    await updateUserSubscription(uid, newSubscription);
-
-    // 4. Log billing record
+    // 3. Update subscription state & log transaction in database
+    const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days active cycle
     const amount = planId === "pro" ? 299 : 999;
-    const transaction = {
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
+    const paymentData = {
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
       amount: amount,
       plan: planId,
       status: "success",
-      createdAt: new Date().toISOString()
+      uid: uid
     };
-    await savePaymentTransaction(uid, transaction);
+
+    await updateUserSubscription(uid, planId, expiryDate, paymentData);
 
     console.log(`✅ Subscription upgraded for user ${uid} to plan ${planId}`);
     return res.status(200).json({ success: true, message: "Subscription upgraded successfully" });
