@@ -28,9 +28,7 @@ function PricingBilling({ user }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Simulated Checkout Sandbox Modal States
-  const [showSimulatedModal, setShowSimulatedModal] = useState(false);
-  const [simulatedOrderDetails, setSimulatedOrderDetails] = useState(null);
+
 
   // 1. Dynamic Script Loader helper for Razorpay SDK
   const loadRazorpayScript = () => {
@@ -166,23 +164,6 @@ function PricingBilling({ user }) {
 
       const orderData = await safeParseJson(response);
 
-      // Detect if we have a dummy/placeholder key ID
-      const keyId = orderData.key_id;
-      const isDummyKey = !keyId || keyId.includes("dummy") || keyId === "rzp_test_dummykey123" || keyId.includes("YOUR");
-
-      if (isDummyKey) {
-        console.log("ℹ️ Dummy Razorpay key detected. Launching simulated checkout gateway.");
-        setSimulatedOrderDetails({
-          order_id: orderData.order_id,
-          planId,
-          amount: orderData.amount,
-          token
-        });
-        setShowSimulatedModal(true);
-        setIsProcessing(false);
-        return;
-      }
-
       // Configure Razorpay Checkout
       const options = {
         key: orderData.key_id,
@@ -277,58 +258,6 @@ function PricingBilling({ user }) {
       console.error('Checkout error:', checkoutErr);
       setErrorMsg(`Checkout error: ${checkoutErr.message}`);
       setIsProcessing(false);
-    }
-  };
-
-  const handleSimulatedPaymentSuccess = async () => {
-    if (!simulatedOrderDetails) return;
-    setShowSimulatedModal(false);
-    setIsProcessing(true);
-    setSuccessMsg('Verifying simulated payment signature...');
-    
-    try {
-      const mockResponse = {
-        razorpay_order_id: simulatedOrderDetails.order_id,
-        razorpay_payment_id: `pay_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        razorpay_signature: "mock_signature_for_testing",
-        planId: simulatedOrderDetails.planId
-      };
-      
-      const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${simulatedOrderDetails.token}`
-        },
-        body: JSON.stringify(mockResponse)
-      });
-      
-      if (!verifyRes.ok) {
-        const verifyError = await safeParseJson(verifyRes);
-        throw new Error(verifyError.error || verifyError.message || 'Payment signature verification failed.');
-      }
-      
-      setSuccessMsg('Simulated payment verified! Active subscription updated successfully.');
-      await fetchSubscriptionAndBillingData();
-      
-      navigate('/payment-success', {
-        state: {
-          txn: {
-            id: mockResponse.razorpay_payment_id,
-            date: new Date().toISOString().split('T')[0],
-            plan: simulatedOrderDetails.planId === 'pro' ? 'Pro Plan' : 'Business Plan',
-            amount: simulatedOrderDetails.planId === 'pro' ? '₹299' : '₹999',
-            status: 'SUCCESS',
-            utr: mockResponse.razorpay_payment_id
-          }
-        }
-      });
-    } catch (err) {
-      console.error('Simulated verification exception:', err);
-      setErrorMsg(`Simulated verification failed: ${err.message}`);
-    } finally {
-      setIsProcessing(false);
-      setSimulatedOrderDetails(null);
     }
   };
 
@@ -628,75 +557,7 @@ function PricingBilling({ user }) {
         )}
       </div>
 
-      {showSimulatedModal && simulatedOrderDetails && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(4px)',
-          padding: '1rem'
-        }}>
-          <div style={{
-            background: '#1e1b4b',
-            color: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '440px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-            border: '2px solid #6366f1',
-            overflow: 'hidden',
-            padding: '2.25rem',
-            fontFamily: 'Inter, sans-serif'
-          }}>
-            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-              <span style={{ background: '#6366f1', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em' }}>SANDBOX GATEWAY</span>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0.75rem 0 0.25rem 0', color: '#f8fafc' }}>Simulated Razorpay Checkout</h3>
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>Placeholder API Key detected. Testing in simulated checkout mode.</p>
-            </div>
 
-            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.75rem', border: '1px solid #334155', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ color: '#94a3b8' }}>Selected Plan:</span>
-                <strong style={{ color: '#f8fafc' }}>{simulatedOrderDetails.planId === 'pro' ? 'Pro Plan' : 'Business Plan'}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <span style={{ color: '#94a3b8' }}>Amount:</span>
-                <strong style={{ color: '#38bdf8', fontSize: '1rem' }}>₹{simulatedOrderDetails.amount / 100}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94a3b8' }}>Order ID:</span>
-                <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>{simulatedOrderDetails.order_id}</span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button 
-                onClick={handleSimulatedPaymentSuccess} 
-                style={{ padding: '0.75rem 1rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s' }}
-              >
-                Simulate Successful Payment
-              </button>
-              <button 
-                onClick={() => {
-                  setShowSimulatedModal(false);
-                  setSimulatedOrderDetails(null);
-                  setErrorMsg("Simulated payment cancelled by user.");
-                }} 
-                style={{ padding: '0.75rem 1rem', background: 'transparent', color: '#94a3b8', border: '1px solid #334155', borderRadius: '8px', fontWeight: 'medium', fontSize: '0.9rem', cursor: 'pointer' }}
-              >
-                Cancel Payment
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

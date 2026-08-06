@@ -162,23 +162,14 @@ const handleCreateOrder = async (req, res, decodedToken) => {
   try {
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-    
-    // Check if we are running in simulated mock mode
-    const isDummyMode = !razorpayKeyId || razorpayKeyId === "rzp_test_dummykey123";
 
-    if (isDummyMode) {
-      console.log(`ℹ️ [create-order] Dummy Razorpay keys detected. Creating mock order.`);
-      const mockOrderId = `order_${Math.random().toString(36).substring(2, 16)}`;
-      const mockOrder = {
-        id: mockOrderId,
-        amount: planAmountPaise,
-        currency: "INR",
-        receipt: `rcpt_${planId.substring(0, 3)}_${uid.substring(0, 5)}_${Date.now().toString().substring(5)}`,
-        key_id: "rzp_test_dummykey123",
-        isDummy: true
-      };
-      console.log("✅ [create-order] Mock order object created:", mockOrder);
-      return res.status(200).json(mockOrder);
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error("❌ [create-order] Razorpay credentials are not configured on the server.");
+      return res.status(500).json({
+        success: false,
+        error: "Configuration Error",
+        message: "Razorpay credentials are not configured on the server. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET."
+      });
     }
 
     console.log("🚀 [create-order] Initializing Razorpay SDK instance...");
@@ -223,8 +214,7 @@ const handleVerify = async (req, res, decodedToken) => {
     razorpay_order_id,
     razorpay_payment_id,
     razorpay_signature,
-    planId,
-    isDummyPayment
+    planId
   } = req.body;
 
   const uid = decodedToken.uid;
@@ -238,7 +228,15 @@ const handleVerify = async (req, res, decodedToken) => {
   try {
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-    const isDummyMode = !razorpayKeyId || razorpayKeyId === "rzp_test_dummykey123" || isDummyPayment === true;
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error("❌ [verify] Razorpay credentials are not configured on the server.");
+      return res.status(500).json({
+        success: false,
+        error: "Configuration Error",
+        message: "Razorpay credentials are not configured on the server."
+      });
+    }
 
     // 1. Prevent duplicate processing (double-spend check)
     console.log("🔍 [verify] Checking for duplicate transaction record...");
@@ -249,22 +247,18 @@ const handleVerify = async (req, res, decodedToken) => {
       return res.status(400).json({ success: false, error: "Transaction already processed" });
     }
 
-    if (isDummyMode) {
-      console.log(`✅ [verify] Mock Checkout confirmed. Bypassing HMAC cryptographic checks.`);
-    } else {
-      // 2. Perform HMAC SHA256 Signature Verification
-      console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
-      const generatedSignature = crypto
-        .createHmac("sha256", razorpayKeySecret)
-        .update(razorpay_order_id + "|" + razorpay_payment_id)
-        .digest("hex");
+    // 2. Perform HMAC SHA256 Signature Verification
+    console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
+    const generatedSignature = crypto
+      .createHmac("sha256", razorpayKeySecret)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
 
-      if (generatedSignature !== razorpay_signature) {
-        console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
-        return res.status(400).json({ success: false, error: "Invalid payment signature" });
-      }
-      console.log("✅ [verify] Signature validation passed.");
+    if (generatedSignature !== razorpay_signature) {
+      console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
+      return res.status(400).json({ success: false, error: "Invalid payment signature" });
     }
+    console.log("✅ [verify] Signature validation passed.");
 
     // 3. Update subscription state & log transaction in database
     console.log("✍️ [verify] Updating subscription state and writing ledger entries...");
