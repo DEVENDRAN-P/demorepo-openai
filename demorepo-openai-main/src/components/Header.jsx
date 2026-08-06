@@ -9,7 +9,7 @@ const BUSINESSES = [
   { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', compliance: 100, status: 'Filed' }
 ];
 
-function Header() {
+function Header({ onMenuClick }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -56,7 +56,14 @@ function Header() {
     }}>
       
       {/* Left: Active Entity & Compliance details */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button 
+          onClick={onMenuClick}
+          className="header-menu-btn"
+          title="Toggle Navigation Menu"
+        >
+          ☰
+        </button>
         <div>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {activeBusiness.name}
@@ -69,7 +76,7 @@ function Header() {
         </div>
 
         {/* Quick Compliance widget */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem 0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.75rem' }}>
+        <div className="header-compliance-score" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem 0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.75rem' }}>
           <span style={{ color: 'var(--text-secondary)' }}>Score:</span>
           <strong style={{ color: activeBusiness.compliance >= 90 ? 'var(--success)' : 'var(--warning)' }}>
             {activeBusiness.compliance}%
@@ -109,7 +116,7 @@ function Header() {
           className="btn btn-outline"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', border: '1px solid var(--theme-secondary)' }}
         >
-          <span>⚡</span> AI Agent
+          <span>⚡</span> <span className="header-btn-text">AI Agent</span>
         </button>
 
         {/* Quick Upload shortcut */}
@@ -118,7 +125,7 @@ function Header() {
           className="btn btn-primary"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
         >
-          <span>📤</span> Upload
+          <span>📤</span> <span className="header-btn-text">Upload</span>
         </button>
 
         {/* Notifications Shortcut */}

@@ -9,6 +9,44 @@ const IconCamera = () => (
   </svg>
 );
 
+const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width <= maxWidth && height <= maxHeight) {
+        resolve(base64Str);
+        return;
+      }
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", 0.7));
+    };
+    img.onerror = () => {
+      resolve(base64Str);
+    };
+  });
+};
+
 function BillUpload() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -110,7 +148,16 @@ Extract metadata from this Indian B2B invoice. Return ONLY a valid JSON object m
       });
 
       setProgress(85);
-      if (!response.ok) throw new Error(`Groq API Error: ${response.status}`);
+      if (!response.ok) {
+        let errDesc = '';
+        try {
+          const errData = await response.json();
+          errDesc = errData.error?.message || JSON.stringify(errData);
+        } catch (e) {
+          errDesc = response.statusText;
+        }
+        throw new Error(`Groq API Error ${response.status}: ${errDesc}`);
+      }
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
@@ -135,6 +182,9 @@ Extract metadata from this Indian B2B invoice. Return ONLY a valid JSON object m
   const extractDataWithVisionAI = async (base64DataUrl) => {
     setProgress(70);
     try {
+      // Compress image to ensure it is under the 4MB limit and uploads quickly
+      const optimizedBase64 = await compressImage(base64DataUrl);
+
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -187,7 +237,7 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
                 {
                   type: 'image_url',
                   image_url: {
-                    url: base64DataUrl
+                    url: optimizedBase64
                   }
                 }
               ]
@@ -200,7 +250,16 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
       });
 
       setProgress(85);
-      if (!response.ok) throw new Error(`Groq Vision API Error: ${response.status}`);
+      if (!response.ok) {
+        let errDesc = '';
+        try {
+          const errData = await response.json();
+          errDesc = errData.error?.message || JSON.stringify(errData);
+        } catch (e) {
+          errDesc = response.statusText;
+        }
+        throw new Error(`Groq Vision API Error ${response.status}: ${errDesc}`);
+      }
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');

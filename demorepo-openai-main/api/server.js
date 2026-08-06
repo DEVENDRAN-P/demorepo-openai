@@ -19,6 +19,21 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
+const { getApps } = require("firebase-admin/app");
+
+// Initialize Firebase Admin for local Express server
+if (getApps().length === 0) {
+  admin.initializeApp({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT || "finalopenai-fc9c5"
+  });
+}
+
+// Import Payment & Subscription Handlers
+const createOrderHandler = require("./payment/create-order");
+const verifyPaymentHandler = require("./payment/verify");
+const paymentHistoryHandler = require("./payment/history");
+const subscriptionStatusHandler = require("./subscription/status");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -268,6 +283,12 @@ app.post("/api/email", async (req, res) => {
     });
   }
 });
+
+// Payment & Subscription API Routes
+app.post("/api/payment/create-order", createOrderHandler);
+app.post("/api/payment/verify", verifyPaymentHandler);
+app.get("/api/payment/history", paymentHistoryHandler);
+app.get("/api/subscription/status", subscriptionStatusHandler);
 
 // Start server
 app.listen(PORT, () => {

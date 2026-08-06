@@ -6,10 +6,16 @@ import {
   GoogleAuthProvider,
   RecaptchaVerifier,
   signInWithPhoneNumber,
+  connectAuthEmulator,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager, 
+  connectFirestoreEmulator 
+} from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getStorage } from "firebase/storage";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
 
 // ========================================
@@ -126,7 +132,11 @@ setPersistence(auth, browserLocalPersistence)
 // ========================================
 // INITIALIZE CLOUD FIRESTORE DATABASE
 // ========================================
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
 // Note: Firestore offline persistence is now handled via FirestoreSettings.cache
 // This is configured in individual components or as needed
@@ -160,14 +170,34 @@ export const storage = getStorage(app);
 // ========================================
 export const database = getDatabase(app);
 
-// Connect to Realtime Database Emulator for local development
+// Connect to Firebase Emulators for local development
 if (useEmulator && typeof window !== "undefined") {
   try {
-    // Note: connectDatabaseEmulator must be called before any database operations
     connectDatabaseEmulator(database, "127.0.0.1", 9000);
     console.log("✅ Connected to Realtime Database Emulator at 127.0.0.1:9000");
   } catch (error) {
-    console.warn("⚠️  Emulator connection skipped:", error.message);
+    console.warn("⚠️  Realtime Database emulator connection skipped:", error.message);
+  }
+
+  try {
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    console.log("✅ Connected to Firestore Emulator at 127.0.0.1:8080");
+  } catch (error) {
+    console.warn("⚠️  Firestore emulator connection skipped:", error.message);
+  }
+
+  try {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+    console.log("✅ Connected to Auth Emulator at 127.0.0.1:9099");
+  } catch (error) {
+    console.warn("⚠️  Auth emulator connection skipped:", error.message);
+  }
+
+  try {
+    connectStorageEmulator(storage, "127.0.0.1", 9199);
+    console.log("✅ Connected to Storage Emulator at 127.0.0.1:9199");
+  } catch (error) {
+    console.warn("⚠️  Storage emulator connection skipped:", error.message);
   }
 }
 

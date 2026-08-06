@@ -1,93 +1,379 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../config/firebase';
+
+const getApiUrl = (path) => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (window.location.port !== '5000') {
+      return `http://localhost:5000${path}`;
+    }
+  }
+  return path;
+};
 
 function PricingBilling({ user }) {
   const navigate = useNavigate();
-  const [activePlan, setActivePlan] = useState(() => {
-    return localStorage.getItem('saas_active_plan') || 'free';
-  });
-
-  const [checkoutPlan, setCheckoutPlan] = useState(null); // 'pro' or 'business'
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi', 'card', 'netbanking'
-  const [upiUtr, setUpiUtr] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
+  
+  // Subscription and state variables
+  const [activePlan, setActivePlan] = useState('free');
+  const [subscriptionStatus, setSubscriptionStatus] = useState('active');
+  const [subscriptionStart, setSubscriptionStart] = useState(null);
+  const [subscriptionExpiry, setSubscriptionExpiry] = useState(null);
+  
+  const [billingHistory, setBillingHistory] = useState([]);
+  
+  // UI States
+  const [loadingState, setLoadingState] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const [billingHistory, setBillingHistory] = useState(() => {
-    const saved = localStorage.getItem('saas_billing_history');
-    return saved ? JSON.parse(saved) : [
-      { id: 'TXN-9021', date: '2026-06-26', plan: 'Free Plan', amount: '₹0', status: 'Success', utr: 'System Preset' }
-    ];
-  });
+  // Simulated Checkout Sandbox Modal States
+  const [showSimulatedModal, setShowSimulatedModal] = useState(false);
+  const [simulatedOrderDetails, setSimulatedOrderDetails] = useState(null);
 
-  useEffect(() => {
-    const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
-    };
-    window.addEventListener('planChanged', handlePlanChanged);
-    return () => window.removeEventListener('planChanged', handlePlanChanged);
-  }, []);
+  // 1. Dynamic Script Loader helper for Razorpay SDK
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
 
-  const handleSelectPlan = (planId) => {
-    if (planId === 'free') {
-      setActivePlan('free');
-      localStorage.setItem('saas_active_plan', 'free');
-      window.dispatchEvent(new Event('planChanged'));
-      alert('Subscription downgraded to Free Plan.');
-    } else {
-      setCheckoutPlan(planId);
+  // 2. Load Subscription Status and History on Component Mount
+  const fetchSubscriptionAndBillingData = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setLoadingState(false);
+        return;
+      }
+
+      const token = await currentUser.getIdToken();
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch active subscription status
+      const statusRes = await fetch(getApiUrl('/api/subscription/status'), { headers });
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setActivePlan(statusData.subscriptionPlan);
+        setSubscriptionStatus(statusData.subscriptionStatus);
+        setSubscriptionStart(statusData.subscriptionStart);
+        setSubscriptionExpiry(statusData.subscriptionExpiry);
+      } else {
+        console.error('Failed to fetch subscription status from API.');
+      }
+
+      // Fetch payment history logs
+      const historyRes = await fetch(getApiUrl('/api/payment/history'), { headers });
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        const formattedHistory = historyData.map(txn => ({
+          id: txn.paymentId,
+          date: txn.createdAt.split('T')[0],
+          plan: txn.plan === 'pro' ? 'Pro Plan' : 'Business Plan',
+          amount: `₹${txn.amount}`,
+          status: txn.status,
+          utr: txn.razorpayPaymentId || 'N/A'
+        }));
+        setBillingHistory(formattedHistory);
+      } else {
+        console.error('Failed to fetch payment history from API.');
+      }
+    } catch (err) {
+      console.error('Error fetching subscription/billing details:', err);
+      setErrorMsg('Failed to load active subscription details from server.');
+    } finally {
+      setLoadingState(false);
     }
   };
 
-  const handlePaymentSubmit = (e) => {
-    e.preventDefault();
-    if (paymentMethod === 'upi' && !upiUtr.trim()) {
-      alert('Please enter your 12-digit UPI UTR number.');
-      return;
-    }
-    if (paymentMethod === 'card' && (!cardNumber || !cardExpiry || !cardCvv)) {
-      alert('Please fill in card details.');
+  useEffect(() => {
+    fetchSubscriptionAndBillingData();
+    // Preload Razorpay Checkout script in the background to ensure zero lag on button click
+    loadRazorpayScript().catch(err => console.warn("Failed to preload Razorpay SDK:", err));
+  }, [user]);
+
+  // 3. Initiate payment order and open Razorpay Checkout SDK
+  const handleSubscribe = async (planId) => {
+    if (planId === 'free') {
+      alert('You are already on the Free Plan. Downgrade takes effect at the end of billing cycle.');
       return;
     }
 
     setIsProcessing(true);
+    setErrorMsg('');
+    setSuccessMsg('');
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      const newPlan = checkoutPlan;
-      localStorage.setItem('saas_active_plan', newPlan);
-      window.dispatchEvent(new Event('planChanged'));
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setErrorMsg('Authentication required. Please sign in to upgrade.');
+        setIsProcessing(false);
+        return;
+      }
 
-      const newTxn = {
-        id: `TXN-${Math.floor(1000 + Math.random() * 9000)}`,
-        date: new Date().toISOString().split('T')[0],
-        plan: newPlan === 'pro' ? 'Pro Plan' : 'Business Plan',
-        amount: newPlan === 'pro' ? '₹399' : '₹1,499',
-        status: 'Success',
-        utr: paymentMethod === 'upi' ? upiUtr : `RPAY-${Math.floor(100000 + Math.random() * 900000)}`
+      // Load Razorpay checkout script
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        setErrorMsg('Unable to load Razorpay payment SDK. Please verify network connectivity.');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Create Order API endpoint call
+      const token = await currentUser.getIdToken(true);
+      const response = await fetch(getApiUrl('/api/payment/create-order'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ planId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment transaction.');
+      }
+
+      const orderData = await response.json();
+
+      // Detect if we have a dummy/placeholder key ID
+      const keyId = orderData.key_id;
+      const isDummyKey = !keyId || keyId.includes("dummy") || keyId === "rzp_test_dummykey123" || keyId.includes("YOUR");
+
+      if (isDummyKey) {
+        console.log("ℹ️ Dummy Razorpay key detected. Launching simulated checkout gateway.");
+        setSimulatedOrderDetails({
+          order_id: orderData.order_id,
+          planId,
+          amount: orderData.amount,
+          token
+        });
+        setShowSimulatedModal(true);
+        setIsProcessing(false);
+        return;
+      }
+
+      // Configure Razorpay Checkout
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'GST Buddy AI',
+        description: `Upgrade to ${planId === 'pro' ? 'Pro Plan' : 'Business Plan'}`,
+        image: 'https://cdn-icons-png.flaticon.com/512/2933/2933116.png', // Modern corporate compliance logo placeholder
+        order_id: orderData.order_id,
+        prefill: {
+          name: user?.name || user?.displayName || '',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        notes: {
+          uid: currentUser.uid,
+          planId: planId
+        },
+        theme: {
+          color: '#6366f1' // Professional Indigo Theme Accent
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessing(false);
+            console.log('Payment checkout process cancelled by user.');
+          }
+        },
+        handler: async function (paymentResponse) {
+          try {
+            setIsProcessing(true);
+            setSuccessMsg('Verifying payment signature with secure servers...');
+
+            // Call verify API endpoint
+            const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                planId: planId
+              })
+            });
+
+            if (!verifyRes.ok) {
+              const verifyError = await verifyRes.json();
+              throw new Error(verifyError.error || 'Payment signature verification failed.');
+            }
+
+            setSuccessMsg('Payment verified! Active subscription updated successfully.');
+            
+            // Reload billing statement and status details
+            await fetchSubscriptionAndBillingData();
+
+            // Redirect to success route
+            navigate('/payment-success', {
+              state: {
+                txn: {
+                  id: paymentResponse.razorpay_payment_id,
+                  date: new Date().toISOString().split('T')[0],
+                  plan: planId === 'pro' ? 'Pro Plan' : 'Business Plan',
+                  amount: planId === 'pro' ? '₹299' : '₹999',
+                  status: 'SUCCESS',
+                  utr: paymentResponse.razorpay_payment_id
+                }
+              }
+            });
+
+          } catch (verifyErr) {
+            console.error('Signature validation exception:', verifyErr);
+            setErrorMsg(`Verification failed: ${verifyErr.message}`);
+          } finally {
+            setIsProcessing(false);
+          }
+        }
       };
 
-      const updatedHistory = [newTxn, ...billingHistory];
-      setBillingHistory(updatedHistory);
-      localStorage.setItem('saas_billing_history', JSON.stringify(updatedHistory));
+      const rzpObj = new window.Razorpay(options);
+      
+      rzpObj.on('payment.failed', function (failDetails) {
+        console.error('Razorpay Payment failed event:', failDetails.error);
+        setErrorMsg(`Payment failed: ${failDetails.error.description || 'Transaction declined'}`);
+        setIsProcessing(false);
+      });
 
-      setCheckoutPlan(null);
-      setUpiUtr('');
-      setCardNumber('');
-      setCardExpiry('');
-      setCardCvv('');
+      rzpObj.open();
 
-      // Redirect to Payment Success page
-      navigate('/payment-success', { state: { txn: newTxn } });
-    }, 1500);
+    } catch (checkoutErr) {
+      console.error('Checkout error:', checkoutErr);
+      setErrorMsg(`Checkout error: ${checkoutErr.message}`);
+      setIsProcessing(false);
+    }
   };
 
-  return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+  const handleSimulatedPaymentSuccess = async () => {
+    if (!simulatedOrderDetails) return;
+    setShowSimulatedModal(false);
+    setIsProcessing(true);
+    setSuccessMsg('Verifying simulated payment signature...');
+    
+    try {
+      const mockResponse = {
+        razorpay_order_id: simulatedOrderDetails.order_id,
+        razorpay_payment_id: `pay_${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        razorpay_signature: "mock_signature_for_testing",
+        planId: simulatedOrderDetails.planId
+      };
       
-      {/* Title Header */}
+      const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${simulatedOrderDetails.token}`
+        },
+        body: JSON.stringify(mockResponse)
+      });
+      
+      if (!verifyRes.ok) {
+        const verifyError = await verifyRes.json();
+        throw new Error(verifyError.error || 'Payment signature verification failed.');
+      }
+      
+      setSuccessMsg('Simulated payment verified! Active subscription updated successfully.');
+      await fetchSubscriptionAndBillingData();
+      
+      navigate('/payment-success', {
+        state: {
+          txn: {
+            id: mockResponse.razorpay_payment_id,
+            date: new Date().toISOString().split('T')[0],
+            plan: simulatedOrderDetails.planId === 'pro' ? 'Pro Plan' : 'Business Plan',
+            amount: simulatedOrderDetails.planId === 'pro' ? '₹299' : '₹999',
+            status: 'SUCCESS',
+            utr: mockResponse.razorpay_payment_id
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Simulated verification exception:', err);
+      setErrorMsg(`Simulated verification failed: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
+      setSimulatedOrderDetails(null);
+    }
+  };
+
+  // Loading spinner layout
+  if (loadingState) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '5px solid var(--bg-tertiary)',
+          borderTop: '5px solid var(--theme-primary)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Retrieving active subscription details...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', position: 'relative' }}>
+      
+      {/* Absolute Loading Overlay */}
+      {isProcessing && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          zIndex: 99999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '6px solid rgba(255,255,255,0.1)',
+            borderTop: '6px solid var(--theme-primary)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '1.5rem'
+          }}></div>
+          <h3 style={{ color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Gateway Processing...</h3>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Do not refresh the page or click back.</p>
+        </div>
+      )}
+
+      {/* Header section */}
       <div style={{ marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Pricing & Subscriptions</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
@@ -95,41 +381,106 @@ function PricingBilling({ user }) {
         </p>
       </div>
 
-      {/* Plan Usage Limits Panel */}
-      <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '2.5rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 1rem 0' }}>Current Subscription Usage</h3>
-        <div className="grid grid-cols-3" style={{ gap: '2rem' }}>
+      {/* Status Notifications */}
+      {errorMsg && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span><strong>Error:</strong> {errorMsg}</span>
+          <button onClick={() => setErrorMsg('')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem' }}>&times;</button>
+        </div>
+      )}
+
+      {successMsg && (
+        <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid rgba(34, 197, 94, 0.2)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span><strong>Success:</strong> {successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} style={{ background: 'transparent', border: 'none', color: '#22c55e', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem' }}>&times;</button>
+        </div>
+      )}
+
+      {/* Subscription Active Badge & Usage Limits Panel */}
+      <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '2.5rem', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>Current Subscription Status</h3>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Status:</span>
+            <span style={{ 
+              background: subscriptionStatus === 'active' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+              color: subscriptionStatus === 'active' ? '#22c55e' : '#ef4444', 
+              padding: '0.25rem 0.75rem', 
+              borderRadius: '9999px', 
+              fontSize: '0.75rem', 
+              fontWeight: 700,
+              textTransform: 'uppercase'
+            }}>
+              {subscriptionStatus === 'active' ? 'Active' : 'Expired'}
+            </span>
+          </div>
+        </div>
+        
+        <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', border: '1px solid var(--border-color)', alignItems: 'center' }}>
+          <div>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Active Tier</span>
+            <strong style={{ fontSize: '1.15rem', color: 'var(--theme-primary-light)' }}>
+              {activePlan === 'free' ? 'Free Plan' : activePlan === 'pro' ? 'Pro Plan' : 'Business Plan'}
+            </strong>
+          </div>
+          {subscriptionStart && (
+            <div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Billing Start</span>
+              <strong style={{ fontSize: '0.95rem' }}>{new Date(subscriptionStart).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong>
+            </div>
+          )}
+          {subscriptionExpiry && (
+            <div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Next Renewal Date</span>
+              <strong style={{ fontSize: '0.95rem' }}>{new Date(subscriptionExpiry).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong>
+            </div>
+          )}
+          {activePlan !== 'free' && (
+            <div style={{ marginLeft: 'auto' }}>
+              <button 
+                onClick={() => handleSubscribe(activePlan)} 
+                className="btn btn-outline" 
+                style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 700 }}
+                disabled={isProcessing}
+              >
+                Renew Subscription
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3" style={{ gap: '2rem', marginTop: '1.5rem' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
               <span>Monthly Invoices OCR</span>
-              <strong>{activePlan === 'free' ? '4 / 5' : activePlan === 'pro' ? '12 / 100' : '88 / Unlimited'}</strong>
+              <strong>{activePlan === 'free' ? 'Up to 10 scans' : 'Unlimited'}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
-              <div style={{ width: activePlan === 'free' ? '80%' : activePlan === 'pro' ? '12%' : '5%', background: 'var(--theme-primary)', height: '100%' }}></div>
+              <div style={{ width: activePlan === 'free' ? '20%' : '100%', background: 'var(--theme-primary)', height: '100%' }}></div>
             </div>
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              <span>Connected Businesses</span>
-              <strong>{activePlan === 'free' ? '1 / 1' : activePlan === 'pro' ? '3 / 3' : '3 / Unlimited'}</strong>
+              <span>AI accountant suggestions</span>
+              <strong>{activePlan === 'free' ? 'Basic AI Suggestions' : activePlan === 'pro' ? 'Advanced AI Insights' : 'Advanced Insights & Analytics'}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
-              <div style={{ width: activePlan === 'free' ? '100%' : activePlan === 'pro' ? '100%' : '10%', background: 'var(--theme-secondary)', height: '100%' }}></div>
+              <div style={{ width: activePlan === 'free' ? '30%' : activePlan === 'pro' ? '70%' : '100%', background: 'var(--theme-secondary)', height: '100%' }}></div>
             </div>
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              <span>AI Queries Credit</span>
-              <strong>{activePlan === 'free' ? '15 / 20' : activePlan === 'pro' ? '82 / 500' : '452 / Unlimited'}</strong>
+              <span>OCR capabilities</span>
+              <strong>{activePlan === 'free' ? 'Limited OCR' : 'Unlimited OCR'}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
-              <div style={{ width: activePlan === 'free' ? '75%' : activePlan === 'pro' ? '16%' : '2%', background: 'var(--warning)', height: '100%' }}></div>
+              <div style={{ width: activePlan === 'free' ? '40%' : '100%', background: 'var(--warning)', height: '100%' }}></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Subscription Cards */}
+      {/* Subscription Cards Grid */}
       <div className="grid grid-cols-3" style={{ gap: '2rem', marginBottom: '3rem' }}>
         
         {/* Free Plan */}
@@ -140,19 +491,17 @@ function PricingBilling({ user }) {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>Ideal for solo-entrepreneurs and micro-shops filing nil or few monthly returns.</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1 }}>
-            <li>Up to 5 invoice uploads/month</li>
-            <li>Single business workspace</li>
-            <li>Basic AI accountant assistance</li>
-            <li>Standard PDF form generation</li>
+            <li>10 invoice scans/month</li>
+            <li>Basic AI suggestions</li>
+            <li>Limited OCR</li>
           </ul>
           
           <button 
-            disabled={activePlan === 'free'} 
-            onClick={() => handleSelectPlan('free')}
-            className={`btn ${activePlan === 'free' ? 'btn-outline' : 'btn-primary'}`}
+            disabled={true} 
+            className="btn btn-outline"
             style={{ width: '100%', padding: '0.6rem' }}
           >
-            {activePlan === 'free' ? 'Active Plan' : 'Select Free'}
+            {activePlan === 'free' ? 'Active Plan' : 'Free Tier'}
           </button>
         </div>
 
@@ -160,50 +509,60 @@ function PricingBilling({ user }) {
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', border: activePlan === 'pro' ? '2px solid var(--theme-secondary)' : '1px solid var(--border-color)', position: 'relative' }}>
           {activePlan === 'pro' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-secondary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>CURRENT PLAN</span>}
           <span style={{ fontSize: '0.8rem', color: 'var(--theme-primary-light)', fontWeight: 700 }}>PROFESSIONAL</span>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.5rem 0' }}>₹399 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span></h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.5rem 0' }}>₹299 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span></h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>Standard SaaS framework for small businesses requiring regular auditing and bulk processing.</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1 }}>
-            <li>Up to 100 invoice uploads/month</li>
-            <li>Connect up to 3 businesses</li>
-            <li>Advanced Llama 3.3 Accountant Agent</li>
-            <li>Priority OCR extraction queue</li>
-            <li>Dedicated Email Reminders</li>
+            <li>Unlimited invoice scans</li>
+            <li>Unlimited OCR</li>
+            <li>Advanced AI insights</li>
+            <li>GST report export</li>
+            <li>Priority support</li>
           </ul>
 
           <button 
-            onClick={() => handleSelectPlan('pro')}
+            onClick={() => handleSubscribe('pro')}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.6rem', background: activePlan === 'pro' ? 'var(--bg-tertiary)' : 'var(--theme-primary)', color: activePlan === 'pro' ? 'var(--text-secondary)' : 'white' }}
-            disabled={activePlan === 'pro'}
+            style={{ 
+              width: '100%', 
+              padding: '0.6rem', 
+              background: activePlan === 'pro' ? 'var(--bg-tertiary)' : 'var(--theme-primary)', 
+              color: activePlan === 'pro' ? 'var(--text-secondary)' : 'white' 
+            }}
+            disabled={activePlan === 'pro' || isProcessing}
           >
             {activePlan === 'pro' ? 'Active Plan' : 'Upgrade to Pro'}
           </button>
         </div>
 
-        {/* Enterprise Plan */}
-        <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', border: activePlan === 'enterprise' ? '2px solid var(--theme-secondary)' : '1px solid var(--border-color)', position: 'relative' }}>
-          {activePlan === 'enterprise' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-secondary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>CURRENT PLAN</span>}
-          <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 700 }}>ENTERPRISE</span>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.5rem 0' }}>₹1,499 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span></h2>
+        {/* Business Plan */}
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', border: activePlan === 'business' ? '2px solid var(--theme-secondary)' : '1px solid var(--border-color)', position: 'relative' }}>
+          {activePlan === 'business' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-secondary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>CURRENT PLAN</span>}
+          <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 700 }}>BUSINESS PLAN</span>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.5rem 0' }}>₹999 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span></h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>For merchants and corporate entities with high billing volumes and complex GST structures.</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1 }}>
-            <li><strong>Unlimited</strong> invoice uploads</li>
-            <li><strong>Unlimited</strong> businesses & branches</li>
-            <li>Flagship Accountant Agent terminal access</li>
-            <li>Legal Agreement review & clause extract</li>
-            <li>Simulated API Keys access</li>
-            <li>Premium support channels</li>
+            <li><strong>Everything</strong> in Pro</li>
+            <li>Team members access</li>
+            <li>Analytics dashboard</li>
+            <li>Bulk invoice processing</li>
+            <li>API access</li>
+            <li>Admin tools</li>
           </ul>
 
           <button 
-            onClick={() => handleSelectPlan('enterprise')}
+            onClick={() => handleSubscribe('business')}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.6rem', background: activePlan === 'enterprise' ? 'var(--bg-tertiary)' : 'var(--success)', color: activePlan === 'enterprise' ? 'var(--text-secondary)' : 'white' }}
-            disabled={activePlan === 'enterprise'}
+            style={{ 
+              width: '100%', 
+              padding: '0.6rem', 
+              background: activePlan === 'business' ? 'var(--bg-tertiary)' : 'var(--success)', 
+              color: activePlan === 'business' ? 'var(--text-secondary)' : 'white' 
+            }}
+            disabled={activePlan === 'business' || isProcessing}
           >
-            {activePlan === 'enterprise' ? 'Active Plan' : 'Get Enterprise'}
+            {activePlan === 'business' ? 'Active Plan' : 'Get Business'}
           </button>
         </div>
 
@@ -213,217 +572,116 @@ function PricingBilling({ user }) {
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Billing Statement Ledger</h3>
         
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-              <th style={{ padding: '0.75rem' }}>Invoice Reference</th>
-              <th style={{ padding: '0.75rem' }}>Date Created</th>
-              <th style={{ padding: '0.75rem' }}>Filing Segment</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Amount Paid</th>
-              <th style={{ padding: '0.75rem', textAlign: 'center' }}>Bank UTR / Ref</th>
-              <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {billingHistory.map((txn, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '0.75rem', fontFamily: 'monospace', fontWeight: 600 }}>{txn.id}</td>
-                <td style={{ padding: '0.75rem' }}>{txn.date}</td>
-                <td style={{ padding: '0.75rem' }}>{txn.plan}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 700 }}>{txn.amount}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center', fontFamily: 'monospace' }}>{txn.utr}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                  <span className="badge-premium badge-excellent" style={{ fontSize: '0.65rem' }}>{txn.status}</span>
-                </td>
+        {billingHistory.length === 0 ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '1rem 0' }}>No invoice payments found. Upgrade your subscription to start transactions.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                <th style={{ padding: '0.75rem' }}>Receipt reference</th>
+                <th style={{ padding: '0.75rem' }}>Date Created</th>
+                <th style={{ padding: '0.75rem' }}>Filing Segment</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Amount Paid</th>
+                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Razorpay Payment ID</th>
+                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {billingHistory.map((txn, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '0.75rem', fontFamily: 'monospace', fontWeight: 600 }}>{txn.id}</td>
+                  <td style={{ padding: '0.75rem' }}>{txn.date}</td>
+                  <td style={{ padding: '0.75rem' }}>{txn.plan}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 700 }}>{txn.amount}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'center', fontFamily: 'monospace' }}>{txn.utr}</td>
+                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                    <span className="badge-premium badge-excellent" style={{ 
+                      fontSize: '0.65rem', 
+                      background: txn.status === 'SUCCESS' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                      color: txn.status === 'SUCCESS' ? 'var(--success)' : 'var(--warning)',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '4px',
+                      fontWeight: 700
+                    }}>
+                      {txn.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {/* Checkout Dialog Modal */}
-      {checkoutPlan && (
+      {showSimulatedModal && simulatedOrderDetails && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
+          background: 'rgba(0, 0, 0, 0.75)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999,
+          zIndex: 99999,
           backdropFilter: 'blur(4px)',
           padding: '1rem'
         }}>
           <div style={{
-            background: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            borderRadius: 'var(--radius-xl)',
+            background: '#1e1b4b',
+            color: '#ffffff',
+            borderRadius: '16px',
             width: '100%',
-            maxWidth: '520px',
-            boxShadow: 'var(--shadow-2xl)',
-            border: '1px solid var(--border-color)',
-            overflow: 'hidden'
+            maxWidth: '440px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            border: '2px solid #6366f1',
+            overflow: 'hidden',
+            padding: '2.25rem',
+            fontFamily: 'Inter, sans-serif'
           }}>
-            {/* Modal Header */}
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Secure Billing Gateway</h3>
-              <button 
-                onClick={() => setCheckoutPlan(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer', outline: 'none' }}
-              >
-                &times;
-              </button>
+            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+              <span style={{ background: '#6366f1', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em' }}>SANDBOX GATEWAY</span>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0.75rem 0 0.25rem 0', color: '#f8fafc' }}>Simulated Razorpay Checkout</h3>
+              <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>Placeholder API Key detected. Testing in simulated checkout mode.</p>
             </div>
 
-            {/* Modal Body */}
-            <form onSubmit={handlePaymentSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>Selected Plan</span>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginTop: '0.25rem', border: '1px solid var(--border-color)' }}>
-                  <strong>{checkoutPlan === 'pro' ? 'Pro Plan (Professional SaaS)' : 'Enterprise Plan (Corporate OS)'}</strong>
-                  <strong style={{ color: 'var(--theme-secondary-light)' }}>{checkoutPlan === 'pro' ? '₹399' : '₹1,499'}</strong>
-                </div>
+            <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.75rem', border: '1px solid #334155', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ color: '#94a3b8' }}>Selected Plan:</span>
+                <strong style={{ color: '#f8fafc' }}>{simulatedOrderDetails.planId === 'pro' ? 'Pro Plan' : 'Business Plan'}</strong>
               </div>
-
-              {/* Payment Method Selector */}
-              <div>
-                <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Select Method</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" onClick={() => setPaymentMethod('upi')} className={`btn ${paymentMethod === 'upi' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem' }}>UPI QR Code</button>
-                  <button type="button" onClick={() => setPaymentMethod('card')} className={`btn ${paymentMethod === 'card' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem' }}>Debit/Credit Card</button>
-                  <button type="button" onClick={() => setPaymentMethod('netbanking')} className={`btn ${paymentMethod === 'netbanking' ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem' }}>Net Banking</button>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ color: '#94a3b8' }}>Amount:</span>
+                <strong style={{ color: '#38bdf8', fontSize: '1rem' }}>₹{simulatedOrderDetails.amount / 100}</strong>
               </div>
-
-              {/* UPI Payment Flow */}
-              {paymentMethod === 'upi' && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-color)', padding: '1rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Scan BHIM UPI QR Code</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Use any UPI App (GPay, PhonePe, Paytm) to scan & pay.</span>
-                  </div>
-                  
-                  {/* Beautiful Simulated QR Code */}
-                  <div style={{
-                    width: '130px',
-                    height: '130px',
-                    background: '#ffffff',
-                    padding: '8px',
-                    borderRadius: '8px',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    border: '1px solid #d1d5db'
-                  }}>
-                    {/* Simulated SVG QR layout */}
-                    <svg width="100" height="100" viewBox="0 0 100 100" fill="black">
-                      <rect x="0" y="0" width="25" height="25" fill="black"/>
-                      <rect x="5" y="5" width="15" height="15" fill="white"/>
-                      <rect x="8" y="8" width="9" height="9" fill="black"/>
-                      <rect x="75" y="0" width="25" height="25" fill="black"/>
-                      <rect x="80" y="5" width="15" height="15" fill="white"/>
-                      <rect x="83" y="8" width="9" height="9" fill="black"/>
-                      <rect x="0" y="75" width="25" height="25" fill="black"/>
-                      <rect x="5" y="80" width="15" height="15" fill="white"/>
-                      <rect x="8" y="83" width="9" height="9" fill="black"/>
-                      {/* Random QR clusters */}
-                      <rect x="35" y="10" width="10" height="5"/>
-                      <rect x="35" y="25" width="5" height="15"/>
-                      <rect x="45" y="45" width="15" height="15"/>
-                      <rect x="15" y="45" width="15" height="5"/>
-                      <rect x="65" y="35" width="10" height="25"/>
-                      <rect x="30" y="65" width="25" height="10"/>
-                      <rect x="65" y="75" width="20" height="10"/>
-                    </svg>
-                    <span style={{ fontSize: '0.55rem', color: '#111827', fontWeight: 800, marginTop: '2px' }}>GST BUDDY AI</span>
-                  </div>
-
-                  <div style={{ width: '100%' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Transaction UTR (12-digit Ref ID)</label>
-                    <input 
-                      type="text" 
-                      value={upiUtr}
-                      onChange={(e) => setUpiUtr(e.target.value.replace(/[^0-9]/g, ''))}
-                      maxLength={12}
-                      placeholder="e.g. 123456789012"
-                      style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Card Payment Flow */}
-              {paymentMethod === 'card' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Card Number</label>
-                    <input 
-                      type="text" 
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value.replace(/[^0-9]/g, '').match(/.{1,4}/g)?.join(' ') || '')}
-                      maxLength={19}
-                      placeholder="4000 1234 5678 9010"
-                      style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Expiry Date</label>
-                      <input 
-                        type="text" 
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/YY"
-                        maxLength={5}
-                        style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>CVV</label>
-                      <input 
-                        type="password" 
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                        maxLength={3}
-                        placeholder="•••"
-                        style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', fontFamily: 'monospace' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Net Banking Flow */}
-              {paymentMethod === 'netbanking' && (
-                <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Select Bank</label>
-                  <select style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}>
-                    <option value="sbi">State Bank of India</option>
-                    <option value="hdfc">HDFC Bank</option>
-                    <option value="icici">ICICI Bank</option>
-                    <option value="axis">Axis Bank</option>
-                    <option value="kotak">Kotak Mahindra Bank</option>
-                  </select>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem', marginTop: '0.25rem' }}>
-                <button type="button" onClick={() => setCheckoutPlan(null)} className="btn btn-outline" style={{ flex: 1, padding: '0.5rem' }} disabled={isProcessing}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 2, padding: '0.5rem' }} disabled={isProcessing}>
-                  {isProcessing ? 'Verifying Gateway...' : `Pay ${checkoutPlan === 'pro' ? '₹399' : '₹1,499'}`}
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Order ID:</span>
+                <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>{simulatedOrderDetails.order_id}</span>
               </div>
+            </div>
 
-            </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button 
+                onClick={handleSimulatedPaymentSuccess} 
+                style={{ padding: '0.75rem 1rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Simulate Successful Payment
+              </button>
+              <button 
+                onClick={() => {
+                  setShowSimulatedModal(false);
+                  setSimulatedOrderDetails(null);
+                  setErrorMsg("Simulated payment cancelled by user.");
+                }} 
+                style={{ padding: '0.75rem 1rem', background: 'transparent', color: '#94a3b8', border: '1px solid #334155', borderRadius: '8px', fontWeight: 'medium', fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                Cancel Payment
+              </button>
+            </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

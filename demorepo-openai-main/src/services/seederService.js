@@ -1,5 +1,6 @@
 import { collection, getDocs, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { invalidateBillsCache } from './firebaseDataService';
 
 const SEED_BILLS = [
   {
@@ -195,6 +196,7 @@ export const seedUserInvoicesIfEmpty = async (userId) => {
       }
       
       console.log(`✅ Seeded ${SEED_BILLS.length} invoices successfully!`);
+      invalidateBillsCache();
       // Dispatch custom event to tell UI pages to reload
       window.dispatchEvent(new Event('billUpdated'));
     } else {
@@ -216,6 +218,7 @@ export const clearAndReseedInvoices = async (userId) => {
     const snap = await getDocs(billsRef);
     
     console.log(`🗑️ Clearing ${snap.size} invoices and resetting seed for user ${userId}...`);
+    invalidateBillsCache();
     const deletePromises = snap.docs.map(docSnap => deleteDoc(doc(db, 'users', userId, 'bills', docSnap.id)));
     await Promise.all(deletePromises);
     

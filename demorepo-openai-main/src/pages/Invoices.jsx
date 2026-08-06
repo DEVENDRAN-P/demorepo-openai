@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserBills, updateUserBill, deleteUserBill } from '../services/firebaseDataService';
+import { clearAndReseedInvoices } from '../services/seederService';
 
 function Invoices({ user }) {
   const navigate = useNavigate();
@@ -202,6 +203,25 @@ function Invoices({ user }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleResetReseed = async () => {
+    if (!user?.uid) return;
+    if (!window.confirm("This will clear all current invoices and restore the default 8 demo invoices. Continue?")) return;
+    
+    setLoading(true);
+    try {
+      await clearAndReseedInvoices(user.uid);
+      setSaveIndicator("Demo data reseeded successfully!");
+      loadInvoices();
+      window.dispatchEvent(new Event('billUpdated'));
+      setTimeout(() => setSaveIndicator(''), 3000);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reset and reseed invoices.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleToggleSort = (field) => {
     if (sortField === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -243,6 +263,7 @@ function Invoices({ user }) {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button onClick={handleResetReseed} className="btn btn-outline" style={{ fontSize: '0.825rem', borderColor: 'var(--theme-primary)', color: 'var(--theme-primary)' }}>🔄 Reset & Reseed</button>
           <button onClick={handleExportCSV} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>Export CSV</button>
           <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}>📥 Upload Invoice</button>
         </div>

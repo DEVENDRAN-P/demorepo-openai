@@ -38,6 +38,19 @@ import {
 import { db, auth, storage } from "../config/firebase";
 
 // ========================================
+// IN-MEMORY CACHE
+// ========================================
+let cachedBills = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 10000; // 10 seconds of in-memory caching
+
+export const invalidateBillsCache = () => {
+  cachedBills = null;
+  lastFetchTime = 0;
+  console.log("🧹 Bills cache invalidated.");
+};
+
+// ========================================
 // HELPER FUNCTIONS
 // ========================================
 
@@ -185,6 +198,7 @@ export const saveUserBill = async (billData) => {
     });
 
     console.log("✅ Bill saved:", docRef.id);
+    invalidateBillsCache();
     return { success: true, billId: docRef.id };
   } catch (error) {
     console.error("❌ Error saving bill:", error);
@@ -195,9 +209,17 @@ export const saveUserBill = async (billData) => {
 /**
  * Get all bills for current user
  */
-export const getUserBills = async () => {
+export const getUserBills = async (forceRefresh = false) => {
   try {
     const userId = getCurrentUserId();
+    const now = Date.now();
+
+    // Check cache
+    if (!forceRefresh && cachedBills && (now - lastFetchTime < CACHE_DURATION)) {
+      console.log(`⚡ [Cache] Returning ${cachedBills.length} cached bills instantly.`);
+      return cachedBills;
+    }
+
     const billsRef = collection(db, "users", userId, "bills");
     const snapshot = await getDocs(billsRef);
 
@@ -209,7 +231,11 @@ export const getUserBills = async () => {
       });
     });
 
-    console.log(`✅ Fetched ${bills.length} bills for user ${userId}`);
+    // Save to cache
+    cachedBills = bills;
+    lastFetchTime = now;
+
+    console.log(`✅ [Network] Fetched ${bills.length} bills for user ${userId}`);
     return bills;
   } catch (error) {
     console.error("❌ Error fetching bills:", error);
@@ -268,6 +294,7 @@ export const updateUserBill = async (billId, updates) => {
     });
 
     console.log("✅ Bill updated:", billId);
+    invalidateBillsCache();
     return { success: true };
   } catch (error) {
     // If it's a "No document to update" error, silently fail
@@ -298,6 +325,7 @@ export const deleteUserBill = async (billId) => {
     await deleteDoc(billRef);
 
     console.log("✅ Bill deleted:", billId);
+    invalidateBillsCache();
     return { success: true };
   } catch (error) {
     console.error("❌ Error deleting bill:", error);

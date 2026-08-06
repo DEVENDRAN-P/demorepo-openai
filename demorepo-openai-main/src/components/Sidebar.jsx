@@ -154,7 +154,7 @@ const iconMap = {
   )
 };
 
-function Sidebar() {
+function Sidebar({ mobileOpen, setMobileOpen }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -162,6 +162,12 @@ function Sidebar() {
     const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
     return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
   });
+
+  useEffect(() => {
+    if (setMobileOpen) {
+      setMobileOpen(false);
+    }
+  }, [location.pathname, setMobileOpen]);
 
   const [selectedPlan, setSelectedPlan] = useState(() => {
     return localStorage.getItem('saas_active_plan') || 'free';
@@ -204,19 +210,22 @@ function Sidebar() {
   ];
 
   return (
-    <aside style={{
-      width: collapsed ? '70px' : '260px',
-      background: 'var(--bg-secondary)',
-      borderRight: '1px solid var(--border-color)',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
-      transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      zIndex: 1000,
-      flexShrink: 0
-    }}>
+    <aside 
+      className={`sidebar-aside ${mobileOpen ? 'mobile-open' : ''}`}
+      style={{
+        width: collapsed ? '70px' : '260px',
+        background: 'var(--bg-secondary)',
+        borderRight: '1px solid var(--border-color)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        position: 'sticky',
+        top: 0,
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        zIndex: 1000,
+        flexShrink: 0
+      }}
+    >
       
       {/* Brand Header */}
       <div style={{

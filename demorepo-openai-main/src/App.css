@@ -1388,3 +1388,92 @@ select option {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVENESS OVERRIDES
+   ========================================================================== */
+
+/* Hamburger menu button in Header */
+.header-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  outline: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sidebar responsive adjustments */
+.sidebar-aside {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@media (max-width: 991px) {
+  /* General Grid Collapse Utility: Forces all page layout grids into a single column */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  /* Settings Split Screen Layout collapse */
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  /* OCR split screen layout collapse */
+  .ocr-viewer-container {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hamburger trigger icon appearance */
+  .header-menu-btn {
+    display: flex !important;
+  }
+
+  /* Convert Sidebar into a mobile drawer overlay */
+  .sidebar-aside {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100vh !important;
+    transform: translateX(-100%);
+    width: 260px !important;
+    z-index: 1000 !important;
+    box-shadow: var(--shadow-2xl);
+  }
+
+  .sidebar-aside.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  /* Hide search bar inside sticky header (use page search/sidebar instead) */
+  .header-search-form {
+    display: none !important;
+  }
+
+  /* Main viewport content margins */
+  main {
+    padding: 1.25rem 1rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Hide text inside header action buttons (show icon symbols only) */
+  .header-btn-text {
+    display: none !important;
+  }
+
+  /* Hide score widget in header to save row space */
+  .header-compliance-score {
+    display: none !important;
+  }
+}

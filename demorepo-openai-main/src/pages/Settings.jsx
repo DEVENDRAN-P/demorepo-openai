@@ -182,7 +182,7 @@ function Settings({ user }) {
       </div>
 
       {/* Layout Split: Tab menu vs Workspace */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '2.5rem', alignItems: 'start' }}>
+      <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '2.5rem', alignItems: 'start' }}>
         
         {/* Left Side Tab Navigation */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>

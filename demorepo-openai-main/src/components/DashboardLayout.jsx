@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 function DashboardLayout() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div style={{
       display: 'flex',
@@ -13,8 +15,25 @@ function DashboardLayout() {
       overflowX: 'hidden'
     }}>
       
+      {/* Overlay backdrop for mobile when sidebar is open */}
+      {mobileOpen && (
+        <div 
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.4)',
+            zIndex: 995,
+            backdropFilter: 'blur(2px)',
+          }}
+        />
+      )}
+
       {/* Fixed Collapsible Side Menu */}
-      <Sidebar />
+      <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       {/* Main Workspace Frame */}
       <div style={{
@@ -26,7 +45,7 @@ function DashboardLayout() {
         overflowY: 'auto'
       }}>
         {/* Sticky Header */}
-        <Header />
+        <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
 
         {/* Scrollable Main Area */}
         <main style={{
