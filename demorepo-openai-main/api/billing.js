@@ -1,4 +1,5 @@
-const admin = require("firebase-admin");
+const { initializeApp, getApps, cert } = require("firebase-admin");
+const { getAuth } = require("firebase-admin/auth");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const { 
@@ -54,8 +55,7 @@ function getFirebaseAuth() {
 
   console.log("🔄 Initializing Firebase Auth Service...");
 
-  if (admin.apps.length === 0) {
-    // Force project ID to default strictly to client finalopenai-fc9c5 to prevent cloud-injected conflicts
+  if (getApps().length === 0) {
     const projectId = process.env.FIREBASE_PROJECT_ID || "finalopenai-fc9c5";
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
@@ -63,8 +63,8 @@ function getFirebaseAuth() {
     try {
       if (clientEmail && privateKey) {
         console.log(`🔑 Authenticating Auth service for project '${projectId}' using Service Account Cert...`);
-        admin.initializeApp({
-          credential: admin.credential.cert({
+        initializeApp({
+          credential: cert({
             projectId: projectId,
             clientEmail: clientEmail,
             privateKey: privateKey.replace(/\\n/g, '\n')
@@ -72,21 +72,21 @@ function getFirebaseAuth() {
         });
       } else {
         console.log(`ℹ️ Initializing Auth service for project '${projectId}' with default context configuration...`);
-        admin.initializeApp({
+        initializeApp({
           projectId: projectId
         });
       }
     } catch (err) {
       console.warn("⚠️ Firebase Admin Auth initialization exception:", err.message);
       try {
-        admin.initializeApp({ projectId: projectId });
+        initializeApp({ projectId: projectId });
       } catch (innerErr) {
         // App already exists or error
       }
     }
   }
 
-  authInstance = admin.auth();
+  authInstance = getAuth();
   return authInstance;
 }
 

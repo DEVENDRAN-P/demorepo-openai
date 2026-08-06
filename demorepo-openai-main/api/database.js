@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const admin = require("firebase-admin");
+const { initializeApp, getApps, cert } = require("firebase-admin");
+const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 
 const MOCK_DB_PATH = path.join(__dirname, "mock_db.json");
 
@@ -89,23 +90,23 @@ async function initializeDb() {
 
     if (clientEmail && privateKey) {
       console.log("🔑 Initializing Firebase Admin with explicit service account...");
-      if (admin.apps.length === 0) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
+      if (getApps().length === 0) {
+        initializeApp({
+          credential: cert({
             projectId: projectId,
             clientEmail: clientEmail,
             privateKey: privateKey.replace(/\\n/g, '\n')
           })
         });
       }
-      firestoreDb = admin.firestore();
+      firestoreDb = getFirestore();
       console.log("✅ Live Firestore database connected via Service Account cert.");
     } else {
       console.log("ℹ️ Service account variables missing. Initializing with default app credentials...");
-      if (admin.apps.length === 0) {
-        admin.initializeApp();
+      if (getApps().length === 0) {
+        initializeApp();
       }
-      firestoreDb = admin.firestore();
+      firestoreDb = getFirestore();
       console.log("✅ Live Firestore database connected via Application Default credentials.");
     }
   } catch (err) {
@@ -202,13 +203,13 @@ async function updateUserSubscription(uid, planId, expiryDate, paymentData) {
       transaction.set(userDocRef, {
         subscriptionPlan: planId,
         subscriptionStatus: "active",
-        subscriptionStart: admin.firestore.FieldValue.serverTimestamp(),
-        subscriptionExpiry: admin.firestore.Timestamp.fromDate(expiryDate)
+        subscriptionStart: FieldValue.serverTimestamp(),
+        subscriptionExpiry: Timestamp.fromDate(expiryDate)
       }, { merge: true });
       
       transaction.set(paymentDocRef, {
         ...paymentData,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp()
       });
     });
     console.log(`✅ [updateUserSubscription] Firestore transaction committed successfully.`);
@@ -239,7 +240,7 @@ async function saveFailedPayment(paymentData) {
     console.log(`📡 [saveFailedPayment] Writing failure log to Firestore: payments/${paymentData.paymentId}`);
     await firestoreDb.collection("payments").doc(paymentData.paymentId).set({
       ...paymentData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
     console.log(`✅ [saveFailedPayment] Log written to Firestore.`);
   } catch (err) {
