@@ -67,11 +67,13 @@ function PricingBilling({ user }) {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
+        console.warn("⚠️ User is not authenticated. Redirecting to login.");
         setLoadingState(false);
+        navigate('/');
         return;
       }
 
-      const token = await currentUser.getIdToken();
+      const token = await currentUser.getIdToken(true);
       const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch active subscription status

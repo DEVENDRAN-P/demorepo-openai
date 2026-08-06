@@ -55,13 +55,14 @@ function getFirebaseAuth() {
   console.log("🔄 Initializing Firebase Auth Service...");
 
   if (admin.apps.length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "finalopenai-fc9c5";
+    // Force project ID to default strictly to client finalopenai-fc9c5 to prevent cloud-injected conflicts
+    const projectId = process.env.FIREBASE_PROJECT_ID || "finalopenai-fc9c5";
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     try {
       if (clientEmail && privateKey) {
-        console.log("🔑 Authenticating Auth service using Service Account Cert...");
+        console.log(`🔑 Authenticating Auth service for project '${projectId}' using Service Account Cert...`);
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: projectId,
@@ -70,11 +71,13 @@ function getFirebaseAuth() {
           })
         });
       } else {
-        console.log("ℹ️ Service account values missing. Authenticating Auth with Application Defaults...");
-        admin.initializeApp();
+        console.log(`ℹ️ Initializing Auth service for project '${projectId}' with default context configuration...`);
+        admin.initializeApp({
+          projectId: projectId
+        });
       }
     } catch (err) {
-      console.warn("⚠️ Firebase Admin Auth initialization fallback: initializing with project ID context.", err.message);
+      console.warn("⚠️ Firebase Admin Auth initialization exception:", err.message);
       try {
         admin.initializeApp({ projectId: projectId });
       } catch (innerErr) {
@@ -309,21 +312,38 @@ module.exports = async (req, res) => {
   try {
     // 1. Authenticate user using Firebase ID Token
     const authHeader = req.headers.authorization;
+    const hasAuthHeader = !!authHeader;
+    const authHeaderLength = authHeader ? authHeader.length : 0;
+    
+    console.log(`🔒 [auth] Checking Authorization header. Present: ${hasAuthHeader}, Length: ${authHeaderLength}`);
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.warn("⚠️ [Billing Router] Unauthorized request: Missing authorization headers.");
-      return res.status(401).json({ success: false, error: "Unauthorized: No token provided" });
+      console.warn("⚠️ [auth] Unauthorized request: Missing or invalid authorization headers.");
+      return res.status(401).json({ 
+        success: false, 
+        error: "Unauthorized: Invalid token",
+        message: "Missing or malformed Authorization header. Expected Format: 'Bearer <token>'"
+      });
     }
 
     const idToken = authHeader.split("Bearer ")[1];
+    console.log(`🔒 [auth] Extracting ID Token. Length: ${idToken ? idToken.length : 0}`);
+
     let decodedToken;
     try {
-      console.log("🔐 [Billing Router] Authenticating JWT user token...");
+      console.log("🔐 [auth] Verifying Firebase ID Token with Auth Service...");
       const authService = getFirebaseAuth();
       decodedToken = await authService.verifyIdToken(idToken);
-      console.log(`👤 [Billing Router] User authenticated successfully: UID ${decodedToken.uid}`);
+      console.log(`👤 [auth] Token verified successfully. UID: ${decodedToken.uid}`);
     } catch (authError) {
-      console.error("❌ [Billing Router] JWT token verification failed:", authError.message);
-      return res.status(401).json({ success: false, error: "Unauthorized: Invalid token" });
+      console.error("❌ [auth] Firebase ID Token verification failed. Complete Error Details:", authError);
+      return res.status(401).json({ 
+        success: false, 
+        error: "Unauthorized: Invalid token",
+        message: authError.message,
+        code: authError.code,
+        stack: authError.stack
+      });
     }
 
     // Determine target route action based on request path/query
