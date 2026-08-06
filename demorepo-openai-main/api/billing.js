@@ -31,7 +31,11 @@ const handleStatus = async (req, res, decodedToken) => {
     });
   } catch (error) {
     console.error("❌ Error fetching subscription status:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ 
+      error: "Internal server error",
+      message: error.message,
+      stack: error.stack
+    });
   }
 };
 
@@ -46,7 +50,11 @@ const handleHistory = async (req, res, decodedToken) => {
     });
   } catch (error) {
     console.error("❌ Error fetching payment history:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ 
+      error: "Internal server error",
+      message: error.message,
+      stack: error.stack
+    });
   }
 };
 
@@ -109,7 +117,11 @@ const handleCreateOrder = async (req, res, decodedToken) => {
     return res.status(200).json(order);
   } catch (error) {
     console.error("❌ Error in create-order endpoint:", error);
-    return res.status(500).json({ error: "Internal server error during order creation" });
+    return res.status(500).json({ 
+      error: "Internal server error during order creation",
+      message: error.message,
+      stack: error.stack
+    });
   }
 };
 
@@ -177,7 +189,11 @@ const handleVerify = async (req, res, decodedToken) => {
     return res.status(200).json({ success: true, message: "Subscription upgraded successfully" });
   } catch (error) {
     console.error("❌ Verification error:", error);
-    return res.status(500).json({ error: "Internal verification error" });
+    return res.status(500).json({ 
+      error: "Internal verification error",
+      message: error.message,
+      stack: error.stack
+    });
   }
 };
 
@@ -228,6 +244,10 @@ module.exports = async (req, res) => {
     }
   } catch (err) {
     console.error("❌ API routing error:", err);
-    return res.status(500).json({ error: "Internal routing error" });
+    return res.status(500).json({ 
+      error: "Internal routing error",
+      message: err.message,
+      stack: err.stack
+    });
   }
 };

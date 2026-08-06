@@ -66,6 +66,10 @@ async function initializeDb() {
     console.log("ℹ️ USE_MOCK_DATABASE is active. Bypassing Firestore initialization.");
   }
   isInitialized = true;
+  if (!useMock && !firestoreDb) {
+    console.warn("⚠️ DB initialization finished but firestoreDb is undefined. Switching to mock mode.");
+    useMock = true;
+  }
 }
 
 async function getUserSubscription(uid) {
@@ -99,12 +103,9 @@ async function getUserSubscription(uid) {
       subscriptionExpiry: uData.subscriptionExpiry ? uData.subscriptionExpiry.toDate().toISOString() : null
     };
   } catch (err) {
-    if (err.message.includes("credentials") || err.message.includes("ProjectId") || err.message.includes("Project Id") || err.code === "invalid-argument") {
-      console.warn("⚠️ Credentials error detected. Switching to local mock database.");
-      useMock = true;
-      return getUserSubscription(uid); // retry using mock
-    }
-    throw err;
+    console.warn("⚠️ Firestore query subscription failed. Falling back to local mock database:", err.message);
+    useMock = true;
+    return getUserSubscription(uid); // retry using mock
   }
 }
 
@@ -150,12 +151,9 @@ async function updateUserSubscription(uid, planId, expiryDate, paymentData) {
     });
     return { success: true };
   } catch (err) {
-    if (err.message.includes("credentials") || err.message.includes("ProjectId") || err.message.includes("Project Id") || err.code === "invalid-argument") {
-      console.warn("⚠️ Credentials error detected. Switching to local mock database.");
-      useMock = true;
-      return updateUserSubscription(uid, planId, expiryDate, paymentData); // retry using mock
-    }
-    throw err;
+    console.warn("⚠️ Firestore update subscription failed. Falling back to local mock database:", err.message);
+    useMock = true;
+    return updateUserSubscription(uid, planId, expiryDate, paymentData); // retry using mock
   }
 }
 
@@ -176,12 +174,9 @@ async function saveFailedPayment(paymentData) {
       createdAt: FieldValue.serverTimestamp()
     });
   } catch (err) {
-    if (err.message.includes("credentials") || err.message.includes("ProjectId") || err.message.includes("Project Id") || err.code === "invalid-argument") {
-      console.warn("⚠️ Credentials error detected. Switching to local mock database.");
-      useMock = true;
-      return saveFailedPayment(paymentData);
-    }
-    throw err;
+    console.warn("⚠️ Firestore save failed payment failed. Falling back to local mock database:", err.message);
+    useMock = true;
+    return saveFailedPayment(paymentData); // retry using mock
   }
 }
 
@@ -210,12 +205,9 @@ async function getPaymentHistory(uid) {
     });
     return logs;
   } catch (err) {
-    if (err.message.includes("credentials") || err.message.includes("ProjectId") || err.message.includes("Project Id") || err.message.includes("requires an index") || err.code === "invalid-argument") {
-      console.warn("⚠️ Database query error. Switching to local mock database.");
-      useMock = true;
-      return getPaymentHistory(uid);
-    }
-    throw err;
+    console.warn("⚠️ Firestore query history failed. Falling back to local mock database:", err.message);
+    useMock = true;
+    return getPaymentHistory(uid); // retry using mock
   }
 }
 
