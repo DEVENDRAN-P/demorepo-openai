@@ -29,11 +29,8 @@ if (getApps().length === 0) {
   });
 }
 
-// Import Payment & Subscription Handlers
-const createOrderHandler = require("./payment/create-order");
-const verifyPaymentHandler = require("./payment/verify");
-const paymentHistoryHandler = require("./payment/history");
-const subscriptionStatusHandler = require("./subscription/status");
+// Import Payment & Subscription Handlers (Unified)
+const billingHandler = require("./billing");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -284,11 +281,11 @@ app.post("/api/email", async (req, res) => {
   }
 });
 
-// Payment & Subscription API Routes
-app.post("/api/payment/create-order", createOrderHandler);
-app.post("/api/payment/verify", verifyPaymentHandler);
-app.get("/api/payment/history", paymentHistoryHandler);
-app.get("/api/subscription/status", subscriptionStatusHandler);
+// Payment & Subscription API Routes (Unified)
+app.post("/api/payment/create-order", billingHandler);
+app.post("/api/payment/verify", billingHandler);
+app.get("/api/payment/history", billingHandler);
+app.get("/api/subscription/status", billingHandler);
 
 // Start server
 app.listen(PORT, () => {
