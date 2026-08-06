@@ -1,8 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
-const { getApps } = require("firebase-admin/app");
-const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 
 const MOCK_DB_PATH = path.join(__dirname, "mock_db.json");
 
@@ -50,12 +48,12 @@ async function initializeDb() {
         const auth = new GoogleAuth();
         await auth.getApplicationDefault();
         
-        if (getApps().length === 0) {
+        if (!admin.apps || admin.apps.length === 0) {
           admin.initializeApp({
             projectId: process.env.GOOGLE_CLOUD_PROJECT || "finalopenai-fc9c5"
           });
         }
-        firestoreDb = getFirestore();
+        firestoreDb = admin.firestore();
         console.log("✅ Live Firestore database initialized successfully.");
       }
     } catch (err) {
@@ -140,13 +138,13 @@ async function updateUserSubscription(uid, planId, expiryDate, paymentData) {
       transaction.set(userDocRef, {
         subscriptionPlan: planId,
         subscriptionStatus: "active",
-        subscriptionStart: FieldValue.serverTimestamp(),
-        subscriptionExpiry: Timestamp.fromDate(expiryDate)
+        subscriptionStart: admin.firestore.FieldValue.serverTimestamp(),
+        subscriptionExpiry: admin.firestore.Timestamp.fromDate(expiryDate)
       }, { merge: true });
       
       transaction.set(paymentDocRef, {
         ...paymentData,
-        createdAt: FieldValue.serverTimestamp()
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
     });
     return { success: true };
@@ -171,7 +169,7 @@ async function saveFailedPayment(paymentData) {
   try {
     await firestoreDb.collection("payments").doc(paymentData.paymentId).set({
       ...paymentData,
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
   } catch (err) {
     console.warn("⚠️ Firestore save failed payment failed. Falling back to local mock database:", err.message);

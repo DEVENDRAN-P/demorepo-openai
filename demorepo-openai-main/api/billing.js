@@ -1,7 +1,5 @@
 const admin = require("firebase-admin");
 const Razorpay = require("razorpay");
-const { getApps } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
 const crypto = require("crypto");
 const { 
   getUserSubscription, 
@@ -10,11 +8,13 @@ const {
 } = require("./database");
 
 // Initialize Firebase Admin
-if (getApps().length === 0) {
+if (!admin.apps || admin.apps.length === 0) {
   admin.initializeApp({
     projectId: process.env.GOOGLE_CLOUD_PROJECT || "finalopenai-fc9c5"
   });
 }
+
+const auth = admin.auth();
 
 // ----------------------------------------------------
 // Handlers
@@ -221,7 +221,7 @@ module.exports = async (req, res) => {
     const idToken = authHeader.split("Bearer ")[1];
     let decodedToken;
     try {
-      decodedToken = await getAuth().verifyIdToken(idToken);
+      decodedToken = await auth.verifyIdToken(idToken);
     } catch (authError) {
       console.error("❌ JWT token verification failed:", authError.message);
       return res.status(401).json({ error: "Unauthorized: Invalid token" });
