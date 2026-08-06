@@ -6,7 +6,7 @@ const {
   getUserSubscription, 
   updateUserSubscription, 
   getPaymentHistory 
-} = require("./database");
+} = require("./_utils/database");
 
 // ==========================================
 // 🔍 PRODUCTION ENVIRONMENT AUDIT ON BOOT

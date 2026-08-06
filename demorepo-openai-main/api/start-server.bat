@@ -30,6 +30,6 @@ if not exist "node_modules" (
 REM Start the server
 echo 🚀 Starting server...
 echo.
-node server.js
+node _server.js
 
 pause
