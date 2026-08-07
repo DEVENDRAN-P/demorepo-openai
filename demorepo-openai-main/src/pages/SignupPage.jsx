@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { signup, login, loginWithGoogle } from '../services/authService';
 import { perf } from '../services/perfService';
+import { scrollToTop } from '../utils/scroll';
+import Logo from '../components/Logo';
 
 // Professional SVG Icons
 const IconUser = ({ size = 18, color = "#4f46e5" }) => (
@@ -77,6 +79,12 @@ function SignupPage({ isLoginInitial = false }) {
     const plan = localStorage.getItem('selectedPlan') || 'free';
     setSelectedPlan(plan);
   }, []);
+
+  useEffect(() => {
+    if (error || successMessage || Object.keys(fieldErrors).length > 0) {
+      scrollToTop();
+    }
+  }, [error, successMessage, fieldErrors]);
 
   const redirectAfterAuth = useCallback(() => {
     const authRedirect = localStorage.getItem('authRedirect');
@@ -309,6 +317,11 @@ function SignupPage({ isLoginInitial = false }) {
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(20px)'
       }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <Logo variant="white" size="180px" />
+        </div>
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem 0' }}>

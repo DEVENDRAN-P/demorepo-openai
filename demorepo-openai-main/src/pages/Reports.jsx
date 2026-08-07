@@ -7,6 +7,7 @@ function Reports({ user }) {
   const [categoryData, setCategoryData] = useState([]);
   const [summary, setSummary] = useState({ paid: 0, collected: 0, credit: 0, netPayable: 0 });
   const [hasData, setHasData] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
     return localStorage.getItem('activeBusinessId') || 'apex_retailers';
   });
@@ -26,8 +27,12 @@ function Reports({ user }) {
   }, []);
 
   const loadReportsData = () => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
     getUserBills(user.uid)
       .then(bills => {
         // Filter by selected business
@@ -38,6 +43,7 @@ function Reports({ user }) {
 
         if (businessBills.length === 0) {
           setHasData(false);
+          setLoading(false);
           return;
         }
 
@@ -107,6 +113,9 @@ function Reports({ user }) {
       .catch(error => {
         console.error('Error fetching bills:', error);
         setHasData(false);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -148,6 +157,21 @@ Vetted and certified by GST Buddy Compliance Engine.`;
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '2rem' }}>
+        <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div style={{ height: '40px', width: '200px', background: 'var(--bg-secondary)', borderRadius: '8px' }}></div>
+          <div className="grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
+            <div style={{ height: '200px', background: 'var(--bg-secondary)', borderRadius: '16px' }}></div>
+            <div style={{ height: '200px', background: 'var(--bg-secondary)', borderRadius: '16px' }}></div>
+          </div>
+          <div style={{ height: '300px', width: '100%', background: 'var(--bg-secondary)', borderRadius: '16px' }}></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasData) {
     return (

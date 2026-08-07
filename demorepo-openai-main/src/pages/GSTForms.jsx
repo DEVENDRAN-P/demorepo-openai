@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 import { getUserBills, updateUserBill, logUserActivity } from '../services/firebaseDataService';
+import { getUserBusinesses } from '../utils/businessHelper';
 
 function GSTForms({ user }) {
   const [formType, setFormType] = useState('GSTR-1');
@@ -9,11 +10,20 @@ function GSTForms({ user }) {
   const [gstr3bData, setGstr3bData] = useState(null);
   const [hasData, setHasData] = useState(false);
   
+  const [userBusinesses, setUserBusinesses] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      setUserBusinesses(getUserBusinesses(user));
+    }
+  }, [user]);
+
   // Filing Readiness States
   const [filingLoading, setFilingLoading] = useState(false);
   const [filingSuccess, setFilingSuccess] = useState(false);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    const list = getUserBusinesses(user);
+    return localStorage.getItem('activeBusinessId') || (list[0]?.id || '');
   });
 
   // Sync active business shifts
@@ -33,8 +43,9 @@ function GSTForms({ user }) {
     getUserBills(user.uid)
       .then(savedBills => {
         // Filter by selected business
+        const firstBizId = userBusinesses[0]?.id || '';
         const businessBills = savedBills.filter(bill => {
-          if (!bill.businessId) return activeBusinessId === 'apex_retailers';
+          if (!bill.businessId) return activeBusinessId === firstBizId;
           return bill.businessId === activeBusinessId;
         });
 

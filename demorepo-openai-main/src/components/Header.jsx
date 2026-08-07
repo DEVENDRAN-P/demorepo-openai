@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useTranslation } from 'react-i18next';
+import { getUserBusinesses } from '../utils/businessHelper';
 
-const BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', compliance: 95, status: 'Ready' },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', compliance: 88, status: 'Auditing' },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', compliance: 100, status: 'Filed' }
-];
+// Removed static BUSINESSES definition to enforce data isolation
 
 function Header({ onMenuClick }) {
   const navigate = useNavigate();
@@ -16,24 +13,45 @@ function Header({ onMenuClick }) {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { i18n } = useTranslation();
   const [langOpen, setLangOpen] = useState(false);
+  const [userBusinesses, setUserBusinesses] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      setUserBusinesses(getUserBusinesses(user));
+    }
+  }, [user]);
+
   const [activeBusiness, setActiveBusiness] = useState(() => {
-    const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
-    return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
+    const list = getUserBusinesses(user);
+    const saved = localStorage.getItem('activeBusinessId');
+    return list.find(b => b.id === saved) || list[0] || { id: '', name: '', gstin: '', compliance: 100, status: 'Ready' };
   });
+
+  useEffect(() => {
+    if (userBusinesses.length > 0) {
+      const saved = localStorage.getItem('activeBusinessId');
+      const found = userBusinesses.find(b => b.id === saved);
+      if (found) {
+        setActiveBusiness(found);
+      } else {
+        setActiveBusiness(userBusinesses[0]);
+      }
+    }
+  }, [userBusinesses]);
 
   const [headerSearch, setHeaderSearch] = useState('');
 
   // Sync active business shifts
   useEffect(() => {
     const handleBusinessChanged = (e) => {
-      if (e.detail?.businessId) {
-        const match = BUSINESSES.find(b => b.id === e.detail.businessId);
+      if (e.detail?.businessId && userBusinesses.length > 0) {
+        const match = userBusinesses.find(b => b.id === e.detail.businessId);
         if (match) setActiveBusiness(match);
       }
     };
     window.addEventListener('businessChanged', handleBusinessChanged);
     return () => window.removeEventListener('businessChanged', handleBusinessChanged);
-  }, []);
+  }, [userBusinesses]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -64,7 +82,7 @@ function Header({ onMenuClick }) {
           onClick={onMenuClick}
           className="header-menu-btn"
           title="Toggle Navigation Menu"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ alignItems: 'center', justifyContent: 'center' }}
         >
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="4" x2="20" y1="12" y2="12" />
@@ -76,9 +94,9 @@ function Header({ onMenuClick }) {
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {activeBusiness.name}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }} className="header-business-info">
             <span>GSTIN: {activeBusiness.gstin}</span>
-            <span>•</span>
+            <span className="header-business-info-bullet">•</span>
             <span style={{ color: 'var(--theme-secondary-light)' }}>Filing: {activeBusiness.status}</span>
           </div>
         </div>

@@ -69,23 +69,33 @@ function AIInsights({ user }) {
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Active Insights Feed</h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {insights.map((ins, idx) => (
-            <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', borderLeft: '5px solid var(--theme-secondary-light)' }}>
-              <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--theme-secondary)' }}>{ins.type}</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Updated Today</span>
+        {bills.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>💡</span>
+            <strong style={{ display: 'block', fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>No AI Insights Generated</strong>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
+              We compile financial observations and tax alerts automatically after you upload purchase bills. Go to the Invoice Intelligence page to upload files.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {insights.map((ins, idx) => (
+              <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', borderLeft: '5px solid var(--theme-secondary-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--theme-secondary)' }}>{ins.type}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Updated Today</span>
+                </div>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0' }}>{ins.title}</h4>
+                <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  {ins.desc}
+                </p>
+                <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
+                  💡 Impact: {ins.impact}
+                </div>
               </div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0' }}>{ins.title}</h4>
-              <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                {ins.desc}
-              </p>
-              <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
-                💡 Impact: {ins.impact}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

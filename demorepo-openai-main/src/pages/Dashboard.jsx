@@ -6,12 +6,9 @@ import PenaltyLateFeeEstimator from '../components/PenaltyLateFeeEstimator';
 import { getUserBills } from '../services/firebaseDataService';
 import { auth } from '../config/firebase';
 
-// Define the demo businesses
-const BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', state: 'Karnataka', type: 'Retail & Distribution' },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', state: 'Maharashtra', type: 'IT Services & Consulting' },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', state: 'Delhi', type: 'Transport & Warehouse' }
-];
+import { getUserBusinesses } from '../utils/businessHelper';
+
+// Removed static BUSINESSES list to enforce data isolation
 
 // SVG Icons
 const IconBriefcase = () => (
@@ -63,11 +60,33 @@ const IconRobot = () => (
 function Dashboard({ user }) {
   const navigate = useNavigate();
   const [bills, setBills] = useState([]);
+  const [loadingBills, setLoadingBills] = useState(true);
   const [activePlan, setActivePlan] = useState('free');
+  const [userBusinesses, setUserBusinesses] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      setUserBusinesses(getUserBusinesses(user));
+    }
+  }, [user]);
+
   const [activeBusiness, setActiveBusiness] = useState(() => {
+    const list = getUserBusinesses(user);
     const saved = localStorage.getItem('activeBusinessId');
-    return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
+    return list.find(b => b.id === saved) || list[0] || { id: '', name: '', gstin: '', state: '', type: '' };
   });
+
+  useEffect(() => {
+    if (userBusinesses.length > 0) {
+      const saved = localStorage.getItem('activeBusinessId');
+      const found = userBusinesses.find(b => b.id === saved);
+      if (found) {
+        setActiveBusiness(found);
+      } else {
+        setActiveBusiness(userBusinesses[0]);
+      }
+    }
+  }, [userBusinesses]);
 
   // AI Finance Agent State
   const [agentInput, setAgentInput] = useState('');
@@ -128,15 +147,20 @@ function Dashboard({ user }) {
 
   // Fetch bills from Firebase
   useEffect(() => {
-    if (!user?.uid) return;
-
+    if (!user?.uid) {
+      setLoadingBills(false);
+      return;
+    }
+    setLoadingBills(true);
     getUserBills(user.uid)
       .then(fetchedBills => {
         setBills(fetchedBills);
+        setLoadingBills(false);
       })
       .catch(error => {
         console.error('Error fetching bills from Firebase:', error);
         setBills([]);
+        setLoadingBills(false);
       });
 
     // Listen for custom bill update event
@@ -150,7 +174,7 @@ function Dashboard({ user }) {
   // Filter bills by active business (invoices without businessId default to the first one)
   const businessBills = bills.filter(bill => {
     if (!bill.businessId) {
-      return activeBusiness.id === BUSINESSES[0].id;
+      return activeBusiness.id === (userBusinesses[0]?.id || '');
     }
     return bill.businessId === activeBusiness.id;
   });
@@ -204,7 +228,7 @@ function Dashboard({ user }) {
 
   const handleBusinessChange = (e) => {
     const businessId = e.target.value;
-    const selected = BUSINESSES.find(b => b.id === businessId);
+    const selected = userBusinesses.find(b => b.id === businessId);
     if (selected) {
       setActiveBusiness(selected);
       localStorage.setItem('activeBusinessId', selected.id);
@@ -337,7 +361,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
                 onChange={handleBusinessChange}
                 style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.9rem', outline: 'none', cursor: 'pointer', paddingRight: '1rem' }}
               >
-                {BUSINESSES.map(b => (
+                {userBusinesses.map(b => (
                   <option key={b.id} value={b.id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                     {b.name}
                   </option>
@@ -346,9 +370,22 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Business Health & Compliance gauges */}
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        {loadingBills ? (
+          <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '2rem' }}>
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              <div style={{ height: '120px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}></div>
+              <div style={{ height: '120px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}></div>
+              <div style={{ height: '120px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}></div>
+            </div>
+            <div style={{ height: '240px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}></div>
+            <div style={{ height: '200px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border-color)' }}></div>
+          </div>
+        ) : (
+          <>
+            {/* Business Health & Compliance gauges */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           
           {/* Business Health Dial */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
@@ -414,7 +451,6 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
               </div>
             </div>
           </div>
-
         </div>
 
         {/* AI Financial Dashboard Stats */}
@@ -778,7 +814,8 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
 
         </div>
 
-      </div>
+          </>
+        )}
 
       <style>{`
         @media (max-width: 768px) {

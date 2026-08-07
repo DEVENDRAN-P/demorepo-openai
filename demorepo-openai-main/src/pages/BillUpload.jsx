@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 import { saveUserBill, getUserBills } from '../services/firebaseDataService';
 import { auth } from '../config/firebase';
+import { scrollToTop } from '../utils/scroll';
 
 const IconCamera = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -81,6 +82,12 @@ function BillUpload() {
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);
   }, []);
+
+  useEffect(() => {
+    if (notification) {
+      scrollToTop();
+    }
+  }, [notification]);
 
   useEffect(() => {
     const fetchBillsCount = async () => {

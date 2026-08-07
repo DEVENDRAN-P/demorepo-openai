@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useDarkMode } from '../context/DarkModeContext';
 import { motion, AnimatePresence, useInView, animate } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import Logo from '../components/Logo';
 import { 
   Sparkles, 
   Play, 
@@ -41,6 +42,7 @@ import {
   XAxis, 
   Tooltip 
 } from 'recharts';
+import EndToEndComplianceSuite from '../components/EndToEndComplianceSuite';
 
 const monthlyData = [
   { name: 'Jan', Revenue: 22000, Expenses: 14000 },
@@ -78,7 +80,6 @@ export default function Home() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { isDarkMode } = useDarkMode();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Translation & Language switcher states
   const { t, i18n } = useTranslation();
@@ -169,25 +170,12 @@ export default function Home() {
     }
   ];
 
-  // Feature Grid Cards (10 Cards)
-  const features = [
-    { title: "AI Accountant", desc: "Conversational compliance expert trained on latest GST circulars.", icon: Bot, color: "text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/30" },
-    { title: "Invoice Intelligence", desc: "Extract supplier name, tax liability, and items with 99% accuracy.", icon: BrainCircuit, color: "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/30" },
-    { title: "Document Assistant", desc: "Securely vault, tag, and organize files for simple tax retrieval.", icon: FolderLock, color: "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/30" },
-    { title: "Compliance Center", desc: "Always file GSTR-1 & GSTR-3B on schedule with auto reminders.", icon: FileCheck, color: "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/30" },
-    { title: "Penalty Prevention", desc: "Automated mismatch notifications shield you from late tax notices.", icon: AlertTriangle, color: "text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-505/40 dark:text-amber-500 dark:border-amber-900/30" },
-    { title: "Business Analytics", desc: "Visual SVG dashboards mapping revenue, outlays, and tax trends.", icon: TrendingUp, color: "text-teal-600 bg-teal-50 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-900/30" },
-    { title: "Tax Forecasting", desc: "Predict future quarterly liabilities and allocate liquid capital.", icon: FileSpreadsheet, color: "text-pink-600 bg-pink-50 border-pink-200 dark:bg-pink-950/40 dark:text-pink-400 dark:border-pink-900/30" },
-    { title: "Vendor Intelligence", desc: "Track non-filing vendors and block faulty ITC claims automatically.", icon: Users, color: "text-cyan-600 bg-cyan-50 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-400 dark:border-cyan-900/30" },
-    { title: "Custom Reports", desc: "Download auditing statements, ledger sheets, and summary PDFs.", icon: FileText, color: "text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/30" },
-    { title: "Executive Dashboard", desc: "Single control center to review multi-GSTIN transactions.", icon: LayoutDashboard, color: "text-violet-600 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-900/30" }
-  ];
-
   // Testimonials
   const testimonials = [
-    { name: "Rajesh Sharma", role: "Founder, Sharma Enterprises", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop", quote: "GST Buddy AI completely automated our monthly returns. The AI Invoice reader correctly parsed ₹80 Lakhs of legacy physical invoices with zero manual corrections. Highly recommended!", rating: 5 },
-    { name: "Priya Nair", role: "CFO, Apex LogiTech", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop", quote: "Our tax compliance audit score improved to 99% within two weeks of deployment. We tracked down non-filing suppliers and saved ₹2.4 Lakhs in blocked Input Tax Credits (ITC) using the dashboard.", rating: 5 },
-    { name: "Aditya Mehta", role: "Managing Director, Mehta Metals", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop", quote: "The ROI was instant. We used to spend hours cross-referencing ledger reports with GSTR sheets. GST Buddy AI's natural language chatbot answers all legal inquiries in Hindi & Tamil perfectly.", rating: 5 }
+    { name: "Haripandi N", role: "Co-Founder & CTO, NexGen Solutions", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop", quote: "GST Buddy AI completely automated our monthly returns. The AI Invoice reader correctly parsed ₹80 Lakhs of legacy physical invoices with zero manual corrections. Highly recommended!", rating: 5 },
+    { name: "Dharshini M", role: "Head of Finance, LogiTech India", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop", quote: "Our tax compliance audit score improved to 99% within two weeks of deployment. We tracked down non-filing suppliers and saved ₹2.4 Lakhs in blocked Input Tax Credits (ITC) using the dashboard.", rating: 5 },
+    { name: "Dhulasi Raman", role: "Managing Director, Raman Enterprises", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop", quote: "The ROI was instant. We used to spend hours cross-referencing ledger reports with GSTR sheets. GST Buddy AI's natural language chatbot answers all legal inquiries perfectly.", rating: 5 },
+    { name: "Devendran P", role: "Founder, GST Buddy AI", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop", quote: "Our mission is to help Indian merchants automate tax compliance, reduce overheads, and escape late notices. We are proud to support over 10,000 active Indian businesses.", rating: 5 }
   ];
 
   // Navigation Dropdown Content
@@ -399,17 +387,7 @@ export default function Home() {
           
           {/* Logo Left */}
           <Link to="/" className="flex items-center gap-3 group decoration-none">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-indigo-600/25 group-hover:scale-105 transition-transform duration-200">
-              GST
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="font-extrabold text-xl leading-none text-slate-900 dark:text-white tracking-tight">
-                GST Buddy <span className="text-indigo-600">AI</span>
-              </span>
-              <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase mt-1 leading-none">
-                Your AI Finance Team
-              </span>
-            </div>
+            <Logo variant="sidebar" size="145px" />
           </Link>
 
           {/* Desktop Navigation Links with Interactive Dropdowns */}
@@ -539,68 +517,7 @@ export default function Home() {
             </div>
           </div>
 
-
         </div>
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden w-full border-t bg-white dark:bg-[#070514] border-slate-200/80 dark:border-slate-800 p-5 flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1 px-2">Features</span>
-              {navDropdowns.Platform.map((item) => (
-                <div 
-                  key={item.name}
-                  onClick={() => { setMobileMenuOpen(false); handleMockNav(item.path); }}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  <item.icon size={16} className="text-indigo-600" />
-                  <span className="text-sm font-semibold">{item.name}</span>
-                </div>
-              ))}
-            </div>
-            
-            <hr className="border-slate-200 dark:border-slate-800" />
-
-            <div className="flex flex-col gap-1">
-              <div 
-                onClick={() => { setMobileMenuOpen(false); navigate('/pricing'); }}
-                className="text-sm font-semibold text-slate-700 dark:text-slate-300 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
-              >
-                Pricing
-              </div>
-              <div 
-                onClick={() => { setMobileMenuOpen(false); handleMockNav('/support'); }}
-                className="text-sm font-semibold text-slate-700 dark:text-slate-300 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
-              >
-                About Us
-              </div>
-              <div 
-                onClick={() => { setMobileMenuOpen(false); handleMockNav('/support'); }}
-                className="text-sm font-semibold text-indigo-600 p-2 hover:bg-indigo-50/50 rounded-xl cursor-pointer"
-              >
-                Contact Sales
-              </div>
-            </div>
-
-            <div className="pt-2 flex flex-col sm:hidden gap-3">
-              {isAuthenticated ? (
-                <button 
-                  onClick={() => { setMobileMenuOpen(false); navigate('/dashboard'); }}
-                  className="w-full py-3 text-center text-sm font-bold text-white bg-indigo-600 rounded-lg shadow-md border-0"
-                >
-                  Go to Dashboard
-                </button>
-              ) : (
-                <button 
-                  onClick={() => { setMobileMenuOpen(false); handleStartFree(); }}
-                  className="w-full py-3 text-center text-sm font-bold text-white bg-indigo-600 rounded-lg shadow-md border-0"
-                >
-                  Start Free
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </header>
 
       {/* 4. Hero Section Layout Container */}
@@ -706,7 +623,7 @@ export default function Home() {
           <div className="lg:col-span-6 relative flex items-center justify-center z-10 w-full mt-10 lg:mt-0">
             
             {/* Tilted Floating Badges */}
-            <div className="float-1 absolute -top-8 -left-8 md:-left-12 z-30 flex items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-purple-200 dark:border-purple-900 rounded-2xl p-3 shadow-xl backdrop-blur-md">
+            <div className="float-1 hidden md:flex absolute -top-8 -left-8 md:-left-12 z-30 items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-purple-200 dark:border-purple-900 rounded-2xl p-3 shadow-xl backdrop-blur-md">
               <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950 flex items-center justify-center text-purple-600 dark:text-purple-400">
                 <FileSpreadsheet size={16} />
               </div>
@@ -716,7 +633,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="float-2 absolute -bottom-6 -left-4 md:-left-8 z-30 flex items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-indigo-200 dark:border-indigo-900 rounded-2xl p-3.5 shadow-xl backdrop-blur-md">
+            <div className="float-2 hidden md:flex absolute -bottom-6 -left-4 md:-left-8 z-30 items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-indigo-200 dark:border-indigo-900 rounded-2xl p-3.5 shadow-xl backdrop-blur-md">
               <div className="w-8.5 h-8.5 rounded-lg bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                 <Upload size={16} />
               </div>
@@ -726,7 +643,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="float-3 absolute -top-6 -right-4 md:-right-8 z-30 flex items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-blue-200 dark:border-blue-900 rounded-2xl p-3 shadow-xl backdrop-blur-md">
+            <div className="float-3 hidden md:flex absolute -top-6 -right-4 md:-right-8 z-30 items-center gap-3 bg-white/85 dark:bg-slate-800/85 border border-blue-200 dark:border-blue-900 rounded-2xl p-3 shadow-xl backdrop-blur-md">
               <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <ShieldCheck size={16} />
               </div>
@@ -1131,60 +1048,7 @@ export default function Home() {
         </motion.section>
 
         {/* SECTION 4: Feature Grid (10-Feature Premium Glass Cards) */}
-        <motion.section 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.08 } }
-          }}
-          className="mb-32 relative z-10"
-        >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              End-to-End Compliance Suite
-            </h2>
-            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-semibold mt-2.5">
-              10 powerful enterprise tools designed to automate your financial bookkeeping.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {features.map((feature) => {
-              const IconComp = feature.icon;
-              return (
-                <motion.div 
-                  key={feature.title}
-                  variants={{
-                    hidden: { opacity: 0, y: 15 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
-                  }}
-                  className="feature-glow backdrop-blur-lg rounded-2xl p-5 text-left flex flex-col justify-between min-h-[220px] transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 group cursor-pointer"
-                >
-                  <div>
-                    {/* Icon container */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border mb-4 font-bold ${feature.color}`}>
-                      <IconComp size={20} />
-                    </div>
-
-                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white mb-2 leading-snug">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                      {feature.desc}
-                    </p>
-                  </div>
-
-                  <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mt-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none">
-                    <span>Learn More</span>
-                    <ArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.section>
+        <EndToEndComplianceSuite />
 
         {/* SECTION 5: Live AI Demo (Interactive Chat Simulation) */}
         <motion.section 
@@ -1292,12 +1156,12 @@ export default function Home() {
 
         {/* SECTION 6: Business Impact (Animated Counter Metrics) */}
         <section className="mb-32 relative z-10 border-t border-b border-slate-200/80 dark:border-slate-800 py-12 bg-white/20 dark:bg-slate-900/10 backdrop-blur-sm rounded-3xl">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 md:gap-4 divide-y sm:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
             
             {/* Metric 1 */}
-            <div className="flex flex-col items-center p-4">
+            <div className="flex flex-col items-center p-4 pb-6 sm:pb-4">
               <span className="text-3xl lg:text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                ₹<Counter value={18} suffix=" Crores+" />
+                <Counter value={25000} suffix="+" />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
                 Invoices Processed
@@ -1305,7 +1169,7 @@ export default function Home() {
             </div>
 
             {/* Metric 2 */}
-            <div className="flex flex-col items-center p-4 pt-8 md:pt-4">
+            <div className="flex flex-col items-center p-4 pt-6 sm:pt-4 pb-6 sm:pb-4">
               <span className="text-3xl lg:text-4xl font-extrabold text-blue-600 dark:text-blue-400">
                 <Counter value={98.7} suffix="%" decimals={1} />
               </span>
@@ -1315,7 +1179,7 @@ export default function Home() {
             </div>
 
             {/* Metric 3 */}
-            <div className="flex flex-col items-center p-4 pt-8 md:pt-4">
+            <div className="flex flex-col items-center p-4 pt-6 sm:pt-4 pb-6 sm:pb-4">
               <span className="text-3xl lg:text-4xl font-extrabold text-purple-600 dark:text-purple-400">
                 <Counter value={92} suffix="%" />
               </span>
@@ -1325,7 +1189,7 @@ export default function Home() {
             </div>
 
             {/* Metric 4 */}
-            <div className="flex flex-col items-center p-4 pt-8 md:pt-4">
+            <div className="flex flex-col items-center p-4 pt-6 sm:pt-4 pb-6 sm:pb-4">
               <span className="text-3xl lg:text-4xl font-extrabold text-teal-600 dark:text-teal-400">
                 <Counter value={85} suffix="%" />
               </span>
@@ -1335,7 +1199,7 @@ export default function Home() {
             </div>
 
             {/* Metric 5 */}
-            <div className="flex flex-col items-center p-4 pt-8 md:pt-4">
+            <div className="flex flex-col items-center p-4 pt-6 sm:pt-4">
               <span className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white">
                 <Counter value={10000} suffix="+" />
               </span>
@@ -1456,28 +1320,28 @@ export default function Home() {
           transition={{ duration: 0.8 }}
           className="mb-12 relative z-10"
         >
-          <div className="bg-gradient-to-br from-[#1E1B4B] via-[#2E1065] to-[#3B0764] rounded-3xl p-12 md:p-16 text-center text-white relative overflow-hidden shadow-2xl shadow-indigo-950/20">
+          <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-[#1E1B4B] dark:via-[#2E1065] dark:to-[#3B0764] rounded-3xl p-12 md:p-16 text-center text-slate-900 dark:text-white relative overflow-hidden shadow-xl shadow-indigo-100/40 dark:shadow-indigo-950/20 border border-indigo-100/50 dark:border-none">
             {/* Animated particles overlay */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none"></div>
 
             <div className="relative z-10 max-w-2xl mx-auto">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-5 leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-5 leading-tight text-slate-900 dark:text-white">
                 Ready to Let AI Handle Your GST?
               </h2>
-              <p className="text-sm sm:text-base text-indigo-100 font-medium leading-relaxed mb-10 max-w-xl mx-auto">
+              <p className="text-sm sm:text-base text-slate-600 dark:text-indigo-100 font-medium leading-relaxed mb-10 max-w-xl mx-auto">
                 Join over 10,000+ businesses saving 20+ hours and escaping late notices every month.
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <button 
                   onClick={handleStartFree}
-                  className="btn-hover-effect px-7 py-4 bg-white text-indigo-950 hover:bg-slate-50 rounded-lg text-base font-extrabold shadow-xl border-0 cursor-pointer"
+                  className="btn-hover-effect px-7 py-4 bg-indigo-600 dark:bg-white text-white dark:text-indigo-950 hover:bg-indigo-700 dark:hover:bg-slate-50 rounded-lg text-base font-extrabold shadow-xl border-0 cursor-pointer"
                 >
                   Start Free Trial
                 </button>
                 <button 
                   onClick={() => handleMockNav('/support')}
-                  className="btn-hover-effect px-6 py-4 bg-white/10 text-white hover:bg-white/15 border border-white/20 rounded-lg text-base font-bold flex items-center gap-2 cursor-pointer"
+                  className="btn-hover-effect px-6 py-4 bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/15 border border-slate-350 dark:border-white/20 rounded-lg text-base font-bold flex items-center gap-2 cursor-pointer"
                 >
                   <Play size={16} fill="currentColor" />
                   <span>Book Demo</span>
@@ -1690,10 +1554,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }} className="items-center text-center sm:items-start sm:text-left">
               <span>
-                © 2026 GST Buddy AI. Built for the NxtWave BUILDATHON. All rights reserved.
-              </span>
-              <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
-                GSTIN: 29ABCDE1234F2Z5
+                © 2026 GST Buddy AI. All rights reserved.
               </span>
             </div>
             <div className="flex items-center gap-6 flex-wrap justify-center">

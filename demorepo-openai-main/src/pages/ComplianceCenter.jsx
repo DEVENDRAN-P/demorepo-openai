@@ -147,7 +147,11 @@ function ComplianceCenter({ user }) {
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Pending Compliance Tasks</h3>
 
-        {activePlan === 'free' ? (
+        {issues.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+            🎉 Complete compliance! No errors or warnings detected in current invoice ledger.
+          </div>
+        ) : activePlan === 'free' ? (
           <div style={{ 
             textAlign: 'center', 
             padding: '3rem 2rem', 
@@ -180,12 +184,7 @@ function ComplianceCenter({ user }) {
             </button>
           </div>
         ) : (
-          issues.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              🎉 Complete compliance! No errors or warnings detected in current invoice ledger.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {issues.map((issue, idx) => (
                 <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', borderLeft: `5px solid ${issue.severity === 'High' ? 'var(--error)' : issue.severity === 'Medium' ? 'var(--warning)' : 'var(--info)'}` }}>
                   <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
@@ -216,7 +215,7 @@ function ComplianceCenter({ user }) {
               ))}
             </div>
           )
-        )}
+        }
       </div>
 
     </div>

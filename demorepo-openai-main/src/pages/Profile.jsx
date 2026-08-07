@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
@@ -194,6 +195,10 @@ const ShieldCheckIcon = (p) => (
 function Profile({ user }) {
   const { t, i18n } = useTranslation();
   const { setUser } = useAuth(); // setUser comes from AuthContext (fix: was an undefined prop)
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const isOnboarding = searchParams.get('onboarding') === 'true';
   const fileInputRef = useRef(null);
   const formRef = useRef(null); // used by the header 'Edit Profile' action
 
@@ -429,6 +434,11 @@ function Profile({ user }) {
 
       setSaveState('success');
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      if (isOnboarding) {
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1200);
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       setSaveState('error');
@@ -467,6 +477,30 @@ function Profile({ user }) {
             Edit Profile
           </button>
         </div>
+
+        {/* Onboarding Banner Alert */}
+        {isOnboarding && (
+          <div style={{
+            background: 'rgba(99, 102, 241, 0.15)',
+            border: '1px solid rgba(99, 102, 241, 0.3)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            textAlign: 'left',
+            color: 'var(--text-primary)'
+          }}>
+            <span style={{ fontSize: '1.5rem' }}>✨</span>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem', color: 'var(--theme-primary-light)' }}>Welcome to GST Buddy AI!</strong>
+              <span style={{ fontSize: '0.825rem', opacity: 0.9, lineHeight: '1.4' }}>
+                Please fill in your name, business shop name, and 15-character GSTIN to complete your registration and activate your dashboard workspace.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ---- Alert ---- */}
         {message && (

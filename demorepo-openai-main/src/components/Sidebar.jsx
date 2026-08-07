@@ -3,12 +3,9 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import { useTranslation } from 'react-i18next';
+import { getUserBusinesses } from '../utils/businessHelper';
 
-const BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5' },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0' },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9' }
-];
+// Removed static BUSINESSES definition to enforce isolated user workspaces
 
 // Helper to render SVG Icons directly
 const iconMap = {
@@ -160,11 +157,58 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(window.innerWidth < 1200);
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 1200 && window.innerWidth >= 991);
+  const [userBusinesses, setUserBusinesses] = useState([]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1200 && window.innerWidth >= 991) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setUserBusinesses(getUserBusinesses(user));
+    }
+  }, [user]);
+
   const [activeBusiness, setActiveBusiness] = useState(() => {
-    const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
-    return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
+    const list = getUserBusinesses(user);
+    const saved = localStorage.getItem('activeBusinessId');
+    return list.find(b => b.id === saved) || list[0] || { id: '', name: '', gstin: '' };
   });
+
+  // Keep activeBusiness in sync if userBusinesses list updates
+  useEffect(() => {
+    if (userBusinesses.length > 0) {
+      const saved = localStorage.getItem('activeBusinessId');
+      const found = userBusinesses.find(b => b.id === saved);
+      if (found) {
+        setActiveBusiness(found);
+      } else {
+        setActiveBusiness(userBusinesses[0]);
+        localStorage.setItem('activeBusinessId', userBusinesses[0].id);
+      }
+    }
+  }, [userBusinesses]);
+
+  // Synchronize on business change event triggers
+  useEffect(() => {
+    const handleBusinessChanged = (e) => {
+      if (e.detail?.businessId && userBusinesses.length > 0) {
+        const found = userBusinesses.find(b => b.id === e.detail.businessId);
+        if (found) setActiveBusiness(found);
+      }
+    };
+    window.addEventListener('businessChanged', handleBusinessChanged);
+    return () => window.removeEventListener('businessChanged', handleBusinessChanged);
+  }, [userBusinesses]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -198,19 +242,20 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
 
   const handleBusinessChange = (e) => {
     const targetId = e.target.value;
-    
+    const targetIndex = userBusinesses.findIndex(b => b.id === targetId);
+
     // Enforce tier-based business profile limits
-    if (selectedPlan === 'free' && targetId !== 'apex_retailers') {
-      alert("⚠️ Single Business Limit: Under the Free Tier, you are limited to 1 business profile (Apex Retailers). Upgrade to the Pro Plan to manage up to 2 businesses, or Business Plan to unlock up to 5 businesses.");
+    if (selectedPlan === 'free' && targetIndex > 0) {
+      alert("⚠️ Single Business Limit: Under the Free Tier, you are limited to 1 business profile. Upgrade to the Pro Plan to manage up to 2 businesses, or Business Plan to unlock up to 5 businesses.");
       return;
     }
     
-    if (selectedPlan === 'pro' && targetId === 'phoenix_logistics') {
+    if (selectedPlan === 'pro' && targetIndex >= 2) {
       alert("⚠️ Pro Business Limit: Under the Pro Tier, you can manage up to 2 businesses. Upgrade to the Business Plan to manage up to 5 business entities and unlock continuous compliance monitoring.");
       return;
     }
 
-    const selected = BUSINESSES.find(b => b.id === targetId);
+    const selected = userBusinesses.find(b => b.id === targetId);
     if (selected) {
       setActiveBusiness(selected);
       localStorage.setItem('activeBusinessId', selected.id);
@@ -309,7 +354,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
               cursor: 'pointer'
             }}
           >
-            {BUSINESSES.map(b => (
+            {userBusinesses.map(b => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>

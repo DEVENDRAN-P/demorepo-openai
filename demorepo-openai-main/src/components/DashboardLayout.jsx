@@ -46,6 +46,7 @@ function DashboardLayout() {
       {/* Main Workspace Frame */}
       <div 
         ref={mainContainerRef}
+        id="main-workspace-container"
         style={{
           flex: 1,
           display: 'flex',

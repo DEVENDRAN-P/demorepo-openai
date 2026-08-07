@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { getUserBusinesses, saveUserBusinesses } from '../utils/businessHelper';
 
-const INITIAL_BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', state: 'Karnataka', type: 'Retail & Distribution', owner: 'Devendra Prabhakar', complianceScore: 94, status: 'Active' },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', state: 'Maharashtra', type: 'IT Services & Consulting', owner: 'Devendra Prabhakar', complianceScore: 88, status: 'Active' },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', state: 'Delhi', type: 'Transport & Warehouse', owner: 'Staff Member', complianceScore: 76, status: 'Active' }
-];
+function BusinessDirectory({ user }) {
+  const [businesses, setBusinesses] = useState([]);
 
-function BusinessDirectory() {
-  const [businesses, setBusinesses] = useState(() => {
-    const saved = localStorage.getItem('saas_businesses');
-    return saved ? JSON.parse(saved) : INITIAL_BUSINESSES;
-  });
+  useEffect(() => {
+    if (user) {
+      setBusinesses(getUserBusinesses(user));
+    }
+  }, [user]);
 
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    const list = getUserBusinesses(user);
+    return localStorage.getItem('activeBusinessId') || (list[0]?.id || '');
   });
+
+  // Keep activeBusinessId in sync if businesses list updates
+  useEffect(() => {
+    if (businesses.length > 0) {
+      const saved = localStorage.getItem('activeBusinessId');
+      const found = businesses.find(b => b.id === saved);
+      if (found) {
+        setActiveBusinessId(found.id);
+      } else {
+        setActiveBusinessId(businesses[0].id);
+        localStorage.setItem('activeBusinessId', businesses[0].id);
+      }
+    }
+  }, [businesses]);
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,7 +85,7 @@ function BusinessDirectory() {
 
     const updated = [...businesses, created];
     setBusinesses(updated);
-    localStorage.setItem('saas_businesses', JSON.stringify(updated));
+    saveUserBusinesses(user?.uid, updated);
     setShowAddModal(false);
     setNewBiz({
       name: '',
@@ -330,4 +343,3 @@ function BusinessDirectory() {
 }
 
 export default BusinessDirectory;
-export { INITIAL_BUSINESSES };

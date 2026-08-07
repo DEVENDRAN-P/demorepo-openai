@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { perf } from '../services/perfService';
+import { scrollToTop } from '../utils/scroll';
+import Logo from '../components/Logo';
 
 function ForgotPasswordPage() {
     const { t } = useTranslation();
@@ -13,6 +15,12 @@ function ForgotPasswordPage() {
     const [successMessage, setSuccessMessage] = useState('');
     const [emailError, setEmailError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (error || successMessage || emailError) {
+            scrollToTop();
+        }
+    }, [error, successMessage, emailError]);
 
     // Real-time email validation
     const validateEmail = (value) => {
@@ -148,6 +156,11 @@ function ForgotPasswordPage() {
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     color: '#000'
                 }}>
+                    {/* Logo */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                        <Logo variant="main" size="180px" />
+                    </div>
+
                     {/* Header */}
                     <div style={{
                         textAlign: 'center',

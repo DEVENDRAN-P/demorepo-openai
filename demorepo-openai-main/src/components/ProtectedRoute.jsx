@@ -1,11 +1,13 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 function ProtectedRoute({ user }) {
-  const { loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated, user: authUser } = useAuth();
+  const location = useLocation();
+  const currentUser = authUser || user;
 
-  // While loading auth state, show nothing (app will redirect when ready)
+  // While loading auth state, show loading spinner
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-500 to-pink-500">
@@ -17,8 +19,20 @@ function ProtectedRoute({ user }) {
     );
   }
 
-  // If authenticated, show the component
-  if (isAuthenticated || user) {
+  // If authenticated, check profile completeness
+  if (isAuthenticated || currentUser) {
+    const hasCompletedProfile = currentUser && currentUser.name && currentUser.shopName && currentUser.gstin;
+
+    if (!hasCompletedProfile) {
+      // Allow visiting setup-related onboarding pages
+      const allowedPaths = ['/profile', '/support', '/pricing', '/checkout', '/payment-success'];
+      if (allowedPaths.includes(location.pathname)) {
+        return <Outlet />;
+      }
+      // Otherwise redirect to profile for onboarding
+      return <Navigate to="/profile?onboarding=true" replace />;
+    }
+
     return <Outlet />;
   }
 

@@ -1220,10 +1220,8 @@ function PricingBilling({ user }) {
 
           {/* Bottom Legal Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            <span>© 2026 GST Buddy AI. Built for the NxtWave BUILDATHON. All rights reserved.</span>
+            <span>© 2026 GST Buddy AI. All rights reserved.</span>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span>GSTIN: 29ABCDE1234F2Z5</span>
-              <span>•</span>
               <span style={{ fontWeight: 600 }}>{t('made_for_india', 'Made with precision for Indian Businesses')}</span>
             </div>
           </div>

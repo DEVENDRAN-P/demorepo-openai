@@ -2,7 +2,6 @@ import React, { createContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { seedUserInvoicesIfEmpty } from '../services/seederService';
 
 // Create the Auth Context
 export const AuthContext = createContext();
@@ -56,8 +55,6 @@ export const AuthProvider = ({ children }) => {
                   } else {
                     console.warn("⚠️  No Firestore document found for user");
                   }
-                  // Seed if empty
-                  seedUserInvoicesIfEmpty(firebaseUser.uid);
                 })
                 .catch((err) => {
                   console.error("❌ Error fetching Firestore data:", err.message);
@@ -114,8 +111,6 @@ export const AuthProvider = ({ children }) => {
                 setUser(newUserData);
                 localStorage.setItem('user', JSON.stringify(newUserData));
               }
-              // Seed if empty
-              seedUserInvoicesIfEmpty(firebaseUser.uid);
             })
             .catch((err) => {
               console.error("❌ Error fetching Firestore profile:", err.message);
@@ -151,6 +146,8 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       localStorage.removeItem('user');
       localStorage.removeItem('userToken');
+      localStorage.removeItem('activeBusinessId');
+      localStorage.removeItem('saas_active_plan');
       setError(null);
     } catch (err) {
       setError(err.message);
