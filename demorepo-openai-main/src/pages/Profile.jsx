@@ -720,7 +720,7 @@ function Profile({ user, setUser }) {
             alignItems: 'center',
             gap: '0.5rem',
           }}>
-            <span>📋</span> Recent Workspace Activity
+            <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span> Recent Workspace Activity
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
@@ -755,7 +755,7 @@ function Profile({ user, setUser }) {
             alignItems: 'center',
             gap: '0.5rem',
           }}>
-            <span>💡</span> {t('pro_tips')}
+            <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/></svg></span> {t('pro_tips')}
           </h3>
           <ul style={{
             margin: 0,

@@ -28,6 +28,49 @@ const IconSavings = () => (
   </svg>
 );
 
+const IconPhone = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+    <line x1="12" y1="18" x2="12.01" y2="18" />
+  </svg>
+);
+
+const IconTarget = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const IconChart = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const IconClipboard = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+  </svg>
+);
+
+const IconPen = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
+
+const IconUpload = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+  </svg>
+);
+
 function ReminderPanel() {
   const { t, i18n } = useTranslation();
   const { isDarkMode } = useDarkMode();
@@ -90,25 +133,25 @@ function ReminderPanel() {
           const tips = [
             {
               id: 1,
-              icon: '💡',
+              iconKey: 'itc',
               title: t('tip_itc_title'),
               description: t('tip_itc_desc'),
             },
             {
               id: 2,
-              icon: '📱',
+              iconKey: 'voice',
               title: t('tip_voice_title'),
               description: t('tip_voice_desc'),
             },
             {
               id: 3,
-              icon: '🎯',
+              iconKey: 'comply',
               title: t('tip_comply_title'),
               description: t('tip_comply_desc'),
             },
             {
               id: 4,
-              icon: '📊',
+              iconKey: 'analytics',
               title: t('tip_analytics_title'),
               description: t('tip_analytics_desc'),
             },
@@ -193,10 +236,10 @@ function ReminderPanel() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">
-              <div className="card-title-icon" style={{ background: 'var(--warning-light)' }}>
+              <div className="card-title-icon" style={{ background: 'var(--warning-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconBell />
               </div>
-              <span>{t('reminders_emoji')}</span>
+              <span>{t('reminders')}</span>
             </h2>
             <span className="badge badge-warning">{reminders.length}</span>
           </div>
@@ -219,7 +262,12 @@ function ReminderPanel() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-                    <span style={{ fontSize: '1.5rem' }}>{reminder.emoji}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', color: colors.text }}>
+                      {reminder.emoji === '💰' ? <IconSavings /> :
+                       reminder.emoji === '📋' ? <IconClipboard /> :
+                       reminder.emoji === '📝' ? <IconPen /> :
+                       <IconUpload />}
+                    </span>
                     <div style={{ flex: 1 }}>
                       <p style={{
                         fontWeight: 600,
@@ -270,11 +318,11 @@ function ReminderPanel() {
       {/* Guidance Tips */}
       <div className="card">
         <div className="card-header" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => setShowTips(!showTips)}>
-          <h2 className="card-title">
-            <div className="card-title-icon" style={{ background: 'var(--primary-50)' }}>
+          <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="card-title-icon" style={{ background: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconLightbulb />
             </div>
-            <span>💡 {t('compliance_tips')}</span>
+            <span>{t('compliance_tips')}</span>
           </h2>
           <span style={{ fontSize: '1.2rem', transition: 'transform 0.3s ease', transform: showTips ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             ▼
@@ -295,7 +343,12 @@ function ReminderPanel() {
                   marginBottom: tip.id === guidanceTips.length ? '0' : '0.5rem',
                 }}
               >
-                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{tip.icon}</span>
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: 'var(--primary-600)' }}>
+                  {tip.iconKey === 'itc' && <IconLightbulb />}
+                  {tip.iconKey === 'voice' && <IconPhone />}
+                  {tip.iconKey === 'comply' && <IconTarget />}
+                  {tip.iconKey === 'analytics' && <IconChart />}
+                </span>
                 <div>
                   <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--neutral-900)', marginBottom: '0.25rem' }}>
                     {tip.title}
@@ -314,11 +367,11 @@ function ReminderPanel() {
       {costSavings && costSavings.totalSaved > 0 && (
         <div className="card" style={{ background: isDarkMode ? '#1a3a1a' : 'var(--success-light)', borderColor: isDarkMode ? '#4ade80' : '#86efac' }}>
           <div className="card-header" style={{ borderBottom: `1px solid ${isDarkMode ? '#4ade80' : '#86efac'}` }}>
-            <h2 className="card-title" style={{ color: isDarkMode ? '#ffffff' : '#166534' }}>
-              <div className="card-title-icon" style={{ background: isDarkMode ? '#ffffff' : 'white' }}>
+            <h2 className="card-title" style={{ color: isDarkMode ? '#ffffff' : '#166534', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="card-title-icon" style={{ background: isDarkMode ? '#ffffff' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconSavings />
               </div>
-              <span>💰 {t('cost_savings')}</span>
+              <span>{t('cost_savings')}</span>
             </h2>
           </div>
 

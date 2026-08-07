@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { auth } from '../config/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,6 +15,7 @@ const getApiUrl = (path) => {
 
 function PricingBilling({ user }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleMockNav = (targetRoute) => {
     if (user) {
@@ -95,6 +97,8 @@ function PricingBilling({ user }) {
       if (statusRes.ok) {
         const statusData = await safeParseJson(statusRes);
         setActivePlan(statusData.subscriptionPlan);
+        localStorage.setItem('saas_active_plan', statusData.subscriptionPlan || 'free');
+        window.dispatchEvent(new Event('planChanged'));
         setSubscriptionStatus(statusData.subscriptionStatus);
         setSubscriptionStart(statusData.subscriptionStart);
         setSubscriptionExpiry(statusData.subscriptionExpiry);
@@ -245,7 +249,8 @@ function PricingBilling({ user }) {
                 razorpay_order_id: paymentResponse.razorpay_order_id,
                 razorpay_payment_id: paymentResponse.razorpay_payment_id,
                 razorpay_signature: paymentResponse.razorpay_signature,
-                planId: planId
+                planId: planId,
+                isYearly: isYearly
               })
             });
 
@@ -295,6 +300,42 @@ function PricingBilling({ user }) {
     } catch (checkoutErr) {
       console.error('Checkout error:', checkoutErr);
       setErrorMsg(`Checkout error: ${checkoutErr.message}`);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDowngradeToFree = async () => {
+    if (!window.confirm("Are you sure you want to cancel your premium subscription and revert to the Free Tier?")) {
+      return;
+    }
+    setIsProcessing(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const token = await currentUser.getIdToken(true);
+      const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          razorpay_order_id: "downgrade_order_" + Date.now(),
+          razorpay_payment_id: "downgrade_payment_" + Date.now(),
+          razorpay_signature: "reset_signature",
+          planId: "free"
+        })
+      });
+      if (!verifyRes.ok) {
+        throw new Error('Failed to downgrade subscription.');
+      }
+      setSuccessMsg('Successfully downgraded to the Free Tier!');
+      await fetchSubscriptionAndBillingData();
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -619,11 +660,12 @@ function PricingBilling({ user }) {
           </ul>
           
           <button 
-            disabled={true} 
+            disabled={activePlan === 'free'} 
+            onClick={handleDowngradeToFree}
             className="btn btn-secondary"
-            style={{ width: '100%', padding: '0.6rem' }}
+            style={{ width: '100%', padding: '0.6rem', cursor: activePlan === 'free' ? 'not-allowed' : 'pointer' }}
           >
-            {activePlan === 'free' ? 'Active Starter Plan' : 'Starter Plan'}
+            {activePlan === 'free' ? 'Active Starter Plan' : 'Downgrade to Free'}
           </button>
         </div>
 
@@ -691,7 +733,12 @@ function PricingBilling({ user }) {
       {/* 3. Interactive ROI Calculator Widget */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2.5rem', marginBottom: '4rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', zIndex: 10 }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left' }}>
-          <span>📊</span> Interactive ROI & Savings Calculator
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--theme-secondary)' }}>
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <span>{t('pricing_roi_calculator', 'Interactive ROI & Savings Calculator')}</span>
         </h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '2rem', textAlign: 'left' }}>
           Estimate the direct fiscal return on investment and hours saved by shifting your tax compliance workflows to GST Buddy AI.
@@ -857,76 +904,125 @@ function PricingBilling({ user }) {
               {/* Category 1: Invoice Processing */}
               <tr style={{ background: 'var(--bg-primary)' }}>
                 <td className="comparison-td" style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--primary-600)' }} colSpan="4">
-                  INVOICE CAPTURE & PROCESSOR
+                  {t('pricing_cat_invoice', 'INVOICE CAPTURE & PROCESSOR')}
                 </td>
               </tr>
               <tr>
-                <td className="comparison-td">Monthly bill uploads allocation</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>10 scans</td>
-                <td className="comparison-td" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary-600)' }}>Unlimited</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>Unlimited</td>
+                <td className="comparison-td">{t('pricing_feature_monthly_allocation', 'Monthly bill uploads allocation')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_10_scans', '10 scans')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary-600)' }}>{t('pricing_unlimited', 'Unlimited')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_unlimited', 'Unlimited')}</td>
               </tr>
               <tr>
-                <td className="comparison-td">Groq AI OCR line-item extraction</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>Limited (Header only)</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔ Full line item</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔ Full line item</td>
+                <td className="comparison-td">{t('pricing_feature_ocr', 'Groq AI OCR line-item extraction')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>{t('pricing_ocr_limited', 'Limited (Header only)')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                    <span>{t('pricing_ocr_full', 'Full line item')}</span>
+                  </div>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                    <span>{t('pricing_ocr_full', 'Full line item')}</span>
+                  </div>
+                </td>
               </tr>
               <tr>
-                <td className="comparison-td">Supported upload attachments (PDF, Image, PNG)</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
+                <td className="comparison-td">{t('pricing_feature_attachments', 'Supported upload attachments (PDF, Image, PNG)')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
               </tr>
 
               {/* Category 2: AI Capabilities */}
               <tr style={{ background: 'var(--bg-primary)' }}>
                 <td className="comparison-td" style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--primary-600)' }} colSpan="4">
-                  AI ACCOUNTANT & INTELLIGENCE
+                  {t('pricing_cat_ai', 'AI ACCOUNTANT & INTELLIGENCE')}
                 </td>
               </tr>
               <tr>
-                <td className="comparison-td">Multi-lingual AI Chat Page (English, Hindi, Tamil)</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>Basic chatbot</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔ Llama 3.3 Assistant</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔ Llama 3.3 Assistant</td>
+                <td className="comparison-td">{t('pricing_feature_multilingual', 'Multi-lingual AI Chat Page (English, Hindi, Tamil)')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_basic_chatbot', 'Basic chatbot')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                    <span>{t('pricing_llama_assistant', 'Llama 3.3 Assistant')}</span>
+                  </div>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                    <span>{t('pricing_llama_assistant', 'Llama 3.3 Assistant')}</span>
+                  </div>
+                </td>
               </tr>
               <tr>
-                <td className="comparison-td">Input Tax Credit (ITC) audits & flags</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>❌</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
+                <td className="comparison-td">{t('pricing_feature_itc_audits', 'Input Tax Credit (ITC) audits & flags')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
               </tr>
               <tr>
-                <td className="comparison-td">Dynamic Tax Forecast Liabilities</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>❌</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
+                <td className="comparison-td">{t('pricing_feature_tax_forecast', 'Dynamic Tax Forecast Liabilities')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
               </tr>
 
               {/* Category 3: Integrations & Teams */}
               <tr style={{ background: 'var(--bg-primary)' }}>
                 <td className="comparison-td" style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--primary-600)' }} colSpan="4">
-                  TEAM COLLABORATION & INTEGRATION
+                  {t('pricing_cat_team', 'TEAM COLLABORATION & INTEGRATION')}
                 </td>
               </tr>
               <tr>
-                <td className="comparison-td">Business entity profiles in one account</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>1 Profile</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>3 Profiles</td>
-                <td className="comparison-td" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary-600)' }}>Unlimited Profiles</td>
+                <td className="comparison-td">{t('pricing_feature_entity_profiles', 'Business entity profiles in one account')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_1_profile', '1 Profile')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_3_profiles', '3 Profiles')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary-600)' }}>{t('pricing_unlimited_profiles', 'Unlimited Profiles')}</td>
               </tr>
               <tr>
-                <td className="comparison-td">Automated Accountant / CA credentials link</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>❌</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>❌</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔</td>
+                <td className="comparison-td">{t('pricing_feature_ca_link', 'Automated Accountant / CA credentials link')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                </td>
               </tr>
               <tr>
-                <td className="comparison-td">Billing exports format support</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>CSV only</td>
-                <td className="comparison-td" style={{ textAlign: 'center' }}>CSV & PDF reports</td>
-                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)' }}>✔ CSV, PDF & JSON</td>
+                <td className="comparison-td">{t('pricing_feature_billing_exports', 'Billing exports format support')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_csv_only', 'CSV only')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_csv_pdf', 'CSV & PDF reports')}</td>
+                <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
+                    <span>{t('pricing_csv_pdf_json', 'CSV, PDF & JSON')}</span>
+                  </div>
+                </td>
               </tr>
 
             </tbody>
@@ -1045,27 +1141,7 @@ function PricingBilling({ user }) {
       <footer style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)', padding: '4rem 1.5rem 2rem 1.5rem', margin: '0 -1.5rem -2.5rem -1.5rem', position: 'relative', zIndex: 10 }} className="footer-theme">
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
-          {/* Newsletter Callout Card */}
-          <div className="glass-panel" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '20px', padding: '2rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem', marginBottom: '4rem' }}>
-            <div style={{ textAlign: 'left', flex: 1, minWidth: '280px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Stay ahead on GST updates & AI features</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>Join 10,000+ business owners reading our weekly compliance breakdown newsletter.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flexShrink: 0 }}>
-              <input 
-                type="email" 
-                placeholder="Enter your business email" 
-                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.6rem 1rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', width: '250px' }}
-              />
-              <button 
-                onClick={() => alert("Thank you for subscribing to GST Buddy AI news updates!")}
-                className="btn btn-primary"
-                style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem', background: 'var(--primary-600)', border: 'none', color: 'white', fontWeight: 700, borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-              >
-                Subscribe
-              </button>
-            </div>
-          </div>
+
 
           {/* 6-Column Navigation Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '2rem', marginBottom: '3.5rem', textAlign: 'left' }}>
@@ -1144,11 +1220,11 @@ function PricingBilling({ user }) {
 
           {/* Bottom Legal Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            <span>© {new Date().getFullYear()} GST Buddy AI. Built for NxtWave BUILDATHON. All rights reserved.</span>
+            <span>© 2026 GST Buddy AI. Built for the NxtWave BUILDATHON. All rights reserved.</span>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <span>GSTIN: 29ABCDE1234F2Z5</span>
               <span>•</span>
-              <span style={{ fontWeight: 600 }}>Made with precision for Indian Businesses 🇮🇳</span>
+              <span style={{ fontWeight: 600 }}>{t('made_for_india', 'Made with precision for Indian Businesses')}</span>
             </div>
           </div>
 

@@ -360,7 +360,7 @@ function PenaltyLateFeeEstimator() {
             color: 'var(--text-tertiary)',
             fontStyle: 'italic',
           }}>
-            ⚠️ Estimates are based on current GST rules. Actual penalties may vary. Consult a tax professional for accurate calculations.
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)', verticalAlign: 'middle' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Estimates are based on current GST rules. Actual penalties may vary. Consult a tax professional for accurate calculations.</span>
           </p>
         </div>
       </div>

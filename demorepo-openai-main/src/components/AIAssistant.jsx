@@ -248,10 +248,34 @@ Rules for responding:
         
         {/* Preset commands */}
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem', whiteSpace: 'nowrap' }}>
-          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Verify Input Tax Credit balance')} style={{ fontSize: '0.75rem' }}>💰 Check ITC Balance</button>
-          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Analyze current expense leakage')} style={{ fontSize: '0.75rem' }}>🔍 Find Expense Leakage</button>
-          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Suggest tax optimization strategies')} style={{ fontSize: '0.75rem' }}>💡 Optimize Taxes</button>
-          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Check invoice math discrepancies')} style={{ fontSize: '0.75rem' }}>⚠️ Audit Invoices</button>
+          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Verify Input Tax Credit balance')} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.25rem' }}>
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/>
+            </svg>
+            <span>Check ITC Balance</span>
+          </button>
+          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Analyze current expense leakage')} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.25rem' }}>
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span>Find Expense Leakage</span>
+          </button>
+          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Suggest tax optimization strategies')} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.25rem' }}>
+              <path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/>
+            </svg>
+            <span>Optimize Taxes</span>
+          </button>
+          <button className="chip-interactive" onClick={(e) => handleSendMessage(e, 'Check invoice math discrepancies')} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.25rem' }}>
+              <path d="m10.29 3.86 8.47 14.71c.77 1.34-.19 3-1.73 3H3.64c-1.54 0-2.5-1.66-1.73-3L10.29 3.86Z"/>
+              <line x1="12" x2="12" y1="9" y2="13"/>
+              <line x1="12" x2="12.01" y1="17" y2="17"/>
+            </svg>
+            <span>Audit Invoices</span>
+          </button>
         </div>
 
         <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem' }}>

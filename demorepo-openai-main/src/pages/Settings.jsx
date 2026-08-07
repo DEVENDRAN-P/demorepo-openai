@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 function Settings({ user }) {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('business');
 
   // Form states & dirty checking
@@ -126,11 +126,11 @@ function Settings({ user }) {
   };
 
   const tabItems = [
-    { id: 'business', label: '🏢 Business & GST Registry' },
-    { id: 'appearance', label: '🎨 Appearance & Branding' },
-    { id: 'security', label: '🔒 Security & 2FA' },
-    { id: 'automation', label: '⚡ AI & Automation Rules' },
-    { id: 'api', label: '🔑 API Access & Integration' }
+    { id: 'business', label: t('settings_tab_business', 'Business & GST Registry'), iconKey: 'business' },
+    { id: 'appearance', label: t('settings_tab_appearance', 'Appearance & Branding'), iconKey: 'appearance' },
+    { id: 'security', label: t('settings_tab_security', 'Security & 2FA'), iconKey: 'security' },
+    { id: 'automation', label: t('settings_tab_automation', 'AI & Automation Rules'), iconKey: 'automation' },
+    { id: 'api', label: t('settings_tab_api', 'API Access & Integration'), iconKey: 'api' }
   ];
 
   return (
@@ -168,18 +168,25 @@ function Settings({ user }) {
           marginBottom: '1.5rem',
           fontSize: '0.825rem'
         }}>
-          <span>⚠️ You have unsaved changes in your settings forms.</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="m10.29 3.86 8.47 14.71c.77 1.34-.19 3-1.73 3H3.64c-1.54 0-2.5-1.66-1.73-3L10.29 3.86Z"/>
+              <line x1="12" x2="12" y1="9" y2="13"/>
+              <line x1="12" x2="12.01" y1="17" y2="17"/>
+            </svg>
+            <span>{t('settings_unsaved_changes', 'You have unsaved changes in your settings forms.')}</span>
+          </span>
           <button onClick={handleSaveProfile} className="btn btn-primary" style={{ padding: '0.375rem 1rem', fontSize: '0.75rem', background: 'var(--theme-accent)', border: 'none' }}>
-            Save Changes
+            {t('save_changes')}
           </button>
         </div>
       )}
 
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Enterprise Settings</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('enterprise_settings', 'Enterprise Settings')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Administer profile details, configure AI parsing filters, schedule automations, and manage API integrations.
+          {t('settings_subtitle', 'Administer profile details, configure AI parsing filters, schedule automations, and manage API integrations.')}
         </p>
       </div>
 
@@ -205,10 +212,45 @@ function Settings({ user }) {
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 outline: 'none',
-                borderLeft: activeTab === tab.id ? '3px solid var(--theme-secondary)' : '3px solid transparent'
+                borderLeft: activeTab === tab.id ? '3px solid var(--theme-secondary)' : '3px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}
             >
-              {tab.label}
+              {tab.iconKey === 'business' && (
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+                  <line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/>
+                  <line x1="9" y1="16" x2="15" y2="16"/>
+                  <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01"/>
+                </svg>
+              )}
+              {tab.iconKey === 'appearance' && (
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="6" r="1.5"/><circle cx="16" cy="10" r="1.5"/>
+                  <circle cx="12" cy="18" r="1.5"/><circle cx="8" cy="10" r="1.5"/>
+                </svg>
+              )}
+              {tab.iconKey === 'security' && (
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              )}
+              {tab.iconKey === 'automation' && (
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              )}
+              {tab.iconKey === 'api' && (
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="7.5" cy="15.5" r="5.5"/>
+                  <path d="m11.5 11.5 9-9M17 3l4 4M15 5l2 2"/>
+                </svg>
+              )}
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -324,8 +366,23 @@ function Settings({ user }) {
                     <strong style={{ display: 'block', fontSize: '0.9rem' }}>Application Dark Theme</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Toggle theme rendering elements across the workspace.</span>
                   </div>
-                  <button onClick={toggleDarkMode} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>
-                    {isDarkMode ? '🌞 Switch Light Mode' : '🌙 Switch Dark Mode'}
+                  <button onClick={toggleDarkMode} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDarkMode ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="5"/>
+                          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                        <span>{t('switch_light_mode', 'Switch Light Mode')}</span>
+                      </span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                        <span>{t('switch_dark_mode', 'Switch Dark Mode')}</span>
+                      </span>
+                    )}
                   </button>
                 </div>
 

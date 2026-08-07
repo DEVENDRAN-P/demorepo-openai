@@ -177,7 +177,7 @@ function GlobalSearch({ user }) {
             {matchedInvoices.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem', color: 'var(--theme-primary-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  🧾 Matching Invoices ({matchedInvoices.length})
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1zM16 8H8m8 4H8m6 4H8"/></svg> Matching Invoices ({matchedInvoices.length})</span>
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {matchedInvoices.map((bill, index) => (

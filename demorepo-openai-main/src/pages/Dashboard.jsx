@@ -97,7 +97,10 @@ function Dashboard({ user }) {
         });
         if (res.ok) {
           const data = await res.json();
-          setActivePlan(data.subscriptionPlan || 'free');
+          const plan = data.subscriptionPlan || 'free';
+          setActivePlan(plan);
+          localStorage.setItem('saas_active_plan', plan);
+          window.dispatchEvent(new Event('planChanged'));
         }
       } catch (err) {
         console.error('Error fetching subscription status in Dashboard:', err);
@@ -438,7 +441,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--success)' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Input Tax Credit</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{inputTaxCredit.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}>💰 Maximize: ₹{costSavings.toLocaleString()} saved</span>
+            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#4ade80' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> Maximize: ₹{costSavings.toLocaleString()} saved</span></span>
           </div>
 
         </div>
@@ -474,11 +477,11 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Analyze this month')}>🔍 Analyze Month</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Check compliance')}>📋 Check Compliance</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Prepare GST')}>📂 Prepare GST Return</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Find risks')}>⚠️ Find Audit Risks</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Suggest tax savings')}>💡 Tax Saving Options</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Analyze this month')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analyze Month</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Check compliance')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4m5 .5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Check Compliance</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Prepare GST')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Prepare GST Return</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Find risks')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Find Audit Risks</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Suggest tax savings')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9.663 17h4.673M12 3v1M6.364 5.636l-.707-.707M21 12h-1"/><path d="M3 12H2m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Tax Saving Options</button>
           </div>
 
           {agentResponse && (
@@ -501,7 +504,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             {/* Global Intelligent Search */}
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.25rem' }}>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '1.25rem' }}>🔍</span>
+                <span style={{ display: 'flex' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--theme-secondary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                 <input 
                   type="text" 
                   value={searchQuery}
@@ -521,7 +524,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             {/* Quick Actions */}
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '1.15rem' }}>⚡</span>
+                <span style={{ display: 'flex' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--theme-secondary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Quick Operations</h2>
               </div>
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
@@ -764,7 +767,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
 
           {/* AI Explanation Insight */}
           <div style={{ background: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.15)', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <div style={{ color: 'var(--theme-primary-light)', fontSize: '1.25rem' }}>💡</div>
+            <div style={{ color: 'var(--theme-primary-light)', display: 'flex' }}><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9.663 17h4.673M12 3v1M6.364 5.636l-.707-.707M21 12h-1M4 12H3m3.343-5.657L5.636 5.636"/><path d="M12 3v1m6.364 4.636.707-.707"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
             <div>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-primary-light)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Impact & Efficiency Insight</span>
               <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
@@ -835,33 +838,73 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
               &times;
             </button>
 
-            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>⭐</div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Subscription Upgrade Required</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
-              This operational framework is available on the <strong>{upgradeTarget === 'pro' ? 'Pro Plan' : 'Business Plan'}</strong>. Upgrade today to unlock unlimited filings, detailed business insights, and 24/7 dedicated auditor support.
-            </p>
+            <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>⭐</div>
+             <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>
+               {upgradeTarget === 'pro' ? 'Unlock AI Accountant' : 'Unlock Advanced Operations'}
+             </h3>
+             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+               {upgradeTarget === 'pro' 
+                 ? "Your AI finance assistant can analyze your invoices, expenses, GST liability, and business performance."
+                 : "Automatically compare transactions, invoices, and GST records, and audit multiple business profiles."}
+             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button
-                onClick={() => {
-                  setShowUpgradeModal(false);
-                  localStorage.setItem('selectedPlan', upgradeTarget);
-                  navigate('/pricing');
-                }}
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
-                  color: 'white',
-                  border: 'none',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
-                }}
-              >
-                Choose {upgradeTarget === 'pro' ? 'Pro' : 'Business'} Plan
-              </button>
+             <div style={{ 
+               background: 'var(--bg-primary)', 
+               border: '1px solid var(--border-color)', 
+               borderRadius: '8px', 
+               padding: '1rem', 
+               textAlign: 'left', 
+               marginBottom: '1.5rem',
+               fontSize: '0.8rem',
+               color: 'var(--text-secondary)'
+             }}>
+               <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                 Available with {upgradeTarget === 'pro' ? 'Pro Plan' : 'Business Plan'}:
+               </strong>
+               {upgradeTarget === 'pro' ? (
+                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                   <li>✓ Analyze financial performance</li>
+                   <li>✓ Detect expense leakage</li>
+                   <li>✓ Explain GST transactions</li>
+                   <li>✓ Generate AI recommendations</li>
+                 </ul>
+               ) : (
+                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                   <li>✓ Continuous compliance monitoring</li>
+                   <li>✓ Advanced anomaly detection & reconciliation</li>
+                   <li>✓ Cash-flow and predictive tax planning</li>
+                   <li>✓ Multi-business profile support (up to 5)</li>
+                 </ul>
+               )}
+               <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Pricing:</span>
+                 <strong style={{ fontSize: '1.05rem', color: 'var(--theme-primary-light)' }}>
+                   {upgradeTarget === 'pro' ? '₹199/month' : '₹499/month'}
+                 </strong>
+               </div>
+             </div>
+
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+               <button
+                 onClick={() => {
+                   setShowUpgradeModal(false);
+                   localStorage.setItem('selectedPlan', upgradeTarget);
+                   navigate('/pricing');
+                 }}
+                 style={{
+                   padding: '0.85rem',
+                   borderRadius: '10px',
+                   background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
+                   color: 'white',
+                   border: 'none',
+                   fontSize: '0.95rem',
+                   fontWeight: 700,
+                   cursor: 'pointer',
+                   boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
+                 }}
+               >
+                 Upgrade to {upgradeTarget === 'pro' ? 'Pro' : 'Business'}
+               </button>
               <button
                 onClick={() => setShowUpgradeModal(false)}
                 style={{

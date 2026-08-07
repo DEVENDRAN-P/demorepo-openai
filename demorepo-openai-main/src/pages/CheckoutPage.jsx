@@ -26,7 +26,7 @@ const LoadingSpinner = () => (
 function CheckoutPage() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState('pro');
-  const [planAmount, setPlanAmount] = useState(299);
+  const [planAmount, setPlanAmount] = useState(199);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -34,7 +34,7 @@ function CheckoutPage() {
   useEffect(() => {
     const plan = localStorage.getItem('selectedPlan') || 'pro';
     setSelectedPlan(plan);
-    setPlanAmount(plan === 'pro' ? 299 : 999);
+    setPlanAmount(plan === 'pro' ? 199 : 499);
   }, []);
 
   const loadRazorpayScript = () => {

@@ -160,11 +160,23 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 1200);
   const [activeBusiness, setActiveBusiness] = useState(() => {
     const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
     return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1200) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (setMobileOpen) {
@@ -185,7 +197,20 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   }, []);
 
   const handleBusinessChange = (e) => {
-    const selected = BUSINESSES.find(b => b.id === e.target.value);
+    const targetId = e.target.value;
+    
+    // Enforce tier-based business profile limits
+    if (selectedPlan === 'free' && targetId !== 'apex_retailers') {
+      alert("⚠️ Single Business Limit: Under the Free Tier, you are limited to 1 business profile (Apex Retailers). Upgrade to the Pro Plan to manage up to 2 businesses, or Business Plan to unlock up to 5 businesses.");
+      return;
+    }
+    
+    if (selectedPlan === 'pro' && targetId === 'phoenix_logistics') {
+      alert("⚠️ Pro Business Limit: Under the Pro Tier, you can manage up to 2 businesses. Upgrade to the Business Plan to manage up to 5 business entities and unlock continuous compliance monitoring.");
+      return;
+    }
+
+    const selected = BUSINESSES.find(b => b.id === targetId);
     if (selected) {
       setActiveBusiness(selected);
       localStorage.setItem('activeBusinessId', selected.id);
@@ -241,17 +266,27 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
         gap: '0.5rem'
       }}>
         {collapsed ? (
-          <Logo variant="icon" size="28px" onClick={() => setCollapsed(false)} style={{ cursor: 'pointer' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
+            <Logo variant="icon" size="28px" onClick={() => setCollapsed(false)} style={{ cursor: 'pointer' }} />
+            <button 
+              onClick={() => setCollapsed(false)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Expand Sidebar"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
         ) : (
-          <Logo variant="sidebar" size="145px" />
-        )}
-        {!collapsed && (
-          <button 
-            onClick={() => setCollapsed(true)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem' }}
-          >
-            ⬅️
-          </button>
+          <>
+            <Logo variant="sidebar" size="145px" />
+            <button 
+              onClick={() => setCollapsed(true)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Collapse Sidebar"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+          </>
         )}
       </div>
 
@@ -345,7 +380,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
               fontSize: '0.9rem',
               flexShrink: 0
             }}>
-              {user?.name?.charAt(0) || '👤'}
+              {user?.name?.charAt(0) || <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -389,7 +424,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             justifyContent: collapsed ? 'center' : 'flex-start'
           }}
         >
-          <span>{user ? '🚪' : '🔑'}</span>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{user ? <><path d="M16 17l5-5-5-5M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></> : <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></>}</svg>
           {!collapsed && <span>{user ? 'Sign Out' : 'Sign In'}</span>}
         </button>
       </div>

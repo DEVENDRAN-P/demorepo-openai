@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
-import { saveUserBill } from '../services/firebaseDataService';
+import { saveUserBill, getUserBills } from '../services/firebaseDataService';
+import { auth } from '../config/firebase';
 
 const IconCamera = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -67,6 +68,41 @@ function BillUpload() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  const [activePlan, setActivePlan] = useState(() => {
+    return localStorage.getItem('saas_active_plan') || 'free';
+  });
+  const [billsCount, setBillsCount] = useState(0);
+
+  useEffect(() => {
+    const handlePlanChanged = () => {
+      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+    };
+    window.addEventListener('planChanged', handlePlanChanged);
+    return () => window.removeEventListener('planChanged', handlePlanChanged);
+  }, []);
+
+  useEffect(() => {
+    const fetchBillsCount = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        const fetched = await getUserBills(currentUser.uid);
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const thisMonthBills = fetched.filter(b => {
+          const date = new Date(b.invoiceDate || b.createdAt || Date.now());
+          return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+        setBillsCount(thisMonthBills.length);
+      } catch (err) {
+        console.error("Error fetching bills count for limits:", err);
+      }
+    };
+    fetchBillsCount();
+  }, [activePlan]);
+
+  const limit = activePlan === 'free' ? 5 : activePlan === 'pro' ? 100 : Infinity;
 
   // File Select Handler
   const handleFileUpload = (e) => {
@@ -286,6 +322,15 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
       setNotification({ message: 'Please select an invoice file first', type: 'warning' });
       return;
     }
+
+    // Limit check
+    if (billsCount >= limit) {
+      alert(`⚠️ Scan Limit Reached: You have processed ${billsCount} of ${limit} invoices this month. Please upgrade your subscription to upload more invoices.`);
+      localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
+      window.location.href = '/pricing';
+      return;
+    }
+
     setLoading(true);
     setProgress(0);
 
@@ -440,11 +485,28 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       
       {/* Title Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Invoice Intelligence</h1>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Upload merchant invoices. AI Accountant automatically extracts metadata, validates GSTIN integrity, and runs tax audit risk analysis.
-        </p>
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Invoice Intelligence</h1>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+            Upload merchant invoices. AI Accountant automatically extracts metadata, validates GSTIN integrity, and runs tax audit risk analysis.
+          </p>
+        </div>
+
+        {/* Scan Limits Badge */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          padding: '0.5rem 1rem',
+          borderRadius: 'var(--radius-lg)',
+          fontSize: '0.75rem',
+          textAlign: 'right'
+        }}>
+          <div>Monthly scans: <strong>{billsCount} / {limit === Infinity ? 'Unlimited' : limit}</strong></div>
+          <div style={{ width: '120px', background: 'var(--bg-tertiary)', height: '4px', borderRadius: '2px', display: 'inline-block', overflow: 'hidden', marginTop: '0.25rem' }}>
+            <div style={{ width: `${limit === Infinity ? 100 : Math.min(100, (billsCount / limit) * 100)}%`, background: billsCount >= limit ? 'var(--error)' : 'var(--theme-primary)', height: '100%' }}></div>
+          </div>
+        </div>
       </div>
 
       {notification && (
@@ -493,7 +555,11 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-                <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🧾</span>
+                <span style={{ display: 'block', marginBottom: '1rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+                    <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto' }}>
+                      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1zM16 8H8m8 4H8m6 4H8"/>
+                    </svg>
+                  </span>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>No Invoice Uploaded</p>
                 <p style={{ margin: '0.25rem 0 1.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Upload an invoice receipt or capture via camera to analyze metadata.</p>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>

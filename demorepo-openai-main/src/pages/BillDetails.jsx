@@ -192,7 +192,7 @@ function BillDetails() {
     const mathConsistent = Math.abs((bill.amount || 0) + (bill.taxAmount || 0) - (bill.totalAmount || 0)) <= 2;
     const mathReasoning = mathConsistent 
       ? `Math check matches perfectly: Taxable (₹${(bill.amount || 0).toLocaleString()}) + GST (₹${(bill.taxAmount || 0).toLocaleString()}) = Total (₹${(bill.totalAmount || 0).toLocaleString()})`
-      : `⚠️ OCR math discrepancy of ₹${Math.abs((bill.amount || 0) + (bill.taxAmount || 0) - (bill.totalAmount || 0))} detected. Review values manually.`;
+      : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> OCR math discrepancy of ₹${Math.abs((bill.amount || 0) + (bill.taxAmount || 0) - (bill.totalAmount || 0))} detected. Review values manually.</span>;
 
     const complianceIssues = bill.complianceIssues || [];
     const fraudIndicators = bill.fraudIndicators || [];
@@ -223,7 +223,7 @@ function BillDetails() {
                         <h2 style={{ fontSize: '1.5rem', margin: '0.25rem 0 0 0', fontWeight: 800 }}>
                             {complianceIssues.length === 0 && mathConsistent 
                               ? '✓ Fully Compliant & Audited' 
-                              : `⚠️ Flagged: ${complianceIssues.length + (!mathConsistent ? 1 : 0)} Auditing Alerts`}
+                              : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Flagged: ${complianceIssues.length + (!mathConsistent ? 1 : 0)} Auditing Alerts</span>}
                         </h2>
                     </div>
 
@@ -410,7 +410,7 @@ function BillDetails() {
                                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                     {bill.gstin && bill.gstin !== '27XXXXX0000X0Z0'
                                       ? `GSTIN structure matches ${bill.gstin.substring(0, 2)} State Code (Karnataka/Maharashtra validation matches invoice address).`
-                                      : '⚠️ Using generic fallback GSTIN. Verify vendor GSTIN registry details before filing GSTR-1.'}
+                                      : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Using generic fallback GSTIN. Verify vendor GSTIN registry details before filing GSTR-1.</span>}
                                 </p>
                             </div>
                         </div>

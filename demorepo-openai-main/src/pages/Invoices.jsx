@@ -263,9 +263,9 @@ function Invoices({ user }) {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button onClick={handleResetReseed} className="btn btn-outline" style={{ fontSize: '0.825rem', borderColor: 'var(--theme-primary)', color: 'var(--theme-primary)' }}>🔄 Reset & Reseed</button>
+          <button onClick={handleResetReseed} className="btn btn-outline" style={{ fontSize: '0.825rem', borderColor: 'var(--theme-primary)', color: 'var(--theme-primary)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.56-.56"/></svg> Reset & Reseed</button>
           <button onClick={handleExportCSV} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>Export CSV</button>
-          <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}>📥 Upload Invoice</button>
+          <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Upload Invoice</button>
         </div>
       </div>
 
@@ -361,7 +361,11 @@ function Invoices({ user }) {
           </div>
         ) : sortedBills.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-secondary)' }}>
-            <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📂</span>
+            <span style={{ display: 'block', marginBottom: '1rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto' }}>
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
             <strong style={{ fontSize: '1rem', display: 'block', color: 'var(--text-primary)' }}>No Invoices Registered</strong>
             <span style={{ fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>Upload invoice documents to see records in this directory workspace.</span>
           </div>

@@ -84,7 +84,7 @@ function Recommendations({ user }) {
                 {rec.desc}
               </p>
               <div style={{ fontSize: '0.75rem', color: 'var(--theme-secondary-light)', fontWeight: 700 }}>
-                💰 Estimated Saving: {rec.saving}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-600)' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> Estimated Saving: {rec.saving}</span>
               </div>
             </div>
           ))}

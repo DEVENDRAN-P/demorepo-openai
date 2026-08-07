@@ -167,7 +167,12 @@ function GSTFilingStatus({ bills = [] }) {
                                     fontWeight: '600',
                                 }}
                             >
-                                {item.statusIcon} {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                {item.status === 'overdue' ? <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--error)', display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> :
+                         item.status === 'urgent' ? <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', marginRight: '4px', verticalAlign: 'middle' }}></span> :
+                         item.status === 'warning' ? <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#eab308', marginRight: '4px', verticalAlign: 'middle' }}></span> :
+                         item.status === 'upcoming' ? <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '4px', verticalAlign: 'middle' }}></span> :
+                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        } {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                             </span>
                         </div>
 

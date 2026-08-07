@@ -335,7 +335,7 @@ function SignupPage({ isLoginInitial = false }) {
           <div>
             <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700, display: 'block', opacity: 0.8, letterSpacing: '0.05em' }}>Selected Plan</span>
             <strong style={{ fontSize: '0.95rem' }}>
-              {selectedPlan === 'free' ? 'Free Tier (₹0/mo)' : selectedPlan === 'pro' ? 'Pro Plan (₹299/mo)' : 'Business Plan (₹999/mo)'}
+              {selectedPlan === 'free' ? 'Free Tier (₹0/mo)' : selectedPlan === 'pro' ? 'Pro Plan (₹199/mo)' : 'Business Plan (₹499/mo)'}
             </strong>
           </div>
           <button 

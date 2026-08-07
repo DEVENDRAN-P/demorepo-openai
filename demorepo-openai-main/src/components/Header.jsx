@@ -64,8 +64,13 @@ function Header({ onMenuClick }) {
           onClick={onMenuClick}
           className="header-menu-btn"
           title="Toggle Navigation Menu"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          ☰
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
         </button>
         <div>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -89,8 +94,13 @@ function Header({ onMenuClick }) {
 
       {/* Center: Global Header Search */}
       <form onSubmit={handleSearchSubmit} style={{ flex: 1, maxWidth: '350px', margin: '0 1.5rem', display: 'block' }} className="header-search-form">
-        <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem' }}>🔍</span>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-tertiary)' }}>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
           <input 
             type="text" 
             placeholder="Search transactions, bills, settings..." 
@@ -119,7 +129,7 @@ function Header({ onMenuClick }) {
           className="btn btn-outline"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', border: '1px solid var(--theme-secondary)' }}
         >
-          <span>⚡</span> <span className="header-btn-text">AI Agent</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span> <span className="header-btn-text">AI Agent</span>
         </button>
 
         {/* Quick Upload shortcut */}
@@ -128,15 +138,15 @@ function Header({ onMenuClick }) {
           className="btn btn-primary"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
         >
-          <span>📤</span> <span className="header-btn-text">Upload</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span> <span className="header-btn-text">Upload</span>
         </button>
 
         {/* Notifications Shortcut */}
         <button 
           onClick={() => navigate('/notifications')}
-          style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', position: 'relative' }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.25rem', color: 'var(--text-secondary)' }}
         >
-          <span>🔔</span>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span style={{ position: 'absolute', top: '2px', right: '2px', width: '6px', height: '6px', background: 'var(--error)', borderRadius: '50%' }}></span>
         </button>
 
@@ -159,7 +169,11 @@ function Header({ onMenuClick }) {
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {isDarkMode ? '☀️' : '🌙'}
+          {isDarkMode ? (
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          ) : (
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          )}
         </button>
 
         {/* Language Selector Dropdown */}
@@ -182,7 +196,7 @@ function Header({ onMenuClick }) {
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             title="Change Language"
           >
-            🌐
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           </button>
           {langOpen && (
             <div style={{
@@ -222,7 +236,13 @@ function Header({ onMenuClick }) {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span style={{ fontSize: '1rem' }}>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" x2="22" y1="12" y2="12" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                  </span>
                   <span>{['English', 'Hindi', 'Tamil', 'Malayalam', 'Kannada'][index]}</span>
                 </button>
               ))}
@@ -247,7 +267,7 @@ function Header({ onMenuClick }) {
             fontSize: '0.75rem',
             fontWeight: 700
           }}>
-            {user?.name?.charAt(0) || '👤'}
+            {user?.name?.charAt(0) || <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
           </div>
         </button>
 

@@ -81,7 +81,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Translation & Language switcher states
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   
   // Hover dropdown state management
@@ -503,7 +503,13 @@ export default function Home() {
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-transparent border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer transition-colors"
               >
-                <span>🌐</span>
+                <span>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" x2="22" y1="12" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                </span>
                 <span className="uppercase">{i18n.language}</span>
               </button>
               {langDropdownOpen && (
@@ -518,7 +524,13 @@ export default function Home() {
                       }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold border-0 bg-transparent cursor-pointer transition-colors ${i18n.language === code ? 'bg-indigo-50 text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
                     >
-                      <span className="mr-2">{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][idx]}</span>
+                      <span className="mr-2">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" x2="22" y1="12" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                      </span>
                       <span>{['English', 'Hindi', 'Tamil', 'Malayalam', 'Kannada'][idx]}</span>
                     </button>
                   ))}
@@ -1481,30 +1493,7 @@ export default function Home() {
       <footer className="w-full mt-24 border-t border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-[#0B0F19] py-16 text-left relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Newsletter Callout Card */}
-          <div className="glass-panel bg-white/60 dark:bg-[#0f111a]/60 border border-slate-200/60 dark:border-slate-850/60 rounded-3xl p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16 shadow-lg backdrop-blur-md">
-            <div className="flex-1">
-              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
-                Stay ahead on GST updates & AI features
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">
-                Join 10,000+ business owners reading our weekly compliance breakdown newsletter.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-              <input 
-                type="email" 
-                placeholder="Enter your business email" 
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--primary-600)] transition-colors w-full sm:w-64"
-              />
-              <button 
-                onClick={() => alert("Thank you for subscribing to GST Buddy AI news updates!")}
-                className="px-6 py-3 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white font-bold rounded-xl text-sm cursor-pointer shadow-md transition-all active:scale-95"
-              >
-                Subscribe
-              </button>
-            </div>
-          </div>
+
 
           {/* 6-Column Navigation Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 lg:gap-6 mb-16">
@@ -1699,14 +1688,18 @@ export default function Home() {
 
           {/* Bottom Legal Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>
-              © {new Date().getFullYear()} GST Buddy AI. Built for the NxtWave BUILDATHON. All rights reserved.
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }} className="items-center text-center sm:items-start sm:text-left">
+              <span>
+                © 2026 GST Buddy AI. Built for the NxtWave BUILDATHON. All rights reserved.
+              </span>
+              <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                GSTIN: 29ABCDE1234F2Z5
+              </span>
+            </div>
             <div className="flex items-center gap-6 flex-wrap justify-center">
-              <span>GSTIN: 29ABCDE1234F2Z5</span>
               <span className="hidden sm:inline">•</span>
               <span className="font-semibold text-slate-600 dark:text-slate-300">
-                Made with precision for Indian Businesses 🇮🇳
+                {t('made_for_india', 'Made with precision for Indian Businesses')}
               </span>
             </div>
           </div>

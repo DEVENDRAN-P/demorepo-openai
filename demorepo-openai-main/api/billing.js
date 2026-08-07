@@ -220,7 +220,8 @@ const handleVerify = async (req, res, decodedToken) => {
     razorpay_order_id,
     razorpay_payment_id,
     razorpay_signature,
-    planId
+    planId,
+    isYearly
   } = req.body;
 
   const uid = decodedToken.uid;
@@ -273,8 +274,10 @@ const handleVerify = async (req, res, decodedToken) => {
 
     // 3. Update subscription state & log transaction in database
     console.log("✍️ [verify] Updating subscription state and writing ledger entries...");
-    const expiryDate = planId === "free" ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const amount = planId === "free" ? 0 : (planId === "pro" ? 299 : 999);
+    const isYearlyBilling = isYearly === true;
+    const daysToAdd = isYearlyBilling ? 365 : 30;
+    const expiryDate = planId === "free" ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000);
+    const amount = planId === "free" ? 0 : (planId === "pro" ? (isYearlyBilling ? 159 * 12 : 199) : (isYearlyBilling ? 399 * 12 : 499));
     const paymentData = {
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,

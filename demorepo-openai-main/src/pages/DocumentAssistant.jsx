@@ -1,7 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 
 function DocumentAssistant() {
+  const [activePlan, setActivePlan] = useState(() => {
+    return localStorage.getItem('saas_active_plan') || 'free';
+  });
+
+  const [documentCount, setDocumentCount] = useState(() => {
+    return Number(localStorage.getItem('saas_doc_count')) || 0;
+  });
+
+  useEffect(() => {
+    const handlePlanChanged = () => {
+      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+    };
+    window.addEventListener('planChanged', handlePlanChanged);
+    return () => window.removeEventListener('planChanged', handlePlanChanged);
+  }, []);
+
+  const limit = activePlan === 'free' ? 3 : activePlan === 'pro' ? 50 : Infinity;
   const [docFile, setDocFile] = useState(null);
   const [docPreview, setDocPreview] = useState(null);
   const [docExtracted, setDocExtracted] = useState(null);
@@ -168,6 +185,15 @@ Analyze this official document, tax notice, contract, or government letter image
 
   const handleAnalyze = async () => {
     if (!docFile) return;
+
+    // Limit check
+    if (documentCount >= limit) {
+      alert(`⚠️ Document Limit Reached: You have analyzed ${documentCount} of ${limit} documents this month under the ${activePlan === 'free' ? 'Free' : 'Pro'} Plan. Please upgrade your subscription to process more documents.`);
+      localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
+      window.location.href = '/pricing';
+      return;
+    }
+
     setLoading(true);
     setProgress(0);
     
@@ -197,6 +223,10 @@ Analyze this official document, tax notice, contract, or government letter image
       setDocExtracted(analysis);
       setNotification({ message: 'Legal document audit complete!', type: 'success' });
       setProgress(100);
+      
+      const newCount = documentCount + 1;
+      setDocumentCount(newCount);
+      localStorage.setItem('saas_doc_count', newCount);
     } catch (e) {
       console.error(e);
       setNotification({ message: e.message || 'Analysis failed. Make sure the document is clear and check your Groq API key.', type: 'error' });
@@ -209,11 +239,28 @@ Analyze this official document, tax notice, contract, or government letter image
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       
       {/* Title Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>AI Document Assistant</h1>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Upload official tax notices, demand letters, vendor agreements, and business contracts. AI will extract key terms and draft formal responses.
-        </p>
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>AI Document Assistant</h1>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+            Upload official tax notices, demand letters, vendor agreements, and business contracts. AI will extract key terms and draft formal responses.
+          </p>
+        </div>
+
+        {/* Scan Limits Badge */}
+        <div style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          padding: '0.5rem 1rem',
+          borderRadius: 'var(--radius-lg)',
+          fontSize: '0.75rem',
+          textAlign: 'right'
+        }}>
+          <div>Documents analyzed: <strong>{documentCount} / {limit === Infinity ? 'Unlimited' : limit}</strong></div>
+          <div style={{ width: '120px', background: 'var(--bg-tertiary)', height: '4px', borderRadius: '2px', display: 'inline-block', overflow: 'hidden', marginTop: '0.25rem' }}>
+            <div style={{ width: `${limit === Infinity ? 100 : Math.min(100, (documentCount / limit) * 100)}%`, background: documentCount >= limit ? 'var(--error)' : 'var(--theme-primary)', height: '100%' }}></div>
+          </div>
+        </div>
       </div>
 
       {notification && (
@@ -239,7 +286,11 @@ Analyze this official document, tax notice, contract, or government letter image
           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Scan Notice / Agreement</h3>
           
           <div style={{ border: '2px dashed var(--border-color)', padding: '2.5rem', textAlign: 'center', borderRadius: 'var(--radius-lg)', background: 'var(--bg-primary)' }}>
-            <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1rem' }}>📥</span>
+            <span style={{ display: 'block', marginBottom: '1rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto' }}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              </svg>
+            </span>
             <input type="file" onChange={handleDocUpload} accept="image/*,application/pdf" style={{ display: 'block', margin: '0 auto 1.5rem', fontSize: '0.85rem' }} />
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supported formats: JPG, PNG, PDF documents (max 5MB)</span>
           </div>

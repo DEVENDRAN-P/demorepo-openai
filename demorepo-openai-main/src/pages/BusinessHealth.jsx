@@ -110,7 +110,7 @@ function BusinessHealth({ user }) {
 
         <div className="grid grid-cols-2" style={{ gap: '2rem' }}>
           <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>📈 Revenue & Expense Alignment</h4>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18"/><path d="m18.7 9.3-5.1 5.2-2.8-2.7-4.3 4.3"/></svg> Revenue & Expense Alignment</span></h4>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
               Your business operations are fully captured. Total active transactions ledger equals <strong>₹{totalInvoiceVal.toLocaleString()}</strong>. The input tax claim ratio stands at <strong>{totalTaxAmount > 0 ? '100%' : '0%'}</strong> which suggests that you are claiming every valid credit available.
             </p>

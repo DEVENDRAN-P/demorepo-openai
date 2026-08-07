@@ -236,7 +236,12 @@ function GSTForms({ user }) {
       <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <div>
           <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', borderRadius: 'var(--radius-xl)' }}>
-            <span style={{ fontSize: '4.5rem', display: 'block', marginBottom: '1.5rem' }}>📋</span>
+            <span style={{ display: 'block', marginBottom: '1.5rem', color: 'var(--theme-primary)', textAlign: 'center' }}>
+            <svg width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto' }}>
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+            </svg>
+          </span>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>
               No GST Invoices Found
             </h2>
@@ -323,7 +328,7 @@ function GSTForms({ user }) {
         {/* Filing success state message */}
         {filingSuccess && (
           <div className="glass-panel" style={{ padding: '1.25rem 2rem', background: '#1b5e20', borderRadius: 'var(--radius-lg)', color: 'white', marginBottom: '2rem', borderLeft: '6px solid var(--success)' }}>
-            <strong>🎉 GSTR Return Form Auto-Filed successfully!</strong>
+            <strong><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--success)' }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> GSTR Return Form Auto-Filed successfully!</strong>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
               All outstanding bills are locked as filed in your records. Activity log has been synced to Vercel/Firebase gateway.
             </p>
@@ -383,8 +388,8 @@ function GSTForms({ user }) {
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', marginLeft: 'auto' }}>
-              <button onClick={downloadPDF} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>📥 Download Return PDF</button>
-              <button onClick={exportJSON} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>💾 Export Return JSON</button>
+              <button onClick={downloadPDF} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Download Return PDF</button>
+              <button onClick={exportJSON} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Export Return JSON</button>
             </div>
           </div>
 
@@ -451,7 +456,12 @@ function GSTForms({ user }) {
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Estimated Net Payable Tax (to Government)</span>
                   <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{gstr3bData?.netPayable.toLocaleString()}</div>
                 </div>
-                <span style={{ fontSize: '2.5rem' }}>💸</span>
+                <span style={{ color: 'var(--theme-secondary)', display: 'inline-block', verticalAlign: 'middle' }}>
+                  <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M16 8h-6a2 2 0 0 0-2 2v0a2 2 0 0 0 2 2h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H8M12 6v12"/>
+                  </svg>
+                </span>
               </div>
             </div>
           )}
