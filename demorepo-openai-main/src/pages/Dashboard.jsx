@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ReminderPanel from '../components/ReminderPanel';
 import GSTFilingStatus from '../components/GSTFilingStatus';
 import PenaltyLateFeeEstimator from '../components/PenaltyLateFeeEstimator';
 import { getUserBills } from '../services/firebaseDataService';
+import { auth } from '../config/firebase';
 
 // Define the demo businesses
 const BUSINESSES = [
@@ -60,7 +61,9 @@ const IconRobot = () => (
 );
 
 function Dashboard({ user }) {
+  const navigate = useNavigate();
   const [bills, setBills] = useState([]);
+  const [activePlan, setActivePlan] = useState('free');
   const [activeBusiness, setActiveBusiness] = useState(() => {
     const saved = localStorage.getItem('activeBusinessId');
     return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
@@ -72,6 +75,51 @@ function Dashboard({ user }) {
   const [agentLoading, setAgentLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
+
+  // Fetch subscription tier status
+  const getApiUrl = (path) => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      if (window.location.port !== '5000') {
+        return `http://localhost:5000${path}`;
+      }
+    }
+    return path;
+  };
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        const token = await currentUser.getIdToken(true);
+        const res = await fetch(getApiUrl('/api/subscription/status'), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setActivePlan(data.subscriptionPlan || 'free');
+        }
+      } catch (err) {
+        console.error('Error fetching subscription status in Dashboard:', err);
+      }
+    };
+    fetchStatus();
+  }, [user]);
+
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeTarget, setUpgradeTarget] = useState('pro');
+
+  const handleFeatureClick = (requiredTier, e) => {
+    if (activePlan === 'free' && requiredTier !== 'free') {
+      e.preventDefault();
+      setUpgradeTarget(requiredTier);
+      setShowUpgradeModal(true);
+    } else if (activePlan === 'pro' && requiredTier === 'business') {
+      e.preventDefault();
+      setUpgradeTarget(requiredTier);
+      setShowUpgradeModal(true);
+    }
+  };
 
 
 
@@ -167,6 +215,22 @@ function Dashboard({ user }) {
     const finalPrompt = promptText || agentInput;
     if (!finalPrompt.trim()) return;
 
+    // Feature gating checks for AI Queries
+    const queryLower = finalPrompt.toLowerCase();
+    if (activePlan === 'free') {
+      if (queryLower.includes('prepare') || queryLower.includes('compliance') || queryLower.includes('risk') || queryLower.includes('audit')) {
+        setUpgradeTarget('pro');
+        setShowUpgradeModal(true);
+        return;
+      }
+    } else if (activePlan === 'pro') {
+      if (queryLower.includes('risk') || queryLower.includes('audit')) {
+        setUpgradeTarget('business');
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+
     setAgentLoading(true);
     setAgentResponse('');
     try {
@@ -237,8 +301,22 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
                 AI Finance Operating System
               </span>
             </div>
-            <h1 className="gradient-text" style={{ fontSize: '2.25rem', margin: 0, letterSpacing: '-0.025em' }}>
-              GST Buddy Executive Dashboard
+            <h1 className="gradient-text" style={{ fontSize: '2.25rem', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              Welcome back, {user?.name || user?.displayName || 'Devendran'} 👋
+              <span style={{
+                fontSize: '0.75rem',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                background: activePlan === 'free' ? 'rgba(100, 116, 139, 0.15)' : activePlan === 'pro' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                color: activePlan === 'free' ? '#94a3b8' : activePlan === 'pro' ? '#818cf8' : '#34d399',
+                border: activePlan === 'free' ? '1px solid rgba(100, 116, 139, 0.3)' : activePlan === 'pro' ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
+                letterSpacing: '0.05em',
+                lineHeight: 1
+              }}>
+                {activePlan} Tier
+              </span>
             </h1>
             <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.95rem' }}>
               Manage accounts, verify compliance, and audit risks with your AI accountant.
@@ -451,11 +529,11 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
                   <IconUploadCloud />
                   <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Smart Upload</span>
                 </Link>
-                <Link to="/gst-forms" className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <Link to="/gst-forms" onClick={(e) => handleFeatureClick('pro', e)} className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconDocuments />
                   <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filing Readiness</span>
                 </Link>
-                <Link to="/reports" className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <Link to="/reports" onClick={(e) => handleFeatureClick('pro', e)} className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconBarChart />
                   <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Deep Analytics</span>
                 </Link>
@@ -712,6 +790,97 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
           }
         }
       `}</style>
+      {/* 🔮 Modern Upgrade Promo Modal */}
+      {showUpgradeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '2px solid var(--theme-primary-light)',
+            borderRadius: '24px',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '2.5rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+            textAlign: 'center',
+            color: 'var(--text-primary)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowUpgradeModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              &times;
+            </button>
+
+            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>⭐</div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Subscription Upgrade Required</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+              This operational framework is available on the <strong>{upgradeTarget === 'pro' ? 'Pro Plan' : 'Business Plan'}</strong>. Upgrade today to unlock unlimited filings, detailed business insights, and 24/7 dedicated auditor support.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => {
+                  setShowUpgradeModal(false);
+                  localStorage.setItem('selectedPlan', upgradeTarget);
+                  navigate('/pricing');
+                }}
+                style={{
+                  padding: '0.85rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
+                  color: 'white',
+                  border: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
+                }}
+              >
+                Choose {upgradeTarget === 'pro' ? 'Pro' : 'Business'} Plan
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                style={{
+                  padding: '0.85rem',
+                  borderRadius: '10px',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

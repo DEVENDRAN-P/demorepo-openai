@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const mainContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (mainContainerRef.current) {
+      mainContainerRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   return (
     <div style={{
@@ -36,14 +44,17 @@ function DashboardLayout() {
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       {/* Main Workspace Frame */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: 0,
-        height: '100vh',
-        overflowY: 'auto'
-      }}>
+      <div 
+        ref={mainContainerRef}
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          height: '100vh',
+          overflowY: 'auto'
+        }}
+      >
         {/* Sticky Header */}
         <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
 

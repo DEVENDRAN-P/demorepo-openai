@@ -11,16 +11,19 @@
 
 require("dotenv").config();
 const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
 const nodemailer = require("nodemailer");
 
 console.log("\n🔔 [OVERDUE BILL TESTER] Testing Automatic Overdue System\n");
 
 // Initialize Firebase
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!admin.getApps().length) {
+  admin.initializeApp({
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "finalopenai-fc9c5"
+  });
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Get transporter
 function getTransporter() {

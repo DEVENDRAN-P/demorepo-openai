@@ -139,9 +139,9 @@ const handleHistory = async (req, res, decodedToken) => {
 
 // 3. Create Order Handler
 const handleCreateOrder = async (req, res, decodedToken) => {
-  const { planId } = req.body;
+  const { planId, isYearly } = req.body;
   const uid = decodedToken.uid;
-  console.log(`📥 [POST /api/payment/create-order] Request received. Plan: '${planId}', UID: '${uid}'`);
+  console.log(`📥 [POST /api/payment/create-order] Request received. Plan: '${planId}', isYearly: '${isYearly}', UID: '${uid}'`);
 
   if (!planId) {
     console.warn("⚠️ [create-order] Missing parameter 'planId' in POST body.");
@@ -150,10 +150,16 @@ const handleCreateOrder = async (req, res, decodedToken) => {
 
   // Determine amount in INR (paise conversion)
   let planAmountPaise = 0;
+  const isYearlyBilling = isYearly === true;
+
   if (planId === "pro") {
-    planAmountPaise = 299 * 100; // ₹299 = 29900 paise
+    const monthlyRate = 199;
+    const yearlyRate = 159 * 12; // ₹1,908 billed annually (save 20%)
+    planAmountPaise = (isYearlyBilling ? yearlyRate : monthlyRate) * 100;
   } else if (planId === "business") {
-    planAmountPaise = 999 * 100; // ₹999 = 99900 paise
+    const monthlyRate = 499;
+    const yearlyRate = 399 * 12; // ₹4,788 billed annually (save 20%)
+    planAmountPaise = (isYearlyBilling ? yearlyRate : monthlyRate) * 100;
   } else {
     console.warn(`⚠️ [create-order] Invalid plan selected: '${planId}'`);
     return res.status(400).json({ success: false, error: "Invalid planId selected" });
@@ -248,22 +254,27 @@ const handleVerify = async (req, res, decodedToken) => {
     }
 
     // 2. Perform HMAC SHA256 Signature Verification
-    console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
-    const generatedSignature = crypto
-      .createHmac("sha256", razorpayKeySecret)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest("hex");
+    const isReset = planId === "free" && razorpay_signature === "reset_signature";
+    if (isReset) {
+      console.log("ℹ️ Test Reset: Downgrading user to Free plan.");
+    } else {
+      console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
+      const generatedSignature = crypto
+        .createHmac("sha256", razorpayKeySecret)
+        .update(razorpay_order_id + "|" + razorpay_payment_id)
+        .digest("hex");
 
-    if (generatedSignature !== razorpay_signature) {
-      console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
-      return res.status(400).json({ success: false, error: "Invalid payment signature" });
+      if (generatedSignature !== razorpay_signature) {
+        console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
+        return res.status(400).json({ success: false, error: "Invalid payment signature" });
+      }
+      console.log("✅ [verify] Signature validation passed.");
     }
-    console.log("✅ [verify] Signature validation passed.");
 
     // 3. Update subscription state & log transaction in database
     console.log("✍️ [verify] Updating subscription state and writing ledger entries...");
-    const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days active cycle
-    const amount = planId === "pro" ? 299 : 999;
+    const expiryDate = planId === "free" ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const amount = planId === "free" ? 0 : (planId === "pro" ? 299 : 999);
     const paymentData = {
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,

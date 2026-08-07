@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
+import { useTranslation } from 'react-i18next';
 
 const BUSINESSES = [
   { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5' },
@@ -157,6 +158,8 @@ const iconMap = {
 function Sidebar({ mobileOpen, setMobileOpen }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [activeBusiness, setActiveBusiness] = useState(() => {
     const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
@@ -191,22 +194,22 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   };
 
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: iconMap.dashboard },
-    { name: 'AI Accountant Agent', path: '/agent', icon: iconMap.agent },
-    { name: 'Invoice Intelligence', path: '/bill-upload', icon: iconMap.upload },
-    { name: 'Invoices', path: '/invoices', icon: iconMap.invoices },
-    { name: 'Document Assistant', path: '/documents', icon: iconMap.documents },
-    { name: 'Compliance Center', path: '/compliance', icon: iconMap.compliance },
-    { name: 'Penalty Center', path: '/penalty', icon: iconMap.penalty },
-    { name: 'Business Health', path: '/health', icon: iconMap.health },
-    { name: 'Reports', path: '/reports', icon: iconMap.reports },
-    { name: 'Analytics', path: '/expenses', icon: iconMap.expenses },
-    { name: 'Business Directory', path: '/business', icon: iconMap.business },
-    { name: 'Notifications', path: '/notifications', icon: iconMap.notifications },
-    { name: 'Pricing & Billing', path: '/pricing', icon: iconMap.pricing },
-    { name: 'Settings', path: '/settings', icon: iconMap.settings },
-    { name: 'Help', path: '/support', icon: iconMap.support },
-    { name: 'Profile', path: '/profile', icon: iconMap.profile }
+    { name: 'Dashboard', translationKey: 'dashboard', path: '/dashboard', icon: iconMap.dashboard },
+    { name: 'AI Accountant Agent', translationKey: 'ai_accountant_agent', path: '/agent', icon: iconMap.agent },
+    { name: 'Invoice Intelligence', translationKey: 'invoice_intelligence', path: '/bill-upload', icon: iconMap.upload },
+    { name: 'Invoices', translationKey: 'invoices', path: '/invoices', icon: iconMap.invoices },
+    { name: 'Document Assistant', translationKey: 'document_assistant', path: '/documents', icon: iconMap.documents },
+    { name: 'Compliance Center', translationKey: 'compliance_center', path: '/compliance', icon: iconMap.compliance },
+    { name: 'Penalty Center', translationKey: 'penalty_center', path: '/penalty', icon: iconMap.penalty },
+    { name: 'Business Health', translationKey: 'business_health', path: '/health', icon: iconMap.health },
+    { name: 'Reports', translationKey: 'reports', path: '/reports', icon: iconMap.reports },
+    { name: 'Analytics', translationKey: 'analytics', path: '/expenses', icon: iconMap.expenses },
+    { name: 'Business Directory', translationKey: 'business_directory', path: '/business', icon: iconMap.business },
+    { name: 'Notifications', translationKey: 'notifications', path: '/notifications', icon: iconMap.notifications },
+    { name: 'Pricing & Billing', translationKey: 'pricing_billing', path: '/pricing', icon: iconMap.pricing },
+    { name: 'Settings', translationKey: 'settings', path: '/settings', icon: iconMap.settings },
+    { name: 'Help', translationKey: 'help', path: '/support', icon: iconMap.support },
+    { name: 'Profile', translationKey: 'profile', path: '/profile', icon: iconMap.profile }
   ];
 
   return (
@@ -312,7 +315,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
               <span style={{ display: 'flex', alignItems: 'center', color: isActive ? 'var(--theme-secondary)' : 'inherit' }}>
                 {item.icon}
               </span>
-              {!collapsed && <span>{item.name}</span>}
+              {!collapsed && <span>{t(item.translationKey, item.name)}</span>}
             </NavLink>
           );
         })}
@@ -346,15 +349,15 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.name || 'Shop owner'}
+                {user?.name || 'Guest User'}
               </span>
               <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.email || 'admin@gstbuddy.ai'}
+                {user?.email || 'guest@gstbuddy.ai'}
               </span>
               <span style={{ 
                 fontSize: '0.6rem', 
                 color: 'white', 
-                background: selectedPlan === 'free' ? '#64748b' : selectedPlan === 'pro' ? 'var(--theme-primary-light)' : '#14b8a6', 
+                background: (!user || selectedPlan === 'free') ? '#64748b' : selectedPlan === 'pro' ? 'var(--theme-primary-light)' : '#14b8a6', 
                 padding: '0.1rem 0.375rem', 
                 borderRadius: '4px',
                 width: 'fit-content',
@@ -362,19 +365,19 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
                 fontWeight: 700,
                 textTransform: 'uppercase'
               }}>
-                {selectedPlan === 'free' ? 'Free Tier' : selectedPlan === 'pro' ? 'Pro Tier' : 'Business Tier'}
+                {!user ? 'Not Subscribed' : selectedPlan === 'free' ? 'Free Tier' : selectedPlan === 'pro' ? 'Pro Tier' : 'Business Tier'}
               </span>
             </div>
           </div>
         )}
         
         <button 
-          onClick={logout}
+          onClick={user ? logout : () => navigate('/login')}
           style={{
             width: '100%',
             background: 'transparent',
             border: 'none',
-            color: '#ef4444',
+            color: user ? '#ef4444' : 'var(--primary-600)',
             cursor: 'pointer',
             padding: '0.5rem 0.75rem',
             borderRadius: 'var(--radius-md)',
@@ -386,8 +389,8 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             justifyContent: collapsed ? 'center' : 'flex-start'
           }}
         >
-          <span>🚪</span>
-          {!collapsed && <span>Sign Out</span>}
+          <span>{user ? '🚪' : '🔑'}</span>
+          {!collapsed && <span>{user ? 'Sign Out' : 'Sign In'}</span>}
         </button>
       </div>
 

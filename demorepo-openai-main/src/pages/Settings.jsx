@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDarkMode } from '../context/DarkModeContext';
 import { getUserProfile, saveUserProfile } from '../services/firebaseDataService';
+import { useTranslation } from 'react-i18next';
 
 function Settings({ user }) {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('business');
 
   // Form states & dirty checking
@@ -325,6 +327,27 @@ function Settings({ user }) {
                   <button onClick={toggleDarkMode} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>
                     {isDarkMode ? '🌞 Switch Light Mode' : '🌙 Switch Dark Mode'}
                   </button>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Workspace Language Preference</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Choose your preferred language for reports, alerts, and dashboard navigation.</span>
+                  </div>
+                  <select 
+                    value={i18n.language} 
+                    onChange={(e) => {
+                      i18n.changeLanguage(e.target.value);
+                      localStorage.setItem('language', e.target.value);
+                    }}
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer', minWidth: '150px' }}
+                  >
+                    <option value="en">🇬🇧 English (UK)</option>
+                    <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+                    <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+                    <option value="ml">🇮🇳 മലയാളം (Malayalam)</option>
+                    <option value="kn">🇮🇳 ಕನ್ನಡ (Kannada)</option>
+                  </select>
                 </div>
               </div>
 

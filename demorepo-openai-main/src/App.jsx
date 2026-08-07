@@ -16,10 +16,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 
 // Pages - Import commonly used pages directly
-import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 
 import DashboardLayout from './components/DashboardLayout';
 
@@ -49,6 +49,7 @@ const GlobalSearch = lazy(() => import('./pages/GlobalSearch'));
 const PenaltyCenter = lazy(() => import('./pages/PenaltyCenter'));
 const PricingBilling = lazy(() => import('./pages/PricingBilling'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 
 // Loading Component
 function LoadingScreen() {
@@ -73,13 +74,21 @@ function AppRoutes() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />} />
+        <Route path="/" element={<Home />} />
+        
+        {/* Render pricing inside dashboard layout for both guests and authenticated users */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/pricing" element={<PricingBilling user={user} />} />
+        </Route>
+        
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage isLoginInitial={true} />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage isLoginInitial={false} />} />
         <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
 
         <Route element={<ProtectedRoute user={user} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard user={user} />} />
+            
             <Route path="/agent" element={<AIFinanceAgent user={user} />} />
             <Route path="/bill-upload" element={<BillUpload user={user} />} />
             <Route path="/bill/:billId" element={<BillDetails user={user} />} />
@@ -101,14 +110,13 @@ function AppRoutes() {
             <Route path="/search" element={<GlobalSearch user={user} />} />
             <Route path="/settings" element={<Settings user={user} />} />
             <Route path="/penalty" element={<PenaltyCenter user={user} />} />
-            <Route path="/pricing" element={<PricingBilling user={user} />} />
+            <Route path="/checkout" element={<CheckoutPage user={user} />} />
             <Route path="/payment-success" element={<PaymentSuccess user={user} />} />
             <Route path="/support" element={<Support user={user} />} />
             <Route path="/profile" element={<Profile user={user} />} />
           </Route>
         </Route>
 
-        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </Suspense>

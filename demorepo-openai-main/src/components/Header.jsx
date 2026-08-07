@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDarkMode } from '../context/DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
 const BUSINESSES = [
   { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', compliance: 95, status: 'Ready' },
@@ -13,6 +14,8 @@ function Header({ onMenuClick }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { i18n } = useTranslation();
+  const [langOpen, setLangOpen] = useState(false);
   const [activeBusiness, setActiveBusiness] = useState(() => {
     const saved = localStorage.getItem('activeBusinessId') || 'apex_retailers';
     return BUSINESSES.find(b => b.id === saved) || BUSINESSES[0];
@@ -158,6 +161,74 @@ function Header({ onMenuClick }) {
         >
           {isDarkMode ? '☀️' : '🌙'}
         </button>
+
+        {/* Language Selector Dropdown */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <button 
+            onClick={() => setLangOpen(!langOpen)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '1.15rem',
+              cursor: 'pointer',
+              padding: '0.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+              transition: 'transform 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            title="Change Language"
+          >
+            🌐
+          </button>
+          {langOpen && (
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              top: '100%',
+              marginTop: '0.5rem',
+              width: '150px',
+              background: 'var(--bg-secondary)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-xl)',
+              border: '1px solid var(--border-color)',
+              overflow: 'hidden',
+              zIndex: 1000
+            }}>
+              {['en', 'hi', 'ta', 'ml', 'kn'].map((code, index) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    i18n.changeLanguage(code);
+                    localStorage.setItem('language', code);
+                    setLangOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    border: 'none',
+                    background: i18n.language === code ? 'var(--primary-50)' : 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: i18n.language === code ? 700 : 500,
+                    color: i18n.language === code ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
+                  <span>{['English', 'Hindi', 'Tamil', 'Malayalam', 'Kannada'][index]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* User profile dropdown shortcut */}
         <button 
