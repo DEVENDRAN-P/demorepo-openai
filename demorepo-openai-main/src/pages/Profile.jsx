@@ -1,18 +1,207 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { db } from '../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { useDarkMode } from '../context/DarkModeContext';
+import { useAuth } from '../hooks/useAuth';
+import { getUserActivityLogs } from '../services/firebaseDataService';
+import { validateGSTNumber, validatePhone } from '../utils/validators';
 
-function Profile({ user, setUser }) {
+/* ============================================================
+   Icons (Lucide-style inline SVGs — matches existing codebase)
+   ============================================================ */
+
+const Icon = ({ children, size = 18, strokeWidth = 2, className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+const CameraIcon = (p) => (
+  <Icon {...p}>
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+    <circle cx="12" cy="13" r="3" />
+  </Icon>
+);
+
+const TrashIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </Icon>
+);
+
+const UserIcon = (p) => (
+  <Icon {...p}>
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </Icon>
+);
+
+const BuildingIcon = (p) => (
+  <Icon {...p}>
+    <rect width="16" height="20" x="4" y="2" rx="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01" />
+    <path d="M16 6h.01" />
+    <path d="M12 6h.01" />
+    <path d="M12 10h.01" />
+    <path d="M12 14h.01" />
+    <path d="M16 10h.01" />
+    <path d="M16 14h.01" />
+    <path d="M8 10h.01" />
+    <path d="M8 14h.01" />
+  </Icon>
+);
+
+const MailIcon = (p) => (
+  <Icon {...p}>
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </Icon>
+);
+
+const PhoneIcon = (p) => (
+  <Icon {...p}>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </Icon>
+);
+
+const HashIcon = (p) => (
+  <Icon {...p}>
+    <line x1="4" x2="20" y1="9" y2="9" />
+    <line x1="4" x2="20" y1="15" y2="15" />
+    <line x1="10" x2="8" y1="3" y2="21" />
+    <line x1="16" x2="14" y1="3" y2="21" />
+  </Icon>
+);
+
+const CreditCardIcon = (p) => (
+  <Icon {...p}>
+    <rect width="20" height="14" x="2" y="5" rx="2" />
+    <line x1="2" x2="22" y1="10" y2="10" />
+  </Icon>
+);
+
+const ClockIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </Icon>
+);
+
+const GlobeIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+    <path d="M2 12h20" />
+  </Icon>
+);
+
+const LightbulbIcon = (p) => (
+  <Icon {...p}>
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+  </Icon>
+);
+
+const LockIcon = (p) => (
+  <Icon {...p}>
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Icon>
+);
+
+const CheckCircleIcon = (p) => (
+  <Icon {...p}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </Icon>
+);
+
+const AlertCircleIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" x2="12" y1="8" y2="12" />
+    <line x1="12" x2="12.01" y1="16" y2="16" />
+  </Icon>
+);
+
+const HistoryIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M12 7v5l4 2" />
+  </Icon>
+);
+
+const UploadIcon = (p) => (
+  <Icon {...p}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" x2="12" y1="3" y2="15" />
+  </Icon>
+);
+
+const FileTextIcon = (p) => (
+  <Icon {...p}>
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    <path d="M10 9H8" />
+    <path d="M16 13H8" />
+    <path d="M16 17H8" />
+  </Icon>
+);
+
+const SaveIcon = (p) => (
+  <Icon {...p}>
+    <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+    <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+    <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+  </Icon>
+);
+
+const PenLineIcon = (p) => (
+  <Icon {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </Icon>
+);
+
+const ShieldCheckIcon = (p) => (
+  <Icon {...p}>
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="m9 12 2 2 4-4" />
+  </Icon>
+);
+
+/* ============================================================
+   Profile Page — GST Buddy AI (uses App.css .profile-* system)
+   ============================================================ */
+
+function Profile({ user }) {
   const { t, i18n } = useTranslation();
-  const { isDarkMode } = useDarkMode();
+  const { setUser } = useAuth(); // setUser comes from AuthContext (fix: was an undefined prop)
   const fileInputRef = useRef(null);
+  const formRef = useRef(null); // used by the header 'Edit Profile' action
+
   const [profilePic, setProfilePic] = useState(user?.profilePic || null);
   const [previewPic, setPreviewPic] = useState(user?.profilePic || null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [profileColor] = useState(localStorage.getItem('profileColor') || 'indigo');
+  const [message, setMessage] = useState(null); // { type: 'success' | 'error', text }
+  // Save action state derived from the real API outcome: 'idle' | 'saving' | 'success' | 'error'
+  const [saveState, setSaveState] = useState('idle');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -24,752 +213,713 @@ function Profile({ user, setUser }) {
     language: i18n.language,
   });
 
+  const [errors, setErrors] = useState({});
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+
+  /* ---- Recent Activity: real data from the existing service ----
+     The service returns logs in document-ID order (not chronological),
+     so sort by timestamp client-side and show the 8 most recent. */
+  useEffect(() => {
+    let mounted = true;
+    setActivityLoading(true);
+    getUserActivityLogs(30)
+      .then((logs) => {
+        if (mounted) {
+          const recent = [...(Array.isArray(logs) ? logs : [])]
+            .sort((a, b) => tsToMs(b.timestamp) - tsToMs(a.timestamp))
+            .slice(0, 8);
+          setActivityLogs(recent);
+        }
+      })
+      .catch(() => {
+        if (mounted) setActivityLogs([]);
+      })
+      .finally(() => {
+        if (mounted) setActivityLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [user?.uid]);
+
+  /* ---- Auto-dismiss alert ---- */
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = setTimeout(() => setMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  /* ---- Helpers ---- */
+  /* Milliseconds for a Firestore Timestamp or ISO/date string; 0 if missing. */
+  const tsToMs = (ts) => {
+    if (!ts) return 0;
+    try {
+      const d = ts?.toDate ? ts.toDate() : new Date(ts);
+      const ms = d.getTime();
+      return Number.isNaN(ms) ? 0 : ms;
+    } catch {
+      return 0;
+    }
+  };
+
+  const formatTimestamp = (ts) => {
+    const ms = tsToMs(ts);
+    if (!ms) return '';
+    const d = new Date(ms);
+    const today = new Date();
+    const dateLabel = d.toDateString() === today.toDateString()
+      ? 'Today'
+      : d.toLocaleDateString();
+    return `${dateLabel}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
+  const humanizeAction = (action = '') => {
+    if (!action) return 'Activity';
+    return action
+      .split('_')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  };
+
+  /* Friendly, human-readable titles for known activity actions */
+  const activityTitles = {
+    upload_bill: 'Invoice uploaded',
+    update_bill: 'Bill updated',
+    delete_bill: 'Bill deleted',
+    file_gst: 'GST Return Draft Generated',
+    payment: 'Payment completed',
+    subscription: 'Subscription updated',
+  };
+
+  const getActivityTitle = (action = '') =>
+    activityTitles[action] || humanizeAction(action);
+
+  /* Secondary detail line built from the real log.details payload */
+  const getActivityDetail = (log = {}) => {
+    const details = log.details || {};
+    if (details.invoiceNumber) return details.invoiceNumber;
+    if (log.action === 'file_gst' && details.formType) {
+      return `${details.formType} Return${details.invoicesFiledCount ? ` · ${details.invoicesFiledCount} invoices` : ''}`;
+    }
+    if (log.action === 'payment' || log.action === 'subscription') {
+      return details.planId ? `Plan: ${details.planId}` : details.description || '';
+    }
+    return '';
+  };
+
+  const activityIconClass = (action = '') => {
+    const a = action.toLowerCase();
+    if (a.includes('upload')) return 'upload';
+    if (a.includes('payment') || a.includes('subscri') || a.includes('plan')) return 'payment';
+    return 'file';
+  };
+
+  /* ---- Profile photo ---- */
   const handleProfilePicChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type (JPG, JPEG, PNG only)
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        setMessage('❌ Only JPG, JPEG, and PNG files are allowed');
-        setTimeout(() => setMessage(''), 3000);
-        return;
-      }
+    if (!file) return;
 
-      // Check file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        setMessage('❌ File size must be less than 2MB');
-        setTimeout(() => setMessage(''), 3000);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewPic(reader.result);
-        setProfilePic(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Only JPG, JPEG, and PNG files are allowed' });
+      return;
     }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'File size must be less than 2MB' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewPic(reader.result);
+      setProfilePic(reader.result);
+      setSaveState('idle');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveProfilePic = () => {
     setProfilePic(null);
     setPreviewPic(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setSaveState('idle');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  /* ---- Form ---- */
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setSaveState('idle');
   };
 
-  const getProfileGradient = () => {
-    const colors = {
-      teal: isDarkMode
-        ? 'linear-gradient(135deg, #0d6b6b 0%, #0a4d4d 100%)'
-        : 'linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-secondary-dark) 100%)',
-      indigo: isDarkMode
-        ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
-        : 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
-      amber: isDarkMode
-        ? 'linear-gradient(135deg, #b45309 0%, #92400e 100%)'
-        : 'linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%)',
-    };
-    return colors[profileColor] || colors.indigo;
+  /* ---- Discard unsaved edits and revert to the last saved values ---- */
+  const handleCancel = () => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      shopName: user?.shopName || '',
+      gstin: user?.gstin || '',
+      address: user?.address || '',
+      mobileNumber: user?.mobileNumber || '',
+      language: user?.language || i18n.language,
+    });
+    setErrors({});
+    setMessage(null);
+    setSaveState('idle');
+    setPreviewPic(user?.profilePic || null);
+    setProfilePic(user?.profilePic || null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  
+  const validate = () => {
+    const nextErrors = {};
+    if (!formData.name?.trim()) nextErrors.name = 'Full name is required';
+    if (!formData.shopName?.trim()) nextErrors.shopName = 'Shop name is required';
+    if (!formData.gstin?.trim()) {
+      nextErrors.gstin = 'GSTIN is required';
+    } else if (!validateGSTNumber(formData.gstin)) {
+      nextErrors.gstin = 'Enter a valid GSTIN (e.g. 27AAHCT5055K1Z0)';
+    }
+    if (formData.mobileNumber && !validatePhone(formData.mobileNumber)) {
+      nextErrors.mobileNumber = 'Enter a valid 10-digit mobile number';
+    }
+    return nextErrors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    const nextErrors = validate();
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setMessage({ type: 'error', text: 'Please fix the highlighted fields' });
+      return;
+    }
+
+    setSaveState('saving');
     try {
       const updatedUser = { ...user, ...formData, profilePic };
 
-      // Save to Firestore if user has uid
+      // Save to Firestore if user has uid (contract unchanged)
       if (user?.uid) {
-        await setDoc(doc(db, 'users', user.uid), {
-          name: formData.name,
-          shopName: formData.shopName,
-          gstin: formData.gstin,
-          address: formData.address,
-          mobileNumber: formData.mobileNumber,
-          profilePic: profilePic,
-          language: formData.language,
-          email: user.email,
-          updatedAt: new Date().toISOString(),
-        }, { merge: true });
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            name: formData.name,
+            shopName: formData.shopName,
+            gstin: formData.gstin,
+            address: formData.address,
+            mobileNumber: formData.mobileNumber,
+            profilePic: profilePic,
+            language: formData.language,
+            email: user.email,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
       }
 
       // Save to localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      setUser(updatedUser); // now works via context
       i18n.changeLanguage(formData.language);
       localStorage.setItem('language', formData.language);
 
-      setMessage('✅ Profile updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setSaveState('success');
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
       console.error('Error updating profile:', error);
-      setMessage('❌ Error updating profile');
-      setTimeout(() => setMessage(''), 3000);
-    } finally {
-      setLoading(false);
+      setSaveState('error');
+      setMessage({ type: 'error', text: 'Error updating profile. Please try again.' });
     }
   };
 
+  // Human-friendly save button label derived from real save state
+  const saveLabel =
+    saveState === 'saving' ? 'Saving...' :
+    saveState === 'success' ? 'Changes Saved ✓' :
+    saveState === 'error' ? 'Unable to save changes' :
+    'Save Changes';
+
+  const planTier = (localStorage.getItem('saas_active_plan') || 'Free').toUpperCase();
+  const lastAuthenticated = formatTimestamp(user?.lastLogin);
+
+  /* ============================================================
+     Render
+     ============================================================ */
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      <div style={{
-        maxWidth: '1000px',
-        margin: '0 auto',
-      }}>
-        {/* Profile Header Card */}
-        <div 
-          className="profile-card"
-          style={{
-            background: getProfileGradient(),
-            borderRadius: '1rem',
-            padding: '2rem',
-            color: '#FFFFFF',
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2.5rem',
-            flexWrap: 'wrap',
-            boxShadow: 'var(--shadow-theme)',
-          }}>
-          <div style={{ flex: '0 0 auto' }}>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                border: '4px solid rgba(255, 255, 255, 0.6)',
-                overflow: 'hidden',
-                transition: 'all 0.3s ease',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
-                e.currentTarget.style.border = '4px solid rgba(255, 255, 255, 0.9)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.border = '4px solid rgba(255, 255, 255, 0.6)';
-              }}
-            >
-              {previewPic ? (
-                <img
-                  src={previewPic}
-                  alt="Profile"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <div style={{
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  width: '100%',
-                  gap: '0.5rem',
-                }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)' }}>Add Photo</div>
-                </div>
-              )}
-              {/* Hover overlay with text */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.3s ease',
-                borderRadius: '50%',
-              }} className="profile-hover-overlay">
-                <span style={{ color: 'white', fontWeight: '600', fontSize: '0.85rem' }}>Update Profile Photo</span>
-              </div>
-              {/* Camera edit icon overlay */}
-              <div style={{
-                position: 'absolute',
-                bottom: '4px',
-                right: '4px',
-                background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
-                padding: '0.5rem',
-                borderRadius: '50%',
-                border: '2px solid white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'var(--shadow-md)',
-              }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png"
-              onChange={handleProfilePicChange}
-              style={{ display: 'none' }}
-            />
-            {/* Change Photo and Remove buttons */}
-            <div style={{
-              display: 'flex',
-              gap: '0.75rem',
-              marginTop: '1rem',
-              justifyContent: 'center',
-            }}>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  padding: '0.6rem 1.25rem',
-                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  boxShadow: 'var(--shadow-lg)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                }}
-              >
-                Change Photo
-              </button>
-              {previewPic && (
-                <button
-                  onClick={handleRemoveProfilePic}
-                  style={{
-                    padding: '0.6rem 1.25rem',
-                    background: 'transparent',
-                    color: '#fca5a5',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '500',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#fee2e2';
-                    e.currentTarget.style.color = '#dc2626';
-                    e.currentTarget.style.borderColor = '#dc2626';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#fca5a5';
-                    e.currentTarget.style.borderColor = '#fca5a5';
+    <div className="profile-page">
+      <div className="profile-container">
+        {/* ---- Page header ---- */}
+        <div className="profile-page-header">
+          <div>
+            <h1>{t('profile')}</h1>
+            <p>Manage your personal information, business details, and account preferences.</p>
+          </div>
+          <button
+            type="button"
+            className="profile-btn profile-btn-secondary"
+            onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          >
+            <PenLineIcon size={15} />
+            Edit Profile
+          </button>
+        </div>
+
+        {/* ---- Alert ---- */}
+        {message && (
+          <div className={`profile-alert ${message.type}`} role="alert">
+            {message.type === 'success' ? <CheckCircleIcon size={18} /> : <AlertCircleIcon size={18} />}
+            <span>{message.text}</span>
+          </div>
+        )}
+
+        {/* ---- Summary card ---- */}
+        <div className="profile-card profile-summary-card">
+          <div className="profile-summary-left">
+            <div className="profile-avatar-column">
+              <div className="profile-avatar-wrap">
+                <div
+                  className="profile-avatar"
+                  onClick={() => fileInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={previewPic ? 'Update profile photo' : 'Add profile photo'}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
                   }}
                 >
-                  Remove
+                  {previewPic ? (
+                    <img src={previewPic} alt="Profile" />
+                  ) : (
+                    <div className="profile-avatar-empty">
+                      <CameraIcon size={20} />
+                      <span>Add photo</span>
+                    </div>
+                  )}
+                  <div className="profile-avatar-overlay">
+                    <CameraIcon size={16} />
+                    <span>Update photo</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="profile-avatar-badge"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Upload profile photo"
+                >
+                  <CameraIcon size={13} />
                 </button>
-              )}
+              </div>
+              <div className="profile-avatar-actions">
+                <button
+                  type="button"
+                  className="profile-avatar-link"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <CameraIcon size={14} />
+                  Change photo
+                </button>
+                {previewPic && (
+                  <button type="button" className="profile-avatar-link profile-avatar-remove" onClick={handleRemoveProfilePic}>
+                    <TrashIcon size={14} />
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="profile-identity">
+              <h2>{formData.name || 'User Profile'}</h2>
+              <div className="profile-identity-role">CFO &amp; Administrator</div>
+              <div className="profile-business">
+                <BuildingIcon size={14} />
+                <span className="profile-business-name">{formData.shopName || 'Your Shop'}</span>
+              </div>
+              <span className="profile-account-type">
+                <ShieldCheckIcon size={13} />
+                GST Business Account
+              </span>
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: '250px', paddingLeft: '0.5rem' }} className="profile-info">
-            <h1 className="profile-name" style={{
-              fontSize: '1.875rem',
-              fontWeight: 'bold',
-              margin: '0 0 0.5rem 0',
-              color: '#FFFFFF',
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}>
-              {formData.name || 'User Profile'}
-            </h1>
-            <p style={{
-              fontSize: '1.1rem',
-              opacity: 0.9,
-              margin: '0 0 1rem 0',
-              color: '#FFFFFF',
-            }}>
-              {formData.shopName || 'Your Shop'}
-            </p>
-            <div className="profile-details" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '1.25rem',
-              marginTop: '1rem',
-              width: '100%',
-              fontSize: '0.85rem'
-            }}>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.email}</p>
+
+          {/* Summary chips */}
+          <div className="profile-summary-chips">
+            <div className="profile-chip">
+              <div className="profile-chip-icon"><MailIcon size={16} /></div>
+              <div style={{ minWidth: 0 }}>
+                <div className="profile-chip-label">{t('email')}</div>
+                <div className="profile-chip-value">{formData.email || '—'}</div>
               </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.mobileNumber || 'Not configured'}</p>
+            </div>
+            <div className="profile-chip">
+              <div className="profile-chip-icon"><PhoneIcon size={16} /></div>
+              <div style={{ minWidth: 0 }}>
+                <div className="profile-chip-label">{t('mobile_number')}</div>
+                <div className="profile-chip-value">{formData.mobileNumber || 'Not configured'}</div>
               </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>User Role</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>CFO & Administrator</p>
+            </div>
+            <div className="profile-chip">
+              <div className="profile-chip-icon"><HashIcon size={16} /></div>
+              <div style={{ minWidth: 0 }}>
+                <div className="profile-chip-label">{t('gstin')}</div>
+                <div className="profile-chip-value">{formData.gstin || 'Not registered'}</div>
               </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Business</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{formData.shopName || 'Apex Retailers'}</p>
+            </div>
+            <div className="profile-chip">
+              <div className="profile-chip-icon"><CreditCardIcon size={16} /></div>
+              <div style={{ minWidth: 0 }}>
+                <div className="profile-chip-label">SaaS Plan</div>
+                <div className="profile-chip-value">{planTier} Tier</div>
               </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>GSTIN Identifier</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF', fontFamily: 'monospace' }}>{formData.gstin || 'Not registered'}</p>
-              </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SaaS Subscription</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF', textTransform: 'uppercase' }}>{(localStorage.getItem('saas_active_plan') || 'Free')} Tier</p>
-              </div>
-              <div>
-                <p style={{ margin: '0 0 0.15rem 0', opacity: 0.75, fontSize: '0.7rem', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Last Authentication</p>
-                <p style={{ margin: 0, fontWeight: '600', color: '#FFFFFF' }}>{user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() + ' ' + new Date(user.lastLogin).toLocaleTimeString() : 'Today, 10:41 AM'}</p>
+            </div>
+            <div className="profile-chip">
+              <div className="profile-chip-icon"><ClockIcon size={16} /></div>
+              <div style={{ minWidth: 0 }}>
+                <div className="profile-chip-label">Last authenticated</div>
+                <div className="profile-chip-value">{lastAuthenticated || '—'}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Message Alert */}
-        {message && (
-          <div style={{
-            background: message.includes('✅') ? '#d1fae5' : '#fee2e2',
-            color: message.includes('✅') ? '#065f46' : '#991b1b',
-            padding: '1rem',
-            borderRadius: '0.5rem',
-            marginBottom: '1.5rem',
-            border: `1px solid ${message.includes('✅') ? '#a7f3d0' : '#fca5a5'}`,
-          }}>
-            {message}
-          </div>
-        )}
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png"
+          onChange={handleProfilePicChange}
+          style={{ display: 'none' }}
+        />
 
-        {/* Profile Form Card */}
-        <div style={{
-          background: isDarkMode ? '#2a2a2a' : 'white',
-          color: isDarkMode ? '#e5e7eb' : '#000',
-          borderRadius: '1rem',
-          padding: '2rem 1.5rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            color: isDarkMode ? '#e5e7eb' : '#1f2937',
-          }}>
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></span>
-            {t('edit_profile_information')}
-          </h2>
-
-          <form onSubmit={handleSubmit} style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-          }}>
-            {/* Personal Information Section */}
-            <div>
-              <h3 style={{
-                fontSize: '1rem',
-                fontWeight: '600',
-                marginBottom: '1rem',
-                color: isDarkMode ? '#d1d5db' : '#374151',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}>
-                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Personal Information
-              </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '1.5rem',
-              }}>
+        {/* ---- Form grid ---- */}
+        <form ref={formRef} className="profile-form-grid" onSubmit={handleSubmit} noValidate>
+          {/* Personal Information */}
+          <div className="profile-card profile-personal-card">
+            <div className="profile-card-header">
+              <div className="profile-card-title-icon"><UserIcon size={18} /></div>
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('Name')} *</label>
+                  <div className="profile-card-title">Personal Information</div>
+                  <div className="profile-card-subtitle">Manage your account and contact information</div>
+                </div>
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-name">
+                  Full Name <span className="profile-field-required">*</span>
+                </label>
+                <div className="profile-input-wrap">
+                  <span className="profile-input-icon"><UserIcon size={16} /></span>
                   <input
+                    id="profile-name"
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: `1px solid ${isDarkMode ? '#444' : '#d1d5db'}`,
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                      background: isDarkMode ? '#3a3a3a' : '#fff',
-                      color: isDarkMode ? '#e5e7eb' : '#000',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#444' : '#d1d5db'}
+                    placeholder={t('placeholder_full_name')}
+                    className={errors.name ? 'profile-input-invalid' : ''}
                     required
                   />
                 </div>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('email')} *</label>
+                {errors.name && (
+                  <div className="profile-input-error">
+                    <AlertCircleIcon size={13} />
+                    {errors.name}
+                  </div>
+                )}
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-email">
+                  Email Address <span className="profile-field-required">*</span>
+                  <span className="profile-readonly-pill"><LockIcon size={11} /> Read only</span>
+                </label>
+                <div className="profile-input-wrap has-lock">
+                  <span className="profile-input-icon"><MailIcon size={16} /></span>
                   <input
+                    id="profile-email"
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: `1px solid ${isDarkMode ? '#444' : '#d1d5db'}`,
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      background: isDarkMode ? '#3a3a3a' : '#f3f4f6',
-                      color: isDarkMode ? '#9ca3af' : '#6b7280',
-                      cursor: 'not-allowed',
-                    }}
+                    readOnly
+                    tabIndex={-1}
+                    aria-readonly="true"
+                    title="Email address cannot be changed"
+                    className="profile-input-disabled"
                   />
-                  <p style={{ fontSize: '0.75rem', color: isDarkMode ? '#9ca3af' : '#9ca3af', margin: '0.25rem 0 0 0' }}>
-                    Email cannot be changed
-                  </p>
+                  <span className="profile-input-lock"><LockIcon size={15} /></span>
                 </div>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('mobile_number')}</label>
+                <div className="profile-input-hint">
+                  <LockIcon size={12} />
+                  Email address cannot be changed
+                </div>
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-mobile">
+                  Mobile Number
+                </label>
+                <div className="profile-input-wrap">
+                  <span className="profile-input-icon"><PhoneIcon size={16} /></span>
                   <input
+                    id="profile-mobile"
                     type="tel"
                     name="mobileNumber"
                     value={formData.mobileNumber}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     placeholder={t('enter_mobile_number')}
+                    className={errors.mobileNumber ? 'profile-input-invalid' : ''}
                   />
                 </div>
+                {errors.mobileNumber && (
+                  <div className="profile-input-error">
+                    <AlertCircleIcon size={13} />
+                    {errors.mobileNumber}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Business Information Section */}
-            <div style={{
-              borderTop: '1px solid #e5e7eb',
-              paddingTop: '1.5rem',
-            }}>
-              <h3 style={{
-                fontSize: '1rem',
-                fontWeight: '600',
-                marginBottom: '1rem',
-                color: isDarkMode ? '#d1d5db' : '#374151',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}>
-                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></span> Business Information
-              </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '1.5rem',
-              }}>
+            {/* Business Information */}
+            <div className="profile-card profile-business-card">
+              <div className="profile-card-header">
+                <div className="profile-card-title-icon"><BuildingIcon size={18} /></div>
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('shop_name')} *</label>
+                  <div className="profile-card-title">Business Information</div>
+                  <div className="profile-card-subtitle">Your registered business information used for GST operations</div>
+                </div>
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-shop">
+                  Business / Shop Name <span className="profile-field-required">*</span>
+                </label>
+                <div className="profile-input-wrap">
+                  <span className="profile-input-icon"><BuildingIcon size={16} /></span>
                   <input
+                    id="profile-shop"
                     type="text"
                     name="shopName"
                     value={formData.shopName}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                    placeholder="Your business name"
+                    className={errors.shopName ? 'profile-input-invalid' : ''}
                     required
                   />
                 </div>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('gstin')} *</label>
+                {errors.shopName && (
+                  <div className="profile-input-error">
+                    <AlertCircleIcon size={13} />
+                    {errors.shopName}
+                  </div>
+                )}
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-gstin">
+                  {t('gstin')} <span className="profile-field-required">*</span>
+                </label>
+                <div className="profile-input-wrap">
+                  <span className="profile-input-icon"><HashIcon size={16} /></span>
                   <input
+                    id="profile-gstin"
                     type="text"
                     name="gstin"
                     value={formData.gstin}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                    placeholder={t('placeholder_gstin')}
+                    className={errors.gstin ? 'profile-input-invalid' : ''}
+                    maxLength={15}
                     required
                   />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>Shop Address</label>
+                {errors.gstin ? (
+                  <div className="profile-input-error">
+                    <AlertCircleIcon size={13} />
+                    {errors.gstin}
+                  </div>
+                ) : (
+                  <div className="profile-input-hint">
+                    <ShieldCheckIcon size={12} />
+                    This identifier is linked to your GST account
+                  </div>
+                )}
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-address">
+                  Business Address
+                </label>
+                <div className="profile-input-wrap">
                   <textarea
+                    id="profile-address"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                      minHeight: '100px',
-                      resize: 'vertical',
-                      fontFamily: 'inherit',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     placeholder={t('enter_business_address')}
+                    style={{ minHeight: '88px', resize: 'vertical' }}
                   />
+                  <span className="profile-input-icon">
+                    <BuildingIcon size={16} />
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Preferences Section */}
-            <div style={{
-              borderTop: '1px solid #e5e7eb',
-              paddingTop: '1.5rem',
-            }}>
-              <h3 style={{
-                fontSize: '1rem',
-                fontWeight: '600',
-                marginBottom: '1rem',
-                color: isDarkMode ? '#d1d5db' : '#374151',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}>
-                <span><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Preferences
-              </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '1.5rem',
-              }}>
+            {/* Preferences */}
+            <div className="profile-card profile-preferences-card">
+              <div className="profile-card-header">
+                <div className="profile-card-title-icon"><GlobeIcon size={18} /></div>
                 <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#d1d5db' : '#374151',
-                    marginBottom: '0.5rem',
-                  }}>{t('language')}</label>
+                  <div className="profile-card-title">Preferences</div>
+                  <div className="profile-card-subtitle">Customize your account preferences</div>
+                </div>
+              </div>
+
+              <div className="profile-field">
+                <label className="profile-field-label" htmlFor="profile-language">
+                  {t('language')}
+                </label>
+                <div className="profile-input-wrap">
+                  <span className="profile-input-icon"><GlobeIcon size={16} /></span>
                   <select
+                    id="profile-language"
                     name="language"
                     value={formData.language}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--theme-primary)'}
-                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   >
-                    <option value="en">🇬🇧 English</option>
-                    <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
-                    <option value="hi">🇮🇳 Hindi (हिंदी)</option>
+                    <option value="en">English</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="hi">Hindi (हिंदी)</option>
+                    <option value="ml">Malayalam (മലയാളം)</option>
+                    <option value="kn">Kannada (ಕನ್ನಡ)</option>
                   </select>
+                </div>
+                <div className="profile-input-hint">
+                  <GlobeIcon size={12} />
+                  Choose the language used for notifications and account communication
                 </div>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid #e5e7eb',
-            }}>
+            {/* ---- Recent Activity ---- */}
+            <div className="profile-card profile-activity-card">
+              <div className="profile-card-header">
+                <div className="profile-card-title-icon"><HistoryIcon size={18} /></div>
+                <div>
+                  <div className="profile-card-title">Recent Workspace Activity</div>
+                  <div className="profile-card-subtitle">Your latest account and GST workspace activity</div>
+                </div>
+              </div>
+
+              {activityLoading ? (
+                <div className="profile-tip-text" style={{ padding: '0.5rem 0' }}>
+                  Loading activity...
+                </div>
+              ) : activityLogs.length === 0 ? (
+                <div className="profile-tip-text" style={{ padding: '0.5rem 0' }}>
+                  No activity yet — upload a bill or file a GST return to see it here.
+                </div>
+              ) : (
+                <div>
+                  {activityLogs.map((log, idx) => {
+                    const iconClass = activityIconClass(log.action);
+                    const detail = getActivityDetail(log);
+                    return (
+                      <div key={log.id || `${log.action}-${idx}`} className="profile-activity-item">
+                        <div className={`profile-activity-icon ${iconClass}`}>
+                          {iconClass === 'upload' ? (
+                            <UploadIcon size={16} />
+                          ) : iconClass === 'payment' ? (
+                            <CreditCardIcon size={16} />
+                          ) : (
+                            <FileTextIcon size={16} />
+                          )}
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div className="profile-activity-desc">
+                            {getActivityTitle(log.action)}
+                          </div>
+                          {detail ? (
+                            <div className="profile-activity-detail">{detail}</div>
+                          ) : null}
+                          <div className="profile-activity-time">{formatTimestamp(log.timestamp)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Profile & GST Tips */}
+            <div className="profile-card profile-tips-card">
+              <div className="profile-card-header">
+                <div className="profile-card-title-icon"><LightbulbIcon size={18} /></div>
+                <div>
+                  <div className="profile-card-title">Profile &amp; GST Tips</div>
+                  <div className="profile-card-subtitle">Keep your account and GST workflows accurate</div>
+                </div>
+              </div>
+
+              <div className="profile-tip-item">
+                <div className="profile-tip-icon indigo"><BuildingIcon size={14} /></div>
+                <div className="profile-tip-text">{t('tip_profile_updated')}</div>
+              </div>
+              <div className="profile-tip-item">
+                <div className="profile-tip-icon violet"><ShieldCheckIcon size={14} /></div>
+                <div className="profile-tip-text">{t('tip_gstin_important')}</div>
+              </div>
+              <div className="profile-tip-item">
+                <div className="profile-tip-icon"><CameraIcon size={14} /></div>
+                <div className="profile-tip-text">{t('tip_profile_pic')}</div>
+              </div>
+              <div className="profile-tip-item">
+                <div className="profile-tip-icon"><GlobeIcon size={14} /></div>
+                <div className="profile-tip-text">{t('tip_language_preference')}</div>
+              </div>
+            </div>
+
+          {/* Save bar */}
+          <div className="profile-save-bar-wrap">
+            <div className="profile-save-bar">
+              <span
+                className={`profile-save-status ${saveState === 'success' ? 'success' : saveState === 'error' ? 'error' : ''}`}
+                aria-live="polite"
+              >
+                {saveState === 'success' ? <CheckCircleIcon size={14} /> : null}
+                {saveState === 'error' ? <AlertCircleIcon size={14} /> : null}
+                {saveState === 'saving' ? 'Saving your changes...' : ''}
+                {saveState === 'success' ? 'Changes Saved ✓' : ''}
+                {saveState === 'error' ? 'Unable to save changes' : ''}
+                {saveState === 'idle' ? 'Changes are saved when you click save' : ''}
+              </span>
+              <button
+                type="button"
+                className="profile-btn profile-btn-secondary"
+                onClick={handleCancel}
+                disabled={saveState === 'saving'}
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
-                disabled={loading}
-                style={{
-                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-light) 100%)',
-                  color: 'white',
-                  padding: '0.875rem 2.5rem',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                  width: '100%',
-                  maxWidth: '350px',
-                  minHeight: '48px',
-                  opacity: loading ? 0.7 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.boxShadow = '0 6px 25px rgba(102, 126, 234, 0.6)';
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }
-                }}
+                className="profile-btn profile-btn-primary"
+                disabled={saveState === 'saving'}
               >
-                {loading ? ' Saving...' : ' Save Changes'}
+                {saveState === 'saving' ? (
+                  <span className="spinner spinner-inverse" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                ) : (
+                  <SaveIcon size={16} />
+                )}
+                {saveLabel}
               </button>
             </div>
-          </form>
-        </div>
-
-        {/* User Activity Log */}
-        <div style={{
-          marginTop: '2rem',
-          background: isDarkMode ? '#2a2a2a' : 'white',
-          color: isDarkMode ? '#e5e7eb' : '#000',
-          borderRadius: '1rem',
-          padding: '2rem 1.5rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-        }}>
-          <h3 style={{
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            marginBottom: '1.25rem',
-            color: isDarkMode ? '#e5e7eb' : '#1f2937',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}>
-            <span>📋</span> Recent Workspace Activity
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              <span>Uploaded B2B Purchase Invoice (INV-9821-20)</span>
-              <span style={{ color: 'var(--text-secondary)' }}>Today, 10:24 AM</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              <span>Generated PDF GSTR-1 Return Draft Summary</span>
-              <span style={{ color: 'var(--text-secondary)' }}>Yesterday, 4:18 PM</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Completed UPI Subscription payment of ₹399</span>
-              <span style={{ color: 'var(--text-secondary)' }}>Jul 26, 2026</span>
-            </div>
           </div>
-        </div>
-
-        {/* Tips Card */}
-        <div style={{
-          marginTop: '2rem',
-          background: '#f0f4ff',
-          border: '1px solid #c7d2fe',
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-        }}>
-          <h3 style={{
-            fontSize: '1rem',
-            fontWeight: '600',
-            marginBottom: '0.75rem',
-            color: '#4338ca',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}>
-            <span>💡</span> {t('pro_tips')}
-          </h3>
-          <ul style={{
-            margin: 0,
-            paddingLeft: '1.5rem',
-            color: '#4338ca',
-            lineHeight: '1.6',
-            fontSize: '0.95rem',
-          }}>
-            <li>{t('tip_profile_updated')}</li>
-            <li>{t('tip_gstin_important')}</li>
-            <li>{t('tip_profile_pic')}</li>
-            <li>{t('tip_language_preference')}</li>
-          </ul>
-        </div>
+        </form>
       </div>
     </div>
   );
