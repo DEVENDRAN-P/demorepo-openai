@@ -917,6 +917,7 @@ function Profile({ user }) {
                 )}
                 {saveLabel}
               </button>
+            </div>
           </div>
         </form>
       </div>
