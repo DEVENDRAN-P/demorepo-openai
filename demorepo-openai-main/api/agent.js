@@ -595,18 +595,30 @@ const ALERT_DEDUP_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 async function createAlert(uid, alert) {
   const db = getDb();
   const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
+  // Dedup against the most recent alerts. We query with a single-field
+  // orderBy (uses Firestore's automatic index) and filter in memory — alert
+  // volume per user is tiny, and this avoids requiring a composite Firestore
+  // index (which the firebase-adminsdk service account cannot create).
+  // NOTE: createdAt is always written as an ISO string (executeAction uses
+  // new Date().toISOString()), so string comparison with `since` is valid.
   const existing = await db
     .collection("users")
     .doc(uid)
     .collection("alerts")
-    .where("type", "==", alert.type)
-    .where("createdAt", ">=", since)
-    .where("read", "==", false)
-    .limit(10)
+    .orderBy("createdAt", "desc")
+    .limit(50)
     .get();
   let found = false;
   existing.forEach((doc) => {
-    if (doc.data().message === alert.message) found = true;
+    const d = doc.data();
+    if (
+      d.type === alert.type &&
+      !d.read &&
+      String(d.createdAt) >= since &&
+      d.message === alert.message
+    ) {
+      found = true;
+    }
   });
   if (found) return null;
   const ref = await db

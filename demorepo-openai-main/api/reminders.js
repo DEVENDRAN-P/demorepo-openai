@@ -219,17 +219,27 @@ async function hasReminderBeenSent(userId, billId, reminderType) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Query on a single field (automatic index) and filter in memory to
+    // avoid requiring a composite Firestore index on emailReminders.
     const snapshot = await db
       .collection("users")
       .doc(userId)
       .collection("emailReminders")
       .where("billId", "==", billId)
-      .where("type", "==", reminderType)
-      .where("sentDate", ">=", today)
-      .limit(1)
+      .limit(20)
       .get();
 
-    return !snapshot.empty;
+    let found = false;
+    snapshot.forEach((doc) => {
+      const d = doc.data();
+      if (found || d.type !== reminderType) return;
+      const sent = d.sentDate && typeof d.sentDate.toDate === "function"
+        ? d.sentDate.toDate()
+        : new Date(d.sentDate);
+      if (!Number.isNaN(sent.getTime()) && sent >= today) found = true;
+    });
+
+    return found;
   } catch (error) {
     console.error("Error checking reminder history:", error);
     return false;
@@ -546,17 +556,27 @@ async function hasOverdueEmailBeenSent(userId, billId) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Query on a single field (automatic index) and filter in memory — same
+    // rationale as hasReminderBeenSent: avoid composite Firestore indexes.
     const snapshot = await db
       .collection("users")
       .doc(userId)
       .collection("emailReminders")
       .where("billId", "==", billId)
-      .where("type", "==", "overdue")
-      .where("sentDate", ">=", today)
-      .limit(1)
+      .limit(20)
       .get();
 
-    return !snapshot.empty;
+    let found = false;
+    snapshot.forEach((doc) => {
+      const d = doc.data();
+      if (found || d.type !== "overdue") return;
+      const sent = d.sentDate && typeof d.sentDate.toDate === "function"
+        ? d.sentDate.toDate()
+        : new Date(d.sentDate);
+      if (!Number.isNaN(sent.getTime()) && sent >= today) found = true;
+    });
+
+    return found;
   } catch (error) {
     console.error("Error checking email history:", error);
     return false;
