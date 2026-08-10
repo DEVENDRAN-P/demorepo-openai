@@ -26,6 +26,9 @@
     "recharts": "^2.10.0",
     "tesseract.js": "^5.1.1"
   },
+  "overrides": {
+    "jose": "4.15.5"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
