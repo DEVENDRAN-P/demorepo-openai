@@ -19,12 +19,12 @@
  * traces and never secret material.
  */
 
-const config = require("./lib/config");
-const { verifyAuth, AiHttpError } = require("./lib/admin");
-const { aiLog } = require("./lib/logger");
-const handlers = require("./lib/aiTasks");
-const { checkUsageLimit, incrementUsage } = require("./lib/usage");
-const { setCorsHeaders, handleCors } = require("./_utils/cors");
+const config = require("../lib/config");
+const { verifyAuth, AiHttpError } = require("../lib/admin");
+const { aiLog } = require("../lib/logger");
+const handlers = require("../lib/aiTasks");
+const { checkUsageLimit, incrementUsage } = require("../lib/usage");
+const { setCorsHeaders, handleCors } = require("../lib/cors");
 
 // Friendly user-facing messages for known error codes (never stack traces).
 const ERROR_MESSAGES = {
@@ -151,7 +151,13 @@ module.exports = async (req, res) => {
     decoded = await verifyAuth(req);
     const body = await readBody(req);
 
-    task = typeof body.task === "string" ? body.task : "";
+    // Task comes from the body, with a fallback to the query param used by
+    // the /api/extract and /api/chat alias rewrites in vercel.json.
+    task = typeof body.task === "string" && body.task.trim()
+      ? body.task
+      : typeof req.query.task === "string"
+        ? req.query.task
+        : "";
     if (!TEXT_TASKS.has(task) && task !== "gst_assistant_stream") {
       throw new AiHttpError(400, "INVALID_TASK", `Unsupported task: "${task}".`);
     }

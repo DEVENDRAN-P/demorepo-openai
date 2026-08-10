@@ -21,13 +21,13 @@
  *   6. Everything is logged to agentRuns collection
  */
 
-const { verifyAuth, getDb, getBillsForUser, AiHttpError } = require("./lib/admin");
-const gemini = require("./lib/gemini");
-const config = require("./lib/config");
-const { checkCompliance, buildForecast, buildMetrics, computeFacts, summarizeBills, GSTIN_REGEX, toNumber } = require("./lib/finance");
-const { createRun, completeRun, addDecision, addAction } = require("./lib/agentRunLogger");
-const { validateCompliance, validateForecast, validateInsights } = require("./lib/schemas");
-const { getPlanForUser } = require("./lib/usage");
+const { verifyAuth, getDb, getBillsForUser, AiHttpError } = require("../lib/admin");
+const gemini = require("../lib/gemini");
+const config = require("../lib/config");
+const { checkCompliance, buildForecast, buildMetrics, computeFacts, summarizeBills, GSTIN_REGEX, toNumber } = require("../lib/finance");
+const { createRun, completeRun, addDecision, addAction } = require("../lib/agentRunLogger");
+const { validateCompliance, validateForecast, validateInsights } = require("../lib/schemas");
+const { getPlanForUser } = require("../lib/usage");
 
 // Server-side monthly invoice limits per plan (10 / 500 / 5000).
 const PLAN_INVOICE_LIMITS = { free: 10, pro: 500, business: 5000 };
@@ -810,7 +810,7 @@ async function runScheduledAgent() {
 // ---------------------------------------------------------------------------
 
 module.exports = async function agentHandler(req, res) {
-  const { handleCors, setCorsHeaders } = require("./_utils/cors");
+  const { handleCors, setCorsHeaders } = require("../lib/cors");
   if (handleCors(req, res)) return;
   setCorsHeaders(res, req);
 
@@ -837,7 +837,7 @@ module.exports = async function agentHandler(req, res) {
     const uid = decoded.uid;
 
     if (req.method === "GET") {
-      const { getRecentRuns } = require("./lib/agentRunLogger");
+      const { getRecentRuns } = require("../lib/agentRunLogger");
       const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
       const runs = await getRecentRuns(uid, limit);
       res.status(200).json({ success: true, runs });
@@ -850,7 +850,7 @@ module.exports = async function agentHandler(req, res) {
       return;
     }
 
-    // Read body. The local Express server (api/_server.js) parses JSON into
+    // Read body. The local Express server (server.js) parses JSON into
     // req.body via express.json(), which CONSUMES the raw stream. Reading the
     // stream again yields nothing and every request fails with 400 "Invalid
     // JSON". On serverless runtimes (Vercel) req.body is undefined, so fall

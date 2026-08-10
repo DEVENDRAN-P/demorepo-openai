@@ -6,7 +6,7 @@ const {
   getUserSubscription,
   updateUserSubscription,
   getPaymentHistory,
-} = require("./_utils/database");
+} = require("../lib/database");
 
 // Validate required env vars at startup (safe — no secret values logged)
 const missingRazorpay = ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"].filter(
@@ -252,7 +252,7 @@ const handleVerify = async (req, res, decodedToken) => {
 // 🚀 MAIN ROUTER HANDLER
 // ==========================================
 module.exports = async (req, res) => {
-  const { handleCors, setCorsHeaders } = require("./_utils/cors");
+  const { handleCors, setCorsHeaders } = require("../lib/cors");
   if (handleCors(req, res)) return;
   setCorsHeaders(res, req);
 

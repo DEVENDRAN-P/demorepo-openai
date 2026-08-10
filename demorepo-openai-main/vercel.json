@@ -3,11 +3,11 @@
   "outputDirectory": "build",
   "crons": [
     {
-      "path": "/api/checkOverdueBills",
+      "path": "/api/reminders?task=overdue",
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/scheduledReminders",
+      "path": "/api/reminders?task=scheduled",
       "schedule": "0 9 * * *"
     },
     {
@@ -15,6 +15,12 @@
       "schedule": "0 7 * * *"
     }
   ],
+  "functions": {
+    "api/email.js": {
+      "memory": 256,
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/payment/create-order",
@@ -31,6 +37,26 @@
     {
       "source": "/api/subscription/status",
       "destination": "/api/billing?action=status"
+    },
+    {
+      "source": "/api/extract",
+      "destination": "/api/ai?task=invoice_extraction"
+    },
+    {
+      "source": "/api/chat",
+      "destination": "/api/ai?task=gst_assistant"
+    },
+    {
+      "source": "/api/sendEmail",
+      "destination": "/api/email"
+    },
+    {
+      "source": "/api/scheduledReminders",
+      "destination": "/api/reminders?task=scheduled"
+    },
+    {
+      "source": "/api/checkOverdueBills",
+      "destination": "/api/reminders?task=overdue"
     },
     {
       "source": "/api/(.*)",

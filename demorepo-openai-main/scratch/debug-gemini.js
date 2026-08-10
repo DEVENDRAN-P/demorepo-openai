@@ -6,8 +6,8 @@
  */
 require("dotenv").config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { RESPONSE_SCHEMAS } = require("../api/lib/schemas");
-const config = require("../api/lib/config");
+const { RESPONSE_SCHEMAS } = require("../lib/schemas");
+const config = require("../lib/config");
 
 async function main() {
   const key = process.env.GEMINI_API_KEY;

@@ -28,8 +28,8 @@
  */
 
 const nodemailer = require("nodemailer");
-const { verifyAuth, AiHttpError } = require("./lib/admin");
-const { handleCors, setCorsHeaders } = require("./_utils/cors");
+const { verifyAuth, AiHttpError } = require("../lib/admin");
+const { handleCors, setCorsHeaders } = require("../lib/cors");
 
 module.exports = async (req, res) => {
   if (handleCors(req, res)) return;

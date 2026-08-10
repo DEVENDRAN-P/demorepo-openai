@@ -17,8 +17,8 @@ echo ✅ Node.js found:
 node -v
 echo.
 
-REM Navigate to api folder
-cd /d "%~dp0"
+REM Navigate to api folder (server.js now lives in the project root)
+cd /d "%~dp0.."
 
 REM Check if dependencies are installed
 if not exist "node_modules" (
@@ -30,6 +30,6 @@ if not exist "node_modules" (
 REM Start the server
 echo 🚀 Starting server...
 echo.
-node _server.js
+node server.js
 
 pause

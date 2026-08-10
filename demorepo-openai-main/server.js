@@ -1,7 +1,9 @@
 /**
- * Express Server for Testing Email API (Local Development)
+ * Express Server for Local Development / Testing
  *
- * For production on Vercel, see: api/sendEmail.js (Vercel serverless function)
+ * For production on Vercel, the API lives in consolidated serverless
+ * functions under api/ (ai, agent, billing, email, reminders, health).
+ * This server mirrors those routes for local development.
  *
  * Uses Brevo (formerly Sendinblue) SMTP for reliable email delivery
  *
@@ -49,13 +51,19 @@ if (getApps().length === 0) {
 }
 
 // Import Payment & Subscription Handlers (Unified)
-const billingHandler = require("./billing");
+const billingHandler = require("./api/billing");
 
 // Import AI Gateway Handler (Gemini)
-const aiHandler = require("./ai");
+const aiHandler = require("./api/ai");
 
 // Import Agent Orchestrator Handler
-const agentHandler = require("./agent");
+const agentHandler = require("./api/agent");
+
+// Import consolidated Reminders handler (scheduled + overdue tasks)
+const remindersHandler = require("./api/reminders");
+
+// Import consolidated Health handler
+const healthHandler = require("./api/health");
 
 // Auth helper (Firebase ID token verification) for the local email endpoint.
 const { verifyAuth } = require("./lib/admin");
@@ -359,6 +367,13 @@ app.get("/api/ai", (req, res) => {
 // Agent Orchestrator Route — matches Vercel serverless api/agent.js
 app.post("/api/agent", agentHandler);
 app.get("/api/agent", agentHandler);
+
+// Reminders Route — consolidated (scheduled + overdue cron tasks)
+app.get("/api/reminders", remindersHandler);
+app.post("/api/reminders", remindersHandler);
+
+// Health check — matches Vercel serverless api/health.js
+app.get("/api/health", healthHandler);
 
 // Start server
 app.listen(PORT, () => {

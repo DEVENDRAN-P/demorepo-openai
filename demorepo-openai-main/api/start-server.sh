@@ -13,8 +13,8 @@ fi
 echo "✅ Node.js found: $(node -v)"
 echo ""
 
-# Navigate to api folder
-cd "$(dirname "$0")"
+# Navigate to project root (server.js now lives there)
+cd "$(dirname "$0")/.."
 
 # Check if dependencies are installed
 if [ ! -d "node_modules" ]; then
@@ -26,4 +26,4 @@ fi
 # Start the server
 echo "🚀 Starting server..."
 echo ""
-node _server.js
+node server.js

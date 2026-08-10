@@ -3,7 +3,7 @@
    - string data-URL image -> input accepted, proceeds to Gemini (503 AI_MISSING_KEY here since no key)
    - ocrText -> input accepted, proceeds to Gemini
 */
-const handlers = require("../api/lib/aiTasks");
+const handlers = require("../lib/aiTasks");
 const handleInvoiceExtraction = handlers.invoice_extraction;
 
 function expect(status, code, label) {

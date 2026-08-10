@@ -72,8 +72,8 @@ async function step2_generateContent() {
 }
 
 async function step3_handlerExtraction() {
-  const handlers = require("../api/lib/aiTasks");
-  const config = require("../api/lib/config");
+  const handlers = require("../lib/aiTasks");
+  const config = require("../lib/config");
   const result = await handlers.invoice_extraction(
     { ocrText: SAMPLE_INVOICE_TEXT },
     { uid: "e2e-test" }

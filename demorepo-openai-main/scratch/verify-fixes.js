@@ -15,7 +15,7 @@ const { getAuth } = require("firebase-admin/auth");
 const BASE = `http://localhost:${process.env.PORT || 5000}`;
 
 // ---- 1. Unit: truncated JSON salvage ----
-const { extractJson } = require("../api/lib/gemini");
+const { extractJson } = require("../lib/gemini");
 function checkSalvage() {
   const truncated = '{"amount": 85000, "supplierName": "Chennai Trade';
   try {

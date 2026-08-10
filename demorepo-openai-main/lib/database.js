@@ -10,10 +10,10 @@
  * rather than silently falling back to ephemeral in-memory state.
  */
 
-// All Firestore access goes through the shared admin helper (api/lib/admin.js)
+// All Firestore access goes through the shared admin helper (lib/admin.js)
 // so the instance is configured exactly once (ignoreUndefinedProperties) and
 // no other module can start the Firestore instance before settings are applied.
-const { getDb } = require("../lib/admin");
+const { getDb } = require("./admin");
 const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 
 /**
