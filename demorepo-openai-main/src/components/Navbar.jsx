@@ -144,6 +144,16 @@ const IconSun = () => (
   </svg>
 );
 
+// Language selector — each language shown in its own native script so
+// options stay distinct regardless of the active UI language.
+const LANG_OPTIONS = [
+  { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'hi', flag: '🇮🇳', name: 'हिंदी' },
+  { code: 'ta', flag: '🇮🇳', name: 'தமிழ்' },
+  { code: 'ml', flag: '🇮🇳', name: 'മലയാളം' },
+  { code: 'kn', flag: '🇮🇳', name: 'ಕನ್ನಡ' },
+];
+
 // Theme support
 const THEMES = {
   indigo: { '--primary-50': '#eef2ff', '--primary-600': '#4f46e5', '--primary-700': '#4338ca' },
@@ -449,7 +459,7 @@ function Navbar({ user }) {
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', transition: 'all 0.3s ease' }}
               >
                 <IconGlobe />
-                <span style={{ textTransform: 'uppercase' }}>{i18n.language}</span>
+                <span style={{ fontSize: '0.85rem' }}>{(LANG_OPTIONS.find((l) => l.code === i18n.language) || {}).name || i18n.language.toUpperCase()}</span>
               </button>
               {langOpen && (
                 <div style={{
@@ -465,19 +475,19 @@ function Navbar({ user }) {
                   zIndex: 50,
                   transition: 'all 0.3s ease',
                 }}>
-                  {['en', 'hi', 'ta', 'ml', 'kn'].map((code, index) => (
+                  {LANG_OPTIONS.map((lang) => (
                     <button
-                      key={code}
-                      onClick={() => changeLanguage(code)}
+                      key={lang.code}
+                      onClick={() => changeLanguage(lang.code)}
                       style={{
                         width: '100%',
                         padding: '0.75rem 1rem',
                         border: 'none',
-                        background: i18n.language === code ? 'var(--primary-50)' : 'var(--bg-primary)',
+                        background: i18n.language === lang.code ? 'var(--primary-50)' : 'var(--bg-primary)',
                         cursor: 'pointer',
                         fontSize: '0.875rem',
-                        fontWeight: i18n.language === code ? 600 : 500,
-                        color: i18n.language === code ? 'var(--primary-700)' : 'var(--text-secondary)',
+                        fontWeight: i18n.language === lang.code ? 600 : 500,
+                        color: i18n.language === lang.code ? 'var(--primary-700)' : 'var(--text-secondary)',
                         textAlign: 'left',
                         display: 'flex',
                         alignItems: 'center',
@@ -485,18 +495,18 @@ function Navbar({ user }) {
                         transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={(e) => {
-                        if (i18n.language !== code) {
+                        if (i18n.language !== lang.code) {
                           e.currentTarget.style.background = 'var(--bg-secondary)';
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (i18n.language !== code) {
+                        if (i18n.language !== lang.code) {
                           e.currentTarget.style.background = 'var(--bg-primary)';
                         }
                       }}
                     >
-                      <span style={{ fontSize: '1.125rem' }}>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
-                      <span>{t(['english', 'hindi', 'tamil', 'malayalam', 'kannada'][index])}</span>
+                      <span style={{ fontSize: '1.125rem' }}>{lang.flag}</span>
+                      <span>{lang.name}</span>
                     </button>
                   ))}
                 </div>
@@ -633,7 +643,7 @@ function Navbar({ user }) {
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <IconPhone size={18} />
-                    <span>Contact Us</span>
+                    <span>{t('contact_us')}</span>
                   </Link>
                   <Link
                     to="/support"
@@ -767,7 +777,7 @@ function Navbar({ user }) {
             onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.05)'}
           >
             <IconWhatsApp />
-            <span>Join WhatsApp Group</span>
+            <span>{t('join_whatsapp_group')}</span>
           </a>
           <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
           <button
@@ -790,7 +800,7 @@ function Navbar({ user }) {
             }}
           >
             <IconGlobe />
-            <span>{t('language')} ({i18n.language.toUpperCase()})</span>
+            <span>{t('language')} ({(LANG_OPTIONS.find((l) => l.code === i18n.language) || {}).name || i18n.language.toUpperCase()})</span>
           </button>
           {langOpen && (
             <div style={{
@@ -802,22 +812,22 @@ function Navbar({ user }) {
               flexDirection: 'column',
               gap: '0.25rem',
             }}>
-              {['en', 'hi', 'ta', 'ml', 'kn'].map((code, index) => (
+              {LANG_OPTIONS.map((lang) => (
                 <button
-                  key={code}
+                  key={lang.code}
                   onClick={() => {
-                    changeLanguage(code);
+                    changeLanguage(lang.code);
                     setLangOpen(false);
                   }}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
                     border: 'none',
-                    background: i18n.language === code ? (isDarkMode ? 'var(--bg-secondary)' : 'white') : 'transparent',
+                    background: i18n.language === lang.code ? (isDarkMode ? 'var(--bg-secondary)' : 'white') : 'transparent',
                     cursor: 'pointer',
                     fontSize: '0.8125rem',
-                    fontWeight: i18n.language === code ? 600 : 500,
-                    color: i18n.language === code ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    fontWeight: i18n.language === lang.code ? 600 : 500,
+                    color: i18n.language === lang.code ? 'var(--primary-700)' : 'var(--text-secondary)',
                     textAlign: 'left',
                     display: 'flex',
                     alignItems: 'center',
@@ -826,18 +836,18 @@ function Navbar({ user }) {
                     transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
-                    if (i18n.language !== code) {
+                    if (i18n.language !== lang.code) {
                       e.currentTarget.style.background = 'var(--bg-secondary)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (i18n.language !== code) {
+                    if (i18n.language !== lang.code) {
                       e.currentTarget.style.background = 'transparent';
                     }
                   }}
                 >
-                  <span>{['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'][index]}</span>
-                  <span>{t(['english', 'hindi', 'tamil', 'malayalam', 'kannada'][index])}</span>
+                  <span>{lang.flag}</span>
+                  <span>{lang.name}</span>
                 </button>
               ))}
             </div>
@@ -894,7 +904,7 @@ function Navbar({ user }) {
             }}
           >
             <span>📞</span>
-            <span>Contact Us</span>
+            <span>{t('contact_us')}</span>
           </Link>
           <Link
             to="/support"

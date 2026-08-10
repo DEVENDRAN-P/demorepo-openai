@@ -809,5 +809,6 @@
   "Try voice-based bill entry! Just speak invoice details and AI will fill the form": "ಧ್ವನಿ ಆಧಾರಿತ ಬಿಲ್ ನಮೂದನ್ನು ಪ್ರಯತ್ನಿಸಿ! ಇನ್‌ವಾಯ್ಸ್ ವಿವರಗಳನ್ನು ಹೇಳಿದರೆ AI ಫಾರ್ಮ್ ಭರ್ತಿ ಮಾಡುತ್ತದೆ",
   "File GSTR-1 by 11th and GSTR-3B by 20th of every month to avoid penalties": "ದಂಡ ತಪ್ಪಿಸಲು ಪ್ರತಿ ತಿಂಗಳ 11ರೊಳಗೆ GSTR-1 ಮತ್ತು 20ರೊಳಗೆ GSTR-3B ಸಲ್ಲಿಸಿ",
   "Check monthly reports to understand your tax trends and plan better": "ನಿಮ್ಮ ತೆರಿಗೆ ಪ್ರವೃತ್ತಿಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಮತ್ತು ಉತ್ತಮ ಯೋಜನೆಗಾಗಿ ಮಾಸಿಕ ವರದಿಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
-  "pricing_ai_assistant": "AI ಸಹಾಯಕ"
+  "pricing_ai_assistant": "AI ಸಹಾಯಕ",
+  "toggle_navigation_menu": "ನ್ಯಾವಿಗೇಷನ್ ಮೆನು ಟಾಗಲ್"
 }

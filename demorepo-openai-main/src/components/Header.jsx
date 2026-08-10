@@ -81,7 +81,7 @@ function Header({ onMenuClick }) {
         <button 
           onClick={onMenuClick}
           className="header-menu-btn"
-          title="Toggle Navigation Menu"
+          title={t('toggle_navigation_menu')}
           style={{ alignItems: 'center', justifyContent: 'center' }}
         >
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -95,7 +95,7 @@ function Header({ onMenuClick }) {
             {activeBusiness.name}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }} className="header-business-info">
-            <span>GSTIN: {activeBusiness.gstin}</span>
+            <span>{t('gstin')}: {activeBusiness.gstin}</span>
             <span className="header-business-info-bullet">•</span>
             <span style={{ color: 'var(--theme-secondary-light)' }}>{t('filing_status', 'Filing:')} {activeBusiness.status}</span>
           </div>
@@ -261,7 +261,7 @@ function Header({ onMenuClick }) {
                       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     </svg>
                   </span>
-                  <span>{[t('english'), t('hindi'), t('tamil'), t('malayalam'), t('kannada')]}</span>
+                  <span>{['English', 'हिंदी', 'தமிழ்', 'മലയാളം', 'ಕನ್ನಡ'][index]}</span>
                 </button>
               ))}
             </div>

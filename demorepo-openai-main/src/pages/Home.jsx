@@ -488,7 +488,7 @@ export default function Home() {
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                   </svg>
                 </span>
-                <span className="uppercase">{i18n.language}</span>
+                <span>{['English', 'हिंदी', 'தமிழ்', 'മലയാളം', 'ಕನ್ನಡ'][['en', 'hi', 'ta', 'ml', 'kn'].indexOf(i18n.language)] || i18n.language.toUpperCase()}</span>
               </button>
               {langDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-1.5 shadow-xl z-50">
@@ -509,7 +509,7 @@ export default function Home() {
                           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                         </svg>
                       </span>
-                      <span>{['English', 'Hindi', 'Tamil', 'Malayalam', 'Kannada'][idx]}</span>
+                      <span>{['English', 'हिंदी', 'தமிழ்', 'മലയാളം', 'ಕನ್ನಡ'][idx]}</span>
                     </button>
                   ))}
                 </div>

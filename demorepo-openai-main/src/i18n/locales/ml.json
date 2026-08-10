@@ -809,5 +809,6 @@
   "Try voice-based bill entry! Just speak invoice details and AI will fill the form": "വോയ്സ് അധിഷ്ഠിത ബിൽ എൻട്രി പരീക്ഷിക്കുക! ഇൻവോയ്സ് വിശദാംശങ്ങൾ സംസാരിച്ചാൽ AI ഫോം പൂരിപ്പിക്കും",
   "File GSTR-1 by 11th and GSTR-3B by 20th of every month to avoid penalties": "പിഴ ഒഴിവാക്കാൻ എല്ലാ മാസവും 11-ന് GSTR-1 ഉം 20-ന് GSTR-3B ഉം ഫയൽ ചെയ്യുക",
   "Check monthly reports to understand your tax trends and plan better": "നിങ്ങളുടെ നികുതി പ്രവണതകൾ മനസിലാക്കാനും മികച്ച ആസൂത്രണത്തിനും പ്രതിമാസ റിപ്പോർട്ടുകൾ പരിശോധിക്കുക",
-  "pricing_ai_assistant": "AI അസിസ്റ്റന്റ്"
+  "pricing_ai_assistant": "AI അസിസ്റ്റന്റ്",
+  "toggle_navigation_menu": "നാവിഗേഷൻ മെനു ടോഗിൾ ചെയ്യുക"
 }
