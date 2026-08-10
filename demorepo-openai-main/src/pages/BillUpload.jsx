@@ -1,8 +1,102 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
-import { saveUserBill, getUserBills } from '../services/firebaseDataService';
+import * as pdfjsLib from 'pdfjs-dist';
+import { saveUserBill, getUserBills, logUserActivity, uploadBillDocument, updateUserBill } from '../services/firebaseDataService';
 import { auth } from '../config/firebase';
+import { ENABLE_DOCUMENT_STORAGE } from '../config/features';
 import { scrollToTop } from '../utils/scroll';
+import { extractInvoiceData } from '../services/aiService';
+import { processInvoice } from '../services/agentService';
+import { fetchActivePlan } from '../services/subscriptionService';
+
+// Configure the PDF.js worker (webpack 5 / CRA 5 compatible).
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+
+const validateFile = (file) => {
+  const name = (file?.name || '').toLowerCase();
+  const isAllowedType =
+    (file?.type && (ALLOWED_IMAGE_TYPES.includes(file.type) || file.type === 'application/pdf')) ||
+    ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext));
+  if (!isAllowedType) {
+    throw new Error('Unsupported file type. Please upload a JPG, PNG, WEBP, or PDF invoice.');
+  }
+  if (file && file.size > MAX_FILE_SIZE) {
+    throw new Error('File is too large. Please upload an invoice smaller than 10 MB.');
+  }
+  return true;
+};
+
+// Render the first page of a PDF to a JPEG data URL and extract any
+// embedded text layer (works for both digital and scanned PDFs).
+const renderPdfFirstPage = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1);
+
+  let pdfText = '';
+  try {
+    const textContent = await page.getTextContent();
+    pdfText = textContent.items
+      .map((item) => (typeof item.str === 'string' ? item.str : ''))
+      .join(' ')
+      .trim();
+  } catch (e) {
+    pdfText = '';
+  }
+
+  const viewport = page.getViewport({ scale: 2 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  return { pdfText, dataUrl };
+};
+
+const mapAiError = (error) => {
+  const friendly = {
+    AI_RATE_LIMITED: 'AI analysis is temporarily busy. Your invoice is safe. Please retry analysis shortly.',
+    AI_MISSING_KEY: 'AI analysis is temporarily unavailable. Your invoice is safe. Please try again later.',
+    AI_TIMEOUT: 'AI analysis took too long to complete. Your invoice is safe. Please retry.',
+    AI_SERVICE_ERROR: 'AI analysis is temporarily unavailable. Your invoice is safe. Please try again shortly.',
+    AI_INVALID_OUTPUT: 'The AI could not read this document clearly. Your invoice is safe. Please retry with a clearer scan.',
+    PAYLOAD_TOO_LARGE: 'This file is too large to analyze. Please upload a smaller file.',
+    LIMIT_EXCEEDED: 'You have reached the monthly invoice limit on your current plan. Your invoice is saved. Upgrade to continue agent analysis.',
+  };
+  return friendly[error?.code] || error?.message || 'Invoice processing failed. Please review the document and retry.';
+};
+
+/**
+ * Build business context from the user's stored profile.
+ * The Sidebar/business selector writes `activeBusinessProfile` to localStorage
+ * as a JSON object when the user selects a business.
+ * We never hardcode fake businesses here.
+ */
+const getBusinessContext = () => {
+  try {
+    const raw = localStorage.getItem('activeBusinessProfile');
+    if (raw) {
+      const profile = JSON.parse(raw);
+      if (profile && profile.name) return { name: profile.name, gstin: profile.gstin || '', state: profile.state || '' };
+    }
+    // Fallback: read individual keys written by older sidebar versions
+    const name = localStorage.getItem('activeBusinessName');
+    const gstin = localStorage.getItem('activeBusinessGSTIN');
+    const state = localStorage.getItem('activeBusinessState');
+    if (name) return { name, gstin: gstin || '', state: state || '' };
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
 
 const IconCamera = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -10,6 +104,35 @@ const IconCamera = () => (
     <circle cx="12" cy="13" r="4" />
   </svg>
 );
+
+// Parse invoice dates that come in many shapes (ISO, DD-MM-YYYY,
+// DD/MM/YYYY, DD.MM.YYYY) and NEVER return an invalid Date — unreadable
+// values ("Not Found", "N/A", garbage) fall back to today. Without this,
+// `new Date(invoiceDate).toISOString()` throws "RangeError: Invalid time
+// value" and blocks saving the invoice.
+const parseInvoiceDate = (raw) => {
+  if (!raw || typeof raw !== 'string') return new Date();
+  const s = raw.trim();
+  if (!s) return new Date();
+
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return d; // ISO / US formats parse natively
+
+  // Indian invoice format: DD-MM-YYYY | DD/MM/YYYY | DD.MM.YYYY
+  const m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+  if (m) {
+    const dd = parseInt(m[1], 10);
+    const mm = parseInt(m[2], 10) - 1;
+    let yy = parseInt(m[3], 10);
+    if (yy < 100) yy += 2000;
+    const parsed = new Date(yy, mm, dd);
+    if (parsed.getFullYear() === yy && parsed.getMonth() === mm && parsed.getDate() === dd) {
+      return parsed;
+    }
+  }
+
+  return new Date(); // unreadable → fall back to today
+};
 
 const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
   return new Promise((resolve) => {
@@ -68,19 +191,13 @@ function BillUpload() {
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
 
-  const [activePlan, setActivePlan] = useState(() => {
-    return localStorage.getItem('saas_active_plan') || 'free';
-  });
+  const [activePlan, setActivePlan] = useState('free');
   const [billsCount, setBillsCount] = useState(0);
 
+  // Fetch subscription plan from server on mount (deduplicated via shared service)
   useEffect(() => {
-    const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
-    };
-    window.addEventListener('planChanged', handlePlanChanged);
-    return () => window.removeEventListener('planChanged', handlePlanChanged);
+    fetchActivePlan().then((plan) => setActivePlan(plan));
   }, []);
 
   useEffect(() => {
@@ -109,25 +226,39 @@ function BillUpload() {
     fetchBillsCount();
   }, [activePlan]);
 
-  const limit = activePlan === 'free' ? 5 : activePlan === 'pro' ? 100 : Infinity;
+  // Free: 10 invoices/month (enforced server-side; this is display-only)
+  const limit = activePlan === 'free' ? 10 : activePlan === 'pro' ? 500 : Infinity;
 
   // File Select Handler
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(selectedFile);
-      setExtractedData(null);
-      setNotification(null);
+    if (!selectedFile) return;
+
+    try {
+      validateFile(selectedFile);
+    } catch (err) {
+      setNotification({ message: err.message, type: 'error' });
+      e.target.value = '';
+      return;
     }
+
+    setFile(selectedFile);
+    setExtractedData(null);
+    setNotification(null);
+
+    // The File stays in browser memory only — it is processed in-memory by
+    // Tesseract OCR / pdf.js and sent to the server-side Gemini endpoint.
+    // No Firebase Storage upload happens here (and none is required).
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result);
+    };
+    reader.readAsDataURL(selectedFile);
   };
 
   // OCR Text Extraction using Tesseract.js
   const extractTextWithOCR = async (targetFile) => {
+    console.log("[OCR] Starting Tesseract");
     setProgress(15);
     try {
       const result = await Tesseract.recognize(targetFile, 'eng', {
@@ -138,187 +269,58 @@ function BillUpload() {
         },
       });
       setProgress(60);
-      return result.data.text;
+      const text = result.data.text;
+      console.log("[OCR] Tesseract completed, extracted characters:", text.length);
+      return text;
     } catch (err) {
-      console.error('OCR Error:', err);
+      console.error("[OCR] Tesseract error:", err);
       throw new Error('Failed to parse text from image using OCR. Please check image clarity.');
     }
   };
 
-  // Groq Llama 3.3 AI Invoice Details Extractor
+  // Gemini AI Invoice Details Extractor (server-side via /api/ai)
   const extractDataWithAI = async (ocrText) => {
+    console.log("[OCR] Tesseract completed, extracted characters:", ocrText.length);
+    console.log("[AI] Sending OCR text to Gemini, text length:", ocrText.length);
     setProgress(75);
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert Indian B2B accountant & tax auditor.
-Extract metadata from this Indian B2B invoice. Return ONLY a valid JSON object matching this structure exactly (do not output any markdown wrapper or extra text):
-{
-  "gstDocumentType": "Tax Invoice | Bill of Supply | Credit Note | Debit Note | E-Way Bill | Delivery Challan | Other",
-  "invoiceNumber": "Alpha-numeric invoice reference code",
-  "invoiceDate": "YYYY-MM-DD",
-  "supplierName": "Full corporate name of the supplier/merchant",
-  "gstin": "15-character alphanumeric Indian GSTIN identifier",
-  "amount": 0.0,
-  "taxPercent": 18,
-  "taxAmount": 0.0,
-  "totalAmount": 0.0,
-  "expenseType": "Raw Material | Utilities | Office Supplies | Services | Others",
-  "category": "E.g. Electronics, Inventory, Electricity, Stationary",
-  "extractionConfidence": "high | medium | low",
-  "taxAnalysis": "Explanation of CGST/SGST local vs IGST interstate split.",
-  "riskAnalysis": "Highlight any compliance issues such as mismatch in GSTIN format, suspicious date range, or missing details.",
-  "aiSuggestions": ["List of suggestions to optimize input tax credit or improve audit quality"]
-}`
-            },
-            {
-              role: 'user',
-              content: `OCR_INVOICE_TEXT:\n${ocrText}\n\nReturn JSON only.`
-            }
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.1,
-          max_tokens: 1200,
-        }),
+      if (!ocrText || !ocrText.trim()) {
+        throw new Error("Tesseract OCR produced no readable text. Please ensure the document is clear.");
+      }
+      const result = await extractInvoiceData({
+        ocrText,
+        business: getBusinessContext(),
       });
-
-      setProgress(85);
-      if (!response.ok) {
-        let errDesc = '';
-        try {
-          const errData = await response.json();
-          errDesc = errData.error?.message || JSON.stringify(errData);
-        } catch (e) {
-          errDesc = response.statusText;
-        }
-        throw new Error(`Groq API Error ${response.status}: ${errDesc}`);
-      }
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
-      }
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
-
-      let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/```([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Could not parse AI response.');
-
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      console.log("[AI] OCR extraction completed");
       setProgress(100);
-      return JSON.parse(jsonStr);
+      return result.data;
     } catch (err) {
+      console.error("[AI] OCR extraction failed:", err);
       throw err;
     }
   };
 
-  // Groq Llama 3.2 Vision AI Details & Bounding Box Extractor
+  // Gemini Vision AI Details & Bounding Box Extractor (server-side via /api/ai)
   const extractDataWithVisionAI = async (base64DataUrl) => {
+    console.log("[OCR] Starting Vision AI extraction");
+    console.log("[AI] Vision extraction started, image length:", base64DataUrl.length);
     setProgress(70);
     try {
+      if (!base64DataUrl || base64DataUrl.length < 100) {
+        throw new Error("Image data is invalid or too short for Vision AI.");
+      }
       // Compress image to ensure it is under the 4MB limit and uploads quickly
       const optimizedBase64 = await compressImage(base64DataUrl);
-
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert Indian B2B accountant & tax auditor.
-Analyze the provided image of a business document (e.g. Tax Invoice, Bill of Supply, Credit/Debit Note, E-Way Bill, Delivery Challan).
-Return ONLY a valid JSON object matching this structure exactly (do not output any markdown headers, wrappers or extra text):
-{
-  "gstDocumentType": "Tax Invoice | Bill of Supply | Credit Note | Debit Note | E-Way Bill | Delivery Challan | Other",
-  "invoiceNumber": "Alpha-numeric invoice reference code",
-  "invoiceDate": "YYYY-MM-DD",
-  "supplierName": "Full corporate name of the supplier/merchant",
-  "gstin": "15-character alphanumeric Indian GSTIN identifier",
-  "amount": 0.0,
-  "taxPercent": 18,
-  "taxAmount": 0.0,
-  "totalAmount": 0.0,
-  "expenseType": "Raw Material | Utilities | Office Supplies | Services | Others",
-  "category": "E.g. Electronics, Inventory, Electricity, Stationary",
-  "extractionConfidence": "high | medium | low",
-  "taxAnalysis": "Explanation of CGST/SGST local vs IGST interstate split.",
-  "riskAnalysis": "Highlight any compliance issues such as mismatch in GSTIN format, suspicious date range, or missing details.",
-  "aiSuggestions": ["List of suggestions to optimize input tax credit or improve audit quality"],
-  "boundingBoxes": {
-    "supplierName": { "top": 12, "left": 10, "width": 45, "height": 6 },
-    "gstin": { "top": 19, "left": 10, "width": 38, "height": 5 },
-    "invoiceNumber": { "top": 12, "left": 60, "width": 30, "height": 5 },
-    "invoiceDate": { "top": 18, "left": 60, "width": 30, "height": 5 },
-    "amount": { "top": 65, "left": 55, "width": 35, "height": 5 },
-    "taxAmount": { "top": 72, "left": 55, "width": 35, "height": 5 },
-    "totalAmount": { "top": 80, "left": 55, "width": 35, "height": 6 }
-  }
-}
-
-You must detect where the fields are on the page. In 'boundingBoxes', output integer percentage values (0-100) representing where each key text field resides on the page image.`
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Extract the GST details and return estimated bounding box coordinates for overlay highlight markers.'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: optimizedBase64
-                  }
-                }
-              ]
-            }
-          ],
-          model: 'llama-3.2-11b-vision-preview',
-          temperature: 0.1,
-          max_tokens: 1400,
-        }),
+      console.log("[AI] Image compressed, sending to server...");
+      const result = await extractInvoiceData({
+        image: optimizedBase64,
+        business: getBusinessContext(),
       });
-
-      setProgress(85);
-      if (!response.ok) {
-        let errDesc = '';
-        try {
-          const errData = await response.json();
-          errDesc = errData.error?.message || JSON.stringify(errData);
-        } catch (e) {
-          errDesc = response.statusText;
-        }
-        throw new Error(`Groq Vision API Error ${response.status}: ${errDesc}`);
-      }
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
-      }
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
-
-      let jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/```([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Could not parse Vision AI response.');
-
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      console.log("[OCR] Vision AI extraction completed");
       setProgress(100);
-      return JSON.parse(jsonStr);
+      return result.data;
     } catch (err) {
+      console.error("[AI] Vision extraction failed:", err);
       throw err;
     }
   };
@@ -340,28 +342,61 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
 
     setLoading(true);
     setProgress(0);
+    console.log("[AI] Extraction started for file:", file.name, "type:", file.type);
 
     try {
       let extractedInfo = null;
-      const isImage = file.type?.startsWith('image/') || file.name?.endsWith('.png') || file.name?.endsWith('.jpg') || file.name?.endsWith('.jpeg');
+      const lowerName = file.name?.toLowerCase() || '';
+      const isImage = file.type?.startsWith('image/') || lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.webp');
+      const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
 
       if (isImage && preview) {
-        setNotification({ message: 'Analyzing document layout via Vision AI...', type: 'info' });
+        setNotification({ message: 'Processing invoice with Vision AI...', type: 'info' });
         try {
           extractedInfo = await extractDataWithVisionAI(preview);
+          if (extractedInfo) extractedInfo.ocrSource = 'vision';
         } catch (visionErr) {
-          console.warn('Vision OCR failed. Falling back to local Tesseract OCR + LLM:', visionErr);
+          console.warn("[AI] Vision failed, falling back to OCR:", visionErr.message);
         }
       }
 
-      if (!extractedInfo) {
+      // PDFs: extract the embedded text layer if present; otherwise render
+      // the first page and run Gemini Vision (with Tesseract as fallback).
+      // All of this happens client-side in memory — no cloud storage needed.
+      if (!extractedInfo && isPdf) {
+        setNotification({ message: 'Reading PDF invoice...', type: 'info' });
+        const { pdfText, dataUrl } = await renderPdfFirstPage(file);
+        if (pdfText && pdfText.trim().length >= 15) {
+          setNotification({ message: 'AI is analyzing the PDF invoice...', type: 'info' });
+          try {
+            extractedInfo = await extractDataWithAI(pdfText);
+            if (extractedInfo) extractedInfo.ocrSource = 'pdf_text';
+          } catch (textErr) {
+            console.warn('[AI] PDF text analysis failed, trying rendered page:', textErr.message);
+          }
+        }
+        if (!extractedInfo) {
+          setNotification({ message: 'Analyzing scanned PDF page via Vision AI...', type: 'info' });
+          try {
+            extractedInfo = await extractDataWithVisionAI(dataUrl);
+            if (extractedInfo) extractedInfo.ocrSource = 'pdf_vision';
+          } catch (visionErr) {
+            console.warn('[AI] PDF Vision failed, falling back to OCR:', visionErr.message);
+          }
+        }
+      }
+
+      if (!extractedInfo && !isPdf) {
         setNotification({ message: 'Processing document with Tesseract OCR...', type: 'info' });
+        console.log("[OCR] Starting Tesseract OCR");
         const ocrText = await extractTextWithOCR(file);
+        console.log("[OCR] Tesseract completed, extracted characters:", ocrText.length);
         if (!ocrText || ocrText.trim().length < 15) {
           throw new Error('OCR returned insufficient text. Please ensure the document is clear.');
         }
         setNotification({ message: 'AI is analyzing invoice and compliance parameters...', type: 'info' });
         extractedInfo = await extractDataWithAI(ocrText);
+        if (extractedInfo) extractedInfo.ocrSource = 'ocr';
       }
       
       // Compute breakdowns & ensure numeric validity
@@ -390,10 +425,16 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
       };
 
       setExtractedData(extractedInfo);
-      setNotification({ message: 'Document analysis completed successfully!', type: 'success' });
+      setNotification({ message: 'Invoice analyzed successfully! Review the details and confirm.', type: 'success' });
     } catch (error) {
-      console.error(error);
-      setNotification({ message: error.message || 'Invoice extraction failed.', type: 'error' });
+      console.error("[AI] Extraction failed:", error);
+      if (error?.code === 'LIMIT_EXCEEDED') {
+        setNotification({ message: error.message, type: 'warning' });
+        setTimeout(() => { window.location.href = '/pricing'; }, 1200);
+      } else {
+        // The uploaded file remains in browser memory for retry — nothing to recover.
+        setNotification({ message: mapAiError(error), type: 'error' });
+      }
     } finally {
       setLoading(false);
     }
@@ -405,27 +446,73 @@ You must detect where the fields are on the page. In 'boundingBoxes', output int
     setLoading(true);
 
     try {
-      const invoiceDateObj = new Date(extractedData.invoiceDate || new Date());
+      const invoiceDateObj = parseInvoiceDate(extractedData.invoiceDate);
       const gstrDeadlineDate = new Date(invoiceDateObj.getFullYear(), invoiceDateObj.getMonth() + 1, 13);
-      const businessId = localStorage.getItem('activeBusinessId') || 'apex_retailers';
+      const businessId = localStorage.getItem('activeBusinessId') || null;
 
-      // Save to Firebase Firestore
-      await saveUserBill({
+      const saved = await saveUserBill({
         ...extractedData,
         businessId,
         gstrDeadline: gstrDeadlineDate.toISOString().split('T')[0],
         gstrForm: 'GSTR-1',
         filed: false,
-        status: 'approved'
+        status: 'approved',
+        createdAt: new Date().toISOString()
+      });
+      const savedBillId = saved?.billId || null;
+
+      // OPTIONAL document archive (default OFF): when ENABLE_DOCUMENT_STORAGE
+      // is true, persist the original file to the storage bucket. When false
+      // (the default), this is a no-op — the app works with no bucket at all.
+      // Fire-and-forget: it never blocks the Firestore save or the agent chain.
+      if (ENABLE_DOCUMENT_STORAGE && file && savedBillId) {
+        uploadBillDocument(file, savedBillId)
+          .then((archive) => {
+            if (archive?.storagePath) {
+              return updateUserBill(savedBillId, { storagePath: archive.storagePath });
+            }
+            return null;
+          })
+          .catch((archiveErr) => {
+            console.warn('[Archive] Optional document archive failed (non-blocking):', archiveErr);
+          });
+      }
+
+      // Log user activity
+      await logUserActivity({
+        action: 'upload_bill',
+        details: {
+          invoiceNumber: extractedData.invoiceNumber || 'INV-AUTO'
+        }
       });
 
-      setNotification({ message: 'Invoice synced to Firebase successfully!', type: 'success' });
+      // Trigger the AI agent chain
+      setNotification({ message: 'Invoice saved. Running AI agents...', type: 'info' });
+      try {
+        const agentResult = await processInvoice(extractedData, { id: businessId }, savedBillId);
+        const agentCount = agentResult.results?.length || 0;
+        setNotification({
+          message: `Invoice synced! ${agentCount} AI agents executed successfully.`,
+          type: 'success'
+        });
+      } catch (agentErr) {
+        console.warn('Agent chain failed (non-blocking):', agentErr);
+        if (agentErr?.code === 'LIMIT_EXCEEDED') {
+          setNotification({
+            message: 'Invoice saved. Monthly agent-analysis limit reached — upgrade to continue AI monitoring.',
+            type: 'warning'
+          });
+        } else {
+          setNotification({ message: 'Invoice synced to Firebase successfully!', type: 'success' });
+        }
+      }
+
       setExtractedData(null);
       setFile(null);
       setPreview(null);
     } catch (err) {
       console.error('Error saving to Firebase:', err);
-      setNotification({ message: 'Error syncing data to Firebase. Try again.', type: 'error' });
+      setNotification({ message: 'Error saving invoice details. Please try again.', type: 'error' });
     } finally {
       setLoading(false);
     }

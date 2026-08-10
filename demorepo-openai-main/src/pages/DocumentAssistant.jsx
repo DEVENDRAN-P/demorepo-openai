@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
+import { analyzeDocument } from '../services/aiService';
+import { fetchActivePlan } from '../services/subscriptionService';
 
 function DocumentAssistant() {
-  const [activePlan, setActivePlan] = useState(() => {
-    return localStorage.getItem('saas_active_plan') || 'free';
-  });
+  // Entitlement is resolved from the server — localStorage is display cache only.
+  const [activePlan, setActivePlan] = useState('free');
 
   const [documentCount, setDocumentCount] = useState(() => {
     return Number(localStorage.getItem('saas_doc_count')) || 0;
   });
 
   useEffect(() => {
+    fetchActivePlan().then((plan) => setActivePlan(plan));
     const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+      fetchActivePlan().then((plan) => setActivePlan(plan));
     };
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);
@@ -25,8 +27,6 @@ function DocumentAssistant() {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [progress, setProgress] = useState(0);
-
-  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
 
   const handleDocUpload = (e) => {
     const file = e.target.files?.[0];
@@ -61,128 +61,6 @@ function DocumentAssistant() {
     }
   };
 
-  // Groq Notice / Legal Agreement Analyze (Text Mode)
-  const analyzeTextWithAI = async (ocrText) => {
-    setProgress(75);
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert Indian Tax Attorney and Corporate Legal Advisor.
-Analyze this official document, tax notice, contract, or government letter. Return ONLY a valid JSON object matching this structure exactly (do not output any markdown headers, wrappers or extra text):
-{
-  "documentType": "GST Notice | Tax Demand | Business Contract | Legal Notice | Vendor Statement | Other",
-  "summary": "Detailed explanation of what the document is, why it was issued, and what it implies for the business.",
-  "clauses": ["List of key clauses, sections, or invoice references mentioned"],
-  "riskLevel": "low | medium | high | critical",
-  "deadlines": "YYYY-MM-DD or 'Immediate' or 'N/A'",
-  "actionItems": ["Step-by-step required actions by the business to comply or respond"],
-  "suggestedResponse": "A formal response letter draft addressed to the tax officer or concerned corporate authority, ready for copy-pasting."
-}`
-            },
-            { role: 'user', content: ocrText }
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.2,
-          max_tokens: 1400
-        })
-      });
-
-      setProgress(85);
-      if (!response.ok) throw new Error('Groq AI API request failed');
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
-      }
-      const data = await response.json();
-      const responseText = data.choices[0]?.message?.content || '';
-
-      let jsonMatch = responseText.match(/```json\s*([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = responseText.match(/```([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Could not parse AI response.');
-
-      return JSON.parse(jsonMatch[1] || jsonMatch[0]);
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Groq Notice / Legal Agreement Analyze (Vision Mode)
-  const analyzeImageWithVisionAI = async (base64DataUrl) => {
-    setProgress(70);
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert Indian Tax Attorney and Corporate Legal Advisor.
-Analyze this official document, tax notice, contract, or government letter image. Return ONLY a valid JSON object matching this structure exactly (do not output any markdown headers, wrappers or extra text):
-{
-  "documentType": "GST Notice | Tax Demand | Business Contract | Legal Notice | Vendor Statement | Other",
-  "summary": "Detailed explanation of what the document is, why it was issued, and what it implies for the business.",
-  "clauses": ["List of key clauses, sections, or invoice references mentioned"],
-  "riskLevel": "low | medium | high | critical",
-  "deadlines": "YYYY-MM-DD or 'Immediate' or 'N/A'",
-  "actionItems": ["Step-by-step required actions by the business to comply or respond"],
-  "suggestedResponse": "A formal response letter draft addressed to the tax officer or concerned corporate authority, ready for copy-pasting."
-}`
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Analyze this GST notice/document image and extract context details.'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: base64DataUrl
-                  }
-                }
-              ]
-            }
-          ],
-          model: 'llama-3.2-11b-vision-preview',
-          temperature: 0.1,
-          max_tokens: 1400
-        })
-      });
-
-      setProgress(85);
-      if (!response.ok) throw new Error('Groq Vision AI API request failed');
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
-      }
-      const data = await response.json();
-      const responseText = data.choices[0]?.message?.content || '';
-
-      let jsonMatch = responseText.match(/```json\s*([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = responseText.match(/```([\s\S]*?)```/);
-      if (!jsonMatch) jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Could not parse Vision AI response.');
-
-      return JSON.parse(jsonMatch[1] || jsonMatch[0]);
-    } catch (err) {
-      throw err;
-    }
-  };
-
   const handleAnalyze = async () => {
     if (!docFile) return;
 
@@ -203,8 +81,11 @@ Analyze this official document, tax notice, contract, or government letter image
 
       if (isImage && docPreview) {
         setNotification({ message: 'Analyzing legal document using AI Vision...', type: 'info' });
+        setProgress(40);
         try {
-          analysis = await analyzeImageWithVisionAI(docPreview);
+          // Send image directly to server-side Gemini
+          const result = await analyzeDocument({ image: docPreview });
+          analysis = result.data;
         } catch (visionErr) {
           console.warn('Vision notice analysis failed. Falling back to local OCR:', visionErr);
         }
@@ -217,7 +98,10 @@ Analyze this official document, tax notice, contract, or government letter image
           throw new Error('OCR returned insufficient text. Please verify image clarity.');
         }
         setNotification({ message: 'Analyzing scanned text with attorney models...', type: 'info' });
-        analysis = await analyzeTextWithAI(text);
+        setProgress(75);
+        // Send OCR text to server-side Gemini
+        const result = await analyzeDocument({ ocrText: text });
+        analysis = result.data;
       }
 
       setDocExtracted(analysis);
@@ -229,7 +113,7 @@ Analyze this official document, tax notice, contract, or government letter image
       localStorage.setItem('saas_doc_count', newCount);
     } catch (e) {
       console.error(e);
-      setNotification({ message: e.message || 'Analysis failed. Make sure the document is clear and check your Groq API key.', type: 'error' });
+      setNotification({ message: e.message || 'Analysis failed. Please ensure the document is clear and try again.', type: 'error' });
     } finally {
       setLoading(false);
     }

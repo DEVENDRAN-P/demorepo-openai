@@ -1,48 +1,58 @@
 # AI GST & Compliance Buddy
 
-A complete React.js web application for automated GST filing using AI - Built for OpenAI x NxtWave BUILDATHON.
+A production-ready, AI-powered GST compliance SaaS for Indian small businesses, MSMEs, retailers, freelancers, and service providers. Upload invoices, extract and validate GST data, monitor compliance, forecast tax liabilities, and receive proactive recommendations from an intelligent compliance system.
 
 ## 🚀 Features
 
 ### ✅ Implemented Features
 
-1. **Smart Bill Upload & AI Extraction**
+1. **Smart Invoice Upload & AI Extraction**
 
-   - Upload bills (PDF, JPG, PNG, WEBP)
-   - AI automatically extracts invoice details using Groq AI
-   - Edit and verify extracted data
-   - Auto-categorizes expenses
+   - Upload invoices (PDF, JPG, PNG, WEBP)
+   - Server-side AI extracts supplier details, GSTIN, line items, taxes, and totals
+   - Tesseract OCR fallback when vision cannot read the document
+   - Edit and verify extracted data before saving
+   - Duplicate invoice detection and GSTIN validation
+   - Original documents are preserved in secure cloud storage
 
-2. **Auto GST Form Generation**
+2. **GST Preparation Data**
 
-   - GSTR-1 (Outward Supplies) - Auto-filled from uploaded bills
-   - GSTR-3B (Summary Return) - Calculated automatically
+   - GSTR-1 (Outward Supplies) — preparation-ready draft from uploaded invoices
+   - GSTR-3B (Summary Return) — calculated automatically
    - Download as PDF or export JSON
-   - Real-time calculations
+   - Real-time deterministic calculations
 
-3. **AI Chat Assistant**
+3. **AI Assistant**
 
-   - Powered by Groq AI (Llama 3.3 70B)
+   - Powered by server-side Google Gemini (key never exposed to the browser)
    - Real-time streaming responses
-   - GST compliance expertise
-   - Multi-language support (English, Hindi, Tamil)
+   - GST compliance expertise in English, Hindi, Tamil, Malayalam, and Kannada
    - Explains tax rules in simple language
 
-4. **Analytics & Reports**
+4. **Compliance & Agent Monitoring**
+
+   - Compliance Monitor Agent with deterministic rule checks
+   - AI Tax Forecast Agent (calculations in code, AI explains)
+   - AI Business Intelligence Agent
+   - Reminder Scheduler Agent
+   - Every agent run is persisted to Firestore (users/{uid}/agentRuns)
+   - Scheduled daily analysis via Vercel Cron
+
+5. **Analytics & Reports**
 
    - Monthly GST trends
    - Category-wise expense breakdown
-   - Tax credit calculations
+   - Input tax credit tracking
    - Visual charts and graphs
 
-5. **Smart Reminders**
+6. **Subscriptions & Payments**
 
-   - Filing deadline notifications
-   - Context-aware reminders based on your data
-   - Pending bill alerts
+   - FREE / PRO / BUSINESS plans
+   - Real Razorpay checkout with server-side signature verification
+   - Server-side entitlement and monthly usage limits
 
-6. **Multi-language Support**
-   - English, Hindi, Tamil
+7. **Multi-language Support**
+   - English, Hindi, Tamil, Malayalam, Kannada (fully synced)
    - Dynamic language switching
    - Localized content
 
@@ -57,97 +67,122 @@ npm start
 
 # Build for production
 npm run build
+
+# Verify translation parity
+node verify_langs.js
 ```
 
 ## 🔑 API Setup
 
-### Groq AI API (Required)
+### Server-Side Secrets (never exposed to the browser)
 
-## 🤖 AI Features Setup
+Add these to your `.env` / Vercel environment variables:
 
-1. Get your free API key: https://console.groq.com/keys
-2. Create `.env.local` file in project root:
-   ```
-   REACT_APP_GROQ_API_KEY=your_groq_api_key_here
-   ```
-3. Restart the development server
+```bash
+# Google Gemini API Key (server-side only)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Firebase Admin SDK (required for AI + billing + agents)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Razorpay (server-side secrets)
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+
+# Cron authentication for the scheduled agent
+CRON_SECRET=your_cron_secret
+
+# Brevo SMTP for email notifications
+BREVO_API_KEY=your_brevo_key
+EMAIL_FROM=noreply@your-domain.com
+```
+
+### Public Client Variables
+
+```bash
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+REACT_APP_FIREBASE_APP_ID=your-app-id
+REACT_APP_RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
+```
+
+Get your Gemini API key from: https://aistudio.google.com/apikey
 
 ## 🎯 How It Works
 
-### 1. Upload Bills
+### 1. Upload Invoices
 
-- Click "Upload Bill" from dashboard
-- Select PDF or image file (up to 10MB)
-- AI automatically extracts:
-  - Supplier name & GSTIN
-  - Invoice number & date
-  - Amounts & tax details
-  - Expense category
+- Click "Upload Invoice" from the dashboard
+- Select a PDF or image file (up to 10MB)
+- The server analyses the document: Gemini Vision first, Tesseract OCR as fallback
+- AI extracts supplier name & GSTIN, invoice number & date, amounts, and category
 
 ### 2. Verify & Confirm
 
 - Review AI-extracted data
 - Edit any field if needed
-- System auto-calculates totals
-- Save to your records
+- The system validates GSTIN format, totals, and tax math
+- Save to your records — agents then analyse the invoice automatically
 
-### 3. Generate GST Forms
+### 3. Generate GST Preparation Data
 
 - Go to "GST Forms"
-- View auto-filled GSTR-1 & GSTR-3B
+- View preparation-ready drafts for GSTR-1 & GSTR-3B
 - Download or export data
-- Ready for filing!
+- Review before filing on the GST portal
 
 ### 4. Get AI Help
 
 - Click "AI Assistant"
 - Ask questions in any language
-- Get instant GST guidance
+- Get instant, data-grounded GST guidance
 - Explanations in simple terms
 
 ## 💡 Key Features Explained
 
-### AI Bill Extraction
+### AI Invoice Extraction
 
-- Uses Groq AI (Llama 3.3 70B) for intelligent extraction
-- Handles various invoice formats
+- Server-side Gemini Vision for image invoices; Tesseract OCR fallback
+- Handles various invoice formats and layouts
 - Smart defaults for missing data
 - Editable before saving
 
 ### Real-time Calculations
 
-- Auto-calculates GST amounts
+- Auto-calculates GST amounts deterministically (CGST/SGST/IGST)
 - Updates totals instantly
-- Supports all GST rates (5%, 12%, 18%, 28%)
+- Supports GST rates (5%, 12%, 18%, 28%)
+- Gemini is used for interpretation only — never for financial math
 
 ### Data-Driven Insights
 
 - All stats use your actual uploaded data
-- Empty states guide you to upload bills
-- Visual analytics for better understanding
+- Empty states guide you to upload invoices
+- No synthetic or seeded business data is generated for real users
 
 ## 🎨 Tech Stack
 
-- **Frontend**: React.js 18, React Router
-- **Styling**: Custom CSS (Professional design system)
+- **Frontend**: React.js 18, React Router, Context API
+- **Styling**: Custom CSS design system (light/dark mode)
 - **Charts**: Recharts
-- **i18n**: react-i18next
-- **AI**: Groq API (Llama 3.3 70B Versatile)
-- **OCR**: Tesseract.js (future enhancement)
-- **Storage**: localStorage (demo mode)
-
-## 📱 Future Enhancements
-
-- [ ] Mobile app (React Native)
-- [ ] WhatsApp bot integration
-- [ ] Voice input for queries
-- [ ] Email notifications
-- [ ] Real OCR with Tesseract.js
-- [ ] Backend API integration
-- [ ] Multi-user support
-- [ ] Cloud storage
+- **i18n**: react-i18next (5 languages, verified parity)
+- **AI**: Google Gemini (server-side only)
+- **OCR**: Tesseract.js + Gemini Vision
+- **Database**: Cloud Firestore (strict user isolation)
+- **Storage**: Firebase Storage
+- **Auth**: Firebase Authentication (email/password + Google)
+- **Payments**: Razorpay (server-side verification)
+- **Email**: Brevo SMTP
+- **Hosting**: Vercel (serverless API routes + Cron)
 
 ## 🔐 Demo Credentials
+
+For local testing only:
 
 ```
 Email: demo@shop.com
@@ -172,20 +207,6 @@ Password: password123
 - "GST விகிதம் என்ன?"
 - "GSTR-1 எப்போது தாக்கல் செய்ய வேண்டும்?"
 
-## 🏆 Competition Features
-
-✅ **Theme Alignment**: AI in Business
-✅ **Problem Solving**: Simplifies GST for small businesses
-✅ **Innovation**: AI-powered invoice extraction
-✅ **User Experience**: Clean, professional UI
-✅ **Practicality**: Real-world applicable
-✅ **Technical Excellence**: Modern tech stack
-✅ **Scalability**: Ready for production
-
 ## 📄 License
 
-MIT License - Built for OpenAI x NxtWave BUILDATHON
-
----
-
-**Made with ❤️ by a Senior Developer**
+MIT License

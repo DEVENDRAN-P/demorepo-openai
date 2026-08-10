@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { getUserBills } from '../services/firebaseDataService';
+import { fetchActivePlan } from '../services/subscriptionService';
 
 function ComplianceCenter({ user }) {
   const [bills, setBills] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   const [activePlan, setActivePlan] = useState(() => {
     return localStorage.getItem('saas_active_plan') || 'free';
   });
 
+  // Resolve the ACTUAL plan from the server. localStorage is only a display cache —
+  // entitlement is always enforced by the backend.
+  useEffect(() => {
+    let mounted = true;
+    fetchActivePlan().then((plan) => {
+      if (mounted) setActivePlan(plan);
+    });
+    return () => { mounted = false; };
+  }, [user?.uid]);
+
   useEffect(() => {
     const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+      fetchActivePlan().then((plan) => setActivePlan(plan));
     };
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);
@@ -34,7 +45,8 @@ function ComplianceCenter({ user }) {
     getUserBills(user.uid)
       .then(fetched => {
         const filtered = fetched.filter(b => {
-          if (!b.businessId) return activeBusinessId === 'apex_retailers';
+          if (!activeBusinessId) return true; // show all when no business selected
+          if (!b.businessId) return true; // include invoices without explicit business
           return b.businessId === activeBusinessId;
         });
         setBills(filtered);

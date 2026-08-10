@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import { useTranslation } from 'react-i18next';
 import { getUserBusinesses } from '../utils/businessHelper';
+import { fetchActivePlan } from '../services/subscriptionService';
+import { preloadRoute } from '../utils/preloadRoutes';
 
 // Removed static BUSINESSES definition to enforce isolated user workspaces
 
@@ -232,9 +234,19 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
     return localStorage.getItem('saas_active_plan') || 'free';
   });
 
+  // Resolve the ACTUAL plan from the server. localStorage is only a display cache —
+  // entitlement is always enforced by the backend.
+  useEffect(() => {
+    let mounted = true;
+    fetchActivePlan().then((plan) => {
+      if (mounted) setSelectedPlan(plan);
+    });
+    return () => { mounted = false; };
+  }, [user]);
+
   useEffect(() => {
     const handlePlanChanged = () => {
-      setSelectedPlan(localStorage.getItem('saas_active_plan') || 'free');
+      fetchActivePlan().then((plan) => setSelectedPlan(plan));
     };
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);
@@ -246,12 +258,12 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
 
     // Enforce tier-based business profile limits
     if (selectedPlan === 'free' && targetIndex > 0) {
-      alert("⚠️ Single Business Limit: Under the Free Tier, you are limited to 1 business profile. Upgrade to the Pro Plan to manage up to 2 businesses, or Business Plan to unlock up to 5 businesses.");
+      alert(t('alert_single_business_limit', '⚠️ Single Business Limit: Under the Free Tier, you are limited to 1 business profile. Upgrade to the Pro Plan to manage up to 2 businesses, or Business Plan to unlock up to 5 businesses.'));
       return;
     }
-    
+
     if (selectedPlan === 'pro' && targetIndex >= 2) {
-      alert("⚠️ Pro Business Limit: Under the Pro Tier, you can manage up to 2 businesses. Upgrade to the Business Plan to manage up to 5 business entities and unlock continuous compliance monitoring.");
+      alert(t('alert_pro_business_limit', '⚠️ Pro Business Limit: Under the Pro Tier, you can manage up to 2 businesses. Upgrade to the Business Plan to manage up to 5 business entities and unlock continuous compliance monitoring.'));
       return;
     }
 
@@ -265,14 +277,15 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
 
   const menuItems = [
     { name: 'Dashboard', translationKey: 'dashboard', path: '/dashboard', icon: iconMap.dashboard },
-    { name: 'AI Accountant Agent', translationKey: 'ai_accountant_agent', path: '/agent', icon: iconMap.agent },
-    { name: 'Invoice Intelligence', translationKey: 'invoice_intelligence', path: '/bill-upload', icon: iconMap.upload },
-    { name: 'Invoices', translationKey: 'invoices', path: '/invoices', icon: iconMap.invoices },
+    { name: 'AI Accountant Agent', translationKey: 'ai_accountant_agent_menu', path: '/agent', icon: iconMap.agent },
+    { name: 'Agent Activity', translationKey: 'agent_activity', path: '/agent-activity', icon: iconMap.agent },
+    { name: 'Invoice Intelligence', translationKey: 'invoice_intelligence_menu', path: '/bill-upload', icon: iconMap.upload },
+    { name: 'Invoices', translationKey: 'invoices_ledger', path: '/invoices', icon: iconMap.invoices },
     { name: 'Document Assistant', translationKey: 'document_assistant', path: '/documents', icon: iconMap.documents },
     { name: 'Compliance Center', translationKey: 'compliance_center', path: '/compliance', icon: iconMap.compliance },
     { name: 'Penalty Center', translationKey: 'penalty_center', path: '/penalty', icon: iconMap.penalty },
-    { name: 'Business Health', translationKey: 'business_health', path: '/health', icon: iconMap.health },
-    { name: 'Reports', translationKey: 'reports', path: '/reports', icon: iconMap.reports },
+    { name: 'Business Health', translationKey: 'business_health_index', path: '/health', icon: iconMap.health },
+    { name: 'Reports', translationKey: 'analytics_reports', path: '/reports', icon: iconMap.reports },
     { name: 'Analytics', translationKey: 'analytics', path: '/expenses', icon: iconMap.expenses },
     { name: 'Business Directory', translationKey: 'business_directory', path: '/business', icon: iconMap.business },
     { name: 'Notifications', translationKey: 'notifications', path: '/notifications', icon: iconMap.notifications },
@@ -316,7 +329,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             <button 
               onClick={() => setCollapsed(false)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title="Expand Sidebar"
+              title={t('expand_sidebar', 'Expand Sidebar')}
             >
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
@@ -327,7 +340,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             <button 
               onClick={() => setCollapsed(true)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title="Collapse Sidebar"
+              title={t('collapse_sidebar', 'Collapse Sidebar')}
             >
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
@@ -376,6 +389,10 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             <NavLink
               key={idx}
               to={item.path}
+              // Warm up the page chunk while the user is still hovering the link,
+              // so clicking it navigates instantly (no Suspense fallback).
+              onMouseEnter={() => preloadRoute(item.path)}
+              onFocus={() => preloadRoute(item.path)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -429,23 +446,23 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.name || 'Guest User'}
+                {user?.name || t('guest_user', 'Guest User')}
               </span>
               <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user?.email || 'guest@gstbuddy.ai'}
               </span>
-              <span style={{ 
-                fontSize: '0.6rem', 
-                color: 'white', 
-                background: (!user || selectedPlan === 'free') ? '#64748b' : selectedPlan === 'pro' ? 'var(--theme-primary-light)' : '#14b8a6', 
-                padding: '0.1rem 0.375rem', 
+              <span style={{
+                fontSize: '0.6rem',
+                color: 'white',
+                background: (!user || selectedPlan === 'free') ? '#64748b' : selectedPlan === 'pro' ? 'var(--theme-primary-light)' : '#14b8a6',
+                padding: '0.1rem 0.375rem',
                 borderRadius: '4px',
                 width: 'fit-content',
                 marginTop: '0.25rem',
                 fontWeight: 700,
                 textTransform: 'uppercase'
               }}>
-                {!user ? 'Not Subscribed' : selectedPlan === 'free' ? 'Free Tier' : selectedPlan === 'pro' ? 'Pro Tier' : 'Business Tier'}
+                {!user ? t('not_subscribed', 'Not Subscribed') : selectedPlan === 'free' ? t('free_tier', 'Free Tier') : selectedPlan === 'pro' ? t('pro_tier', 'Pro Tier') : t('business_tier', 'Business Tier')}
               </span>
             </div>
           </div>
@@ -470,7 +487,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
           }}
         >
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{user ? <><path d="M16 17l5-5-5-5M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></> : <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></>}</svg>
-          {!collapsed && <span>{user ? 'Sign Out' : 'Sign In'}</span>}
+          {!collapsed && <span>{user ? t('sign_out', 'Sign Out') : t('sign_in', 'Sign In')}</span>}
         </button>
       </div>
 

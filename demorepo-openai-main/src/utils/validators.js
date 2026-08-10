@@ -215,7 +215,7 @@ export const validateForm = (formData, rules) => {
   };
 };
 
-export default {
+const validators = {
   sanitizeString,
   validateEmail,
   validatePassword,
@@ -228,3 +228,5 @@ export default {
   isInRange,
   validateForm,
 };
+
+export default validators;

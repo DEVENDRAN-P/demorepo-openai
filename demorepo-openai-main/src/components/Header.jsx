@@ -11,7 +11,7 @@ function Header({ onMenuClick }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [langOpen, setLangOpen] = useState(false);
   const [userBusinesses, setUserBusinesses] = useState([]);
 
@@ -97,13 +97,13 @@ function Header({ onMenuClick }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }} className="header-business-info">
             <span>GSTIN: {activeBusiness.gstin}</span>
             <span className="header-business-info-bullet">•</span>
-            <span style={{ color: 'var(--theme-secondary-light)' }}>Filing: {activeBusiness.status}</span>
+            <span style={{ color: 'var(--theme-secondary-light)' }}>{t('filing_status', 'Filing:')} {activeBusiness.status}</span>
           </div>
         </div>
 
         {/* Quick Compliance widget */}
         <div className="header-compliance-score" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem 0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.75rem' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Score:</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{t('compliance_score_label', 'Score')}:</span>
           <strong style={{ color: activeBusiness.compliance >= 90 ? 'var(--success)' : 'var(--warning)' }}>
             {activeBusiness.compliance}%
           </strong>
@@ -121,7 +121,7 @@ function Header({ onMenuClick }) {
           </span>
           <input 
             type="text" 
-            placeholder="Search transactions, bills, settings..." 
+            placeholder={t('header_search_placeholder', 'Search transactions, bills, settings...')} 
             value={headerSearch}
             onChange={(e) => setHeaderSearch(e.target.value)}
             style={{
@@ -147,7 +147,7 @@ function Header({ onMenuClick }) {
           className="btn btn-outline"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', border: '1px solid var(--theme-secondary)' }}
         >
-          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span> <span className="header-btn-text">AI Agent</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>           <span className="header-btn-text">{t('ai_agent', 'AI Agent')}</span>
         </button>
 
         {/* Quick Upload shortcut */}
@@ -156,7 +156,7 @@ function Header({ onMenuClick }) {
           className="btn btn-primary"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
         >
-          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span> <span className="header-btn-text">Upload</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span>           <span className="header-btn-text">{t('upload')}</span>
         </button>
 
         {/* Notifications Shortcut */}
@@ -185,7 +185,7 @@ function Header({ onMenuClick }) {
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          title={isDarkMode ? t('switch_to_light_mode') : t('switch_to_dark_mode')}
         >
           {isDarkMode ? (
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -212,7 +212,7 @@ function Header({ onMenuClick }) {
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            title="Change Language"
+            title={t('change_language', 'Change Language')}
           >
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           </button>
@@ -261,7 +261,7 @@ function Header({ onMenuClick }) {
                       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     </svg>
                   </span>
-                  <span>{['English', 'Hindi', 'Tamil', 'Malayalam', 'Kannada'][index]}</span>
+                  <span>{[t('english'), t('hindi'), t('tamil'), t('malayalam'), t('kannada')]}</span>
                 </button>
               ))}
             </div>

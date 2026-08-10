@@ -4,16 +4,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { txn } = location.state || {
-    txn: {
-      id: 'TXN-0000',
-      date: new Date().toISOString().split('T')[0],
-      plan: 'Pro Plan',
-      amount: '₹399',
-      status: 'Success',
-      utr: 'MOCK-REF-12345'
-    }
-  };
+  const { txn } = location.state || {};
+
+  // If no real transaction state, redirect — never show fake data
+  if (!txn) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-2xl)', padding: '3rem 2rem', maxWidth: '480px', width: '100%', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-xl)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>No payment data found</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
+            This page is only accessible after a completed payment. Please visit your dashboard or upgrade your plan.
+          </p>
+          <button onClick={() => navigate('/dashboard')} className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontWeight: 700 }}>
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleDownloadReceipt = () => {
     const content = `=========================================
@@ -40,7 +48,7 @@ Thank you for choosing GST Buddy AI!`;
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-2xl)', padding: '3rem 2rem', maxWidth: '480px', width: '100%', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-xl)' }}>
         
-        {/* Animated Checkmark Circle */}
+        {/* Success Icon */}
         <div style={{
           width: '72px',
           height: '72px',

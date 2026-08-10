@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchActivePlan } from '../services/subscriptionService';
 
 function PenaltyCenter() {
   // Calculator States
@@ -16,9 +17,19 @@ function PenaltyCenter() {
     return localStorage.getItem('saas_active_plan') || 'free';
   });
 
+  // Resolve the ACTUAL plan from the server. localStorage is only a display cache —
+  // entitlement is always enforced by the backend.
+  useEffect(() => {
+    let mounted = true;
+    fetchActivePlan().then((plan) => {
+      if (mounted) setActivePlan(plan);
+    });
+    return () => { mounted = false; };
+  }, []);
+
   useEffect(() => {
     const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+      fetchActivePlan().then((plan) => setActivePlan(plan));
     };
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);

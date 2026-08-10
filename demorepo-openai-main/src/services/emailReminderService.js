@@ -4,6 +4,8 @@ import {
   query,
   where,
   getDocs,
+  doc,
+  getDoc,
   serverTimestamp,
   addDoc,
 } from "firebase/firestore";
@@ -116,11 +118,37 @@ export const sendReminderEmail = async (emailData) => {
       subject: emailData.subject,
     });
 
-    const response = await axios.post(apiUrl, {
-      subject: emailData.subject,
-      body: emailData.body,
-      email: emailData.email,
-    });
+    // /api/email requires authentication. Short-circuit with a clear error
+    // instead of sending a doomed unauthenticated request.
+    let token = "";
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        token = await currentUser.getIdToken();
+      }
+    } catch (tokenErr) {
+      console.warn("⚠️ Could not fetch ID token for email API:", tokenErr);
+    }
+
+    if (!token) {
+      return {
+        success: false,
+        message: "You must be signed in to send email reminders.",
+        provider: "Brevo",
+        error: true,
+        statusCode: 401,
+      };
+    }
+
+    const response = await axios.post(
+      apiUrl,
+      {
+        subject: emailData.subject,
+        body: emailData.body,
+        email: emailData.email,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
     console.log("✅ Email sent successfully via Brevo:", response.data);
 
@@ -321,13 +349,15 @@ export const sendManualReminder = async (userId, billId) => {
     const userUid = userId || currentUser.uid;
 
     // Get bill details
-    const billSnapshot = await getDocs(query(where("__name__", "==", billId)));
+    // Bills live under users/{uid}/bills — never query the root collection.
+    const billRef = doc(db, "users", userUid, "bills", billId);
+    const billDoc = await getDoc(billRef);
 
-    if (billSnapshot.empty) {
+    if (!billDoc.exists()) {
       throw new Error("Bill not found");
     }
 
-    const bill = billSnapshot.docs[0].data();
+    const bill = billDoc.data();
     const now = new Date();
     const deadline = new Date(bill.gstrDeadline);
     const daysUntilDeadline = Math.ceil(

@@ -4,7 +4,7 @@ import { getUserBills } from '../services/firebaseDataService';
 function AIInsights({ user }) {
   const [bills, setBills] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   useEffect(() => {
@@ -22,7 +22,8 @@ function AIInsights({ user }) {
     getUserBills(user.uid)
       .then(fetched => {
         const filtered = fetched.filter(b => {
-          if (!b.businessId) return activeBusinessId === 'apex_retailers';
+          if (!activeBusinessId) return true; // show all when no business selected
+          if (!b.businessId) return true; // include invoices without explicit business
           return b.businessId === activeBusinessId;
         });
         setBills(filtered);
@@ -30,29 +31,69 @@ function AIInsights({ user }) {
       .catch(e => console.error(e));
   }, [user?.uid, activeBusinessId]);
 
-  // Compute mock insights list
+  // Deterministic insights — computed ONLY from the user's stored invoices.
+  // No hardcoded figures; every number below is derived from real data.
   const pendingCount = bills.filter(b => !b.filed).length;
-  
-  const insights = [
-    {
-      title: 'Utilities Cost Variance Alert',
-      type: 'Expense Trend',
-      desc: `Your telecom and energy utility bills increased by 14% this month. Large invoice #${bills[0]?.invoiceNumber || '101'} accounts for the main variance chunk.`,
-      impact: '₹1,200 additional overhead cash outlay.'
-    },
-    {
-      title: 'BSNL Telecom GSTIN Correction opportunity',
-      type: 'ITC Matching',
-      desc: 'AI identified a broadband invoice containing empty/invalid GSTIN. Re-submitting the BSNL invoice with your active corporate GSTIN will unlock input credit claims.',
-      impact: '₹280 cash refund recovery.'
-    },
-    {
-      title: 'Quarterly compliance timeline review',
+  const totalTax = bills.reduce((s, b) => s + (b.taxAmount || 0), 0);
+  const totalSpend = bills.reduce((s, b) => s + (b.totalAmount || 0), 0);
+  const GSTIN_REGEX = /^[0-9]{2}[A-Za-z0-9]{10}[0-9A-Za-z]{2}$/;
+  const validGstinCount = bills.filter(b => b.gstin && GSTIN_REGEX.test(String(b.gstin).trim()) && !String(b.gstin).toUpperCase().includes('XXXXX')).length;
+  const missingGstinCount = bills.filter(b => !b.gstin || !GSTIN_REGEX.test(String(b.gstin).trim()) || String(b.gstin).toUpperCase().includes('XXXXX')).length;
+
+  // Duplicate detection: same invoice number + same supplier
+  const seen = new Map();
+  const duplicateInvoiceNumbers = [];
+  for (const b of bills) {
+    const invNo = String(b.invoiceNumber || '').trim().toUpperCase();
+    const supplier = String(b.supplierName || '').trim().toLowerCase();
+    if (!invNo || !supplier) continue;
+    const key = `${invNo}|${supplier}`;
+    if (seen.has(key)) duplicateInvoiceNumbers.push(b.invoiceNumber);
+    else seen.set(key, true);
+  }
+  const uniqueDuplicates = [...new Set(duplicateInvoiceNumbers)];
+
+  const insights = [];
+  if (pendingCount > 0) {
+    insights.push({
+      title: `${pendingCount} pending filing${pendingCount > 1 ? 's' : ''}`,
       type: 'Filing Alert',
-      desc: `You have ${pendingCount} pending returns awaiting filing. Lock GSTR-1 ledger before the GSTR deadline to prevent late fee charges.`,
-      impact: 'Potential ₹50/day portal delay fine.'
-    }
-  ];
+      desc: `You have ${pendingCount} invoice${pendingCount > 1 ? 's' : ''} not yet filed. Prepare your GSTR-1/GSTR-3B drafts before the deadline to avoid late fees.`,
+      impact: `Based on ${pendingCount} unfiled invoice${pendingCount > 1 ? 's' : ''} in your records.`
+    });
+  }
+  if (missingGstinCount > 0) {
+    insights.push({
+      title: `${missingGstinCount} invoice${missingGstinCount > 1 ? 's' : ''} with invalid or missing supplier GSTIN`,
+      type: 'ITC Risk',
+      desc: `${missingGstinCount} invoice${missingGstinCount > 1 ? 's' : ''} carry a supplier GSTIN that fails the 15-character format check and may be ineligible for input tax credit.`,
+      impact: `₹${totalTax.toLocaleString()} total GST recorded across your invoices.`
+    });
+  }
+  if (uniqueDuplicates.length > 0) {
+    insights.push({
+      title: `${uniqueDuplicates.length} potential duplicate invoice${uniqueDuplicates.length > 1 ? 's' : ''}`,
+      type: 'Data Quality',
+      desc: `Invoice number${uniqueDuplicates.length > 1 ? 's' : ''} ${uniqueDuplicates.slice(0, 3).join(', ')} appear more than once for the same supplier.`,
+      impact: 'Review to avoid double-counting in reports.'
+    });
+  }
+  if (validGstinCount > 0) {
+    insights.push({
+      title: `${validGstinCount} invoice${validGstinCount > 1 ? 's' : ''} eligible for ITC`,
+      type: 'ITC Tracking',
+      desc: `${validGstinCount} invoice${validGstinCount > 1 ? 's' : ''} carry a well-formed supplier GSTIN, keeping input credit claims available.`,
+      impact: `₹${totalTax.toLocaleString()} GST recorded across ${bills.length} invoices.`
+    });
+  }
+  if (totalSpend > 0) {
+    insights.push({
+      title: `Recorded spend: ₹${totalSpend.toLocaleString()}`,
+      type: 'Overview',
+      desc: `${bills.length} invoice${bills.length > 1 ? 's' : ''} recorded with ₹${totalSpend.toLocaleString()} total value and ₹${totalTax.toLocaleString()} GST.`,
+      impact: 'Figures are computed from your stored invoices.'
+    });
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>

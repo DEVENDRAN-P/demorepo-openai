@@ -1,6 +1,6 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import i18n from './i18n/config';
 import './App.css';
 import './styles/auth-animations.css';
@@ -10,20 +10,23 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { DarkModeProvider } from './context/DarkModeContext';
 
-// Components - Import directly (not lazy)
+// Components - Import directly (not lazy) — these are lightweight guards/layouts
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
-
-// Pages - Import commonly used pages directly
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import Dashboard from './pages/Dashboard';
-import Home from './pages/Home';
-
 import DashboardLayout from './components/DashboardLayout';
 
-// Pages - Lazy load secondary pages for better performance
+import { preloadRoute } from './utils/preloadRoutes';
+
+// Pages - ALL pages are lazy-loaded. Heavy libraries (recharts, framer-motion,
+// lucide-react, tesseract, pdfjs) stay out of the initial bundle and load only
+// when their page is actually visited. The Dashboard chunk is preloaded in idle
+// time after auth so the first navigation is instant.
+const Home = lazy(() => import('./pages/Home'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+
 const BillUpload = lazy(() => import('./pages/BillUpload'));
 const BillDetails = lazy(() => import('./pages/BillDetails'));
 const GSTForms = lazy(() => import('./pages/GSTForms'));
@@ -50,14 +53,16 @@ const PenaltyCenter = lazy(() => import('./pages/PenaltyCenter'));
 const PricingBilling = lazy(() => import('./pages/PricingBilling'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const AgentActivityPage = lazy(() => import('./pages/AgentActivity'));
 
 // Loading Component
 function LoadingScreen() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-500 to-teal-500">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mb-4"></div>
-        <p className="text-white text-xl font-semibold">Loading GST Buddy AI...</p>
+        <p className="text-white text-xl font-semibold">{t('loading_app', 'Loading GST Buddy AI...')}</p>
       </div>
     </div>
   );
@@ -66,6 +71,18 @@ function LoadingScreen() {
 // Main Routes Component
 function AppRoutes() {
   const { loading, isAuthenticated, user } = useAuth();
+
+  // Warm up the most likely next chunk while the user is idle, so navigation
+  // after login renders without a spinner. Authenticated users go to the
+  // Dashboard; guests stay on the landing page.
+  useEffect(() => {
+    const idle = window.requestIdleCallback
+      ? window.requestIdleCallback
+      : (cb) => setTimeout(cb, 250);
+    idle(() => {
+      preloadRoute(isAuthenticated ? '/dashboard' : '/');
+    });
+  }, [isAuthenticated]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -90,6 +107,7 @@ function AppRoutes() {
             <Route path="/dashboard" element={<Dashboard user={user} />} />
             
             <Route path="/agent" element={<AIFinanceAgent user={user} />} />
+            <Route path="/agent-activity" element={<AgentActivityPage user={user} />} />
             <Route path="/bill-upload" element={<BillUpload user={user} />} />
             <Route path="/bill/:billId" element={<BillDetails user={user} />} />
             <Route path="/invoices" element={<Invoices user={user} />} />

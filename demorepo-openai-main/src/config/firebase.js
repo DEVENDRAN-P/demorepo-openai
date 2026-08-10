@@ -15,8 +15,8 @@ import {
   connectFirestoreEmulator 
 } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
+import { ENABLE_DOCUMENT_STORAGE } from "./features";
 
 // ========================================
 // FIREBASE CONFIGURATION - PRODUCTION READY
@@ -161,9 +161,31 @@ if (typeof window !== "undefined") {
 export { analytics };
 
 // ========================================
-// INITIALIZE FIREBASE STORAGE
+// INITIALIZE FIREBASE STORAGE (OPTIONAL)
 // ========================================
-export const storage = getStorage(app);
+// Cloud Storage is NOT required for the app to work. Invoices are processed
+// in browser memory and only metadata is saved to Firestore. Storage is only
+// initialized when ENABLE_DOCUMENT_STORAGE=true (optional future archive).
+// firebase/storage is imported dynamically so it stays out of the main
+// bundle when disabled.
+let storageInstance = null;
+let storagePromise = null;
+
+/**
+ * Lazily resolve the Firebase Storage instance.
+ * Returns null when document storage is disabled (the default).
+ */
+export const getStorageInstance = () => {
+  if (!ENABLE_DOCUMENT_STORAGE) return null;
+  if (storageInstance) return Promise.resolve(storageInstance);
+  if (!storagePromise) {
+    storagePromise = import("firebase/storage").then(({ getStorage }) => {
+      storageInstance = getStorage(app);
+      return storageInstance;
+    });
+  }
+  return storagePromise;
+};
 
 // ========================================
 // INITIALIZE FIREBASE REALTIME DATABASE
@@ -193,11 +215,18 @@ if (useEmulator && typeof window !== "undefined") {
     console.warn("⚠️  Auth emulator connection skipped:", error.message);
   }
 
-  try {
-    connectStorageEmulator(storage, "127.0.0.1", 9199);
-    console.log("✅ Connected to Storage Emulator at 127.0.0.1:9199");
-  } catch (error) {
-    console.warn("⚠️  Storage emulator connection skipped:", error.message);
+  if (ENABLE_DOCUMENT_STORAGE) {
+    try {
+      getStorageInstance().then((storageInstance) => {
+        import("firebase/storage")
+          .then(({ connectStorageEmulator }) => {
+            if (storageInstance) connectStorageEmulator(storageInstance, "127.0.0.1", 9199);
+            console.log("✅ Connected to Storage Emulator at 127.0.0.1:9199");
+          });
+      });
+    } catch (error) {
+      console.warn("⚠️  Storage emulator connection skipped:", error.message);
+    }
   }
 }
 

@@ -130,7 +130,7 @@ export default function Home() {
       title: "AI OCR", 
       subtitle: "Neural Text Extraction", 
       metric: "99.8% Accuracy", 
-      desc: "Llama 3.3 OCR parses and extracts structural text instantly.", 
+      desc: "AI vision parses and extracts invoice text instantly.", 
       icon: Scan 
     },
     { 
@@ -638,7 +638,7 @@ export default function Home() {
                 <Upload size={16} />
               </div>
               <div className="text-left">
-                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Llama extraction</span>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">AI extraction</span>
                 <strong className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold">₹1.2L ITC Drafted</strong>
               </div>
             </div>
@@ -1373,7 +1373,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-sm">
-                Automating finance compliance, invoice extraction, and returns drafting using Groq Llama 3.3.
+                Automating finance compliance, invoice extraction, and returns drafting using Google Gemini AI.
               </p>
               
               {/* SSL & ISO Badges */}

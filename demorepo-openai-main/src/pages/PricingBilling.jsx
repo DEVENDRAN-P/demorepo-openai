@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../config/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { invalidatePlanCache } from '../services/subscriptionService';
 
 const getApiUrl = (path) => {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -96,12 +97,13 @@ function PricingBilling({ user }) {
       const statusRes = await fetch(getApiUrl('/api/subscription/status'), { headers });
       if (statusRes.ok) {
         const statusData = await safeParseJson(statusRes);
-        setActivePlan(statusData.subscriptionPlan);
-        localStorage.setItem('saas_active_plan', statusData.subscriptionPlan || 'free');
-        window.dispatchEvent(new Event('planChanged'));
-        setSubscriptionStatus(statusData.subscriptionStatus);
-        setSubscriptionStart(statusData.subscriptionStart);
-        setSubscriptionExpiry(statusData.subscriptionExpiry);
+        // API shape: { success: true, subscription: { subscriptionPlan, ... } }
+        const plan = statusData.subscription?.subscriptionPlan || statusData.subscriptionPlan || 'free';
+        setActivePlan(plan);
+        localStorage.setItem('saas_active_plan', plan);
+        setSubscriptionStatus(statusData.subscription?.subscriptionStatus || statusData.subscriptionStatus);
+        setSubscriptionStart(statusData.subscription?.subscriptionStart || statusData.subscriptionStart);
+        setSubscriptionExpiry(statusData.subscription?.subscriptionExpiry || statusData.subscriptionExpiry);
       } else {
         const errText = await statusRes.text().catch(() => "");
         console.error('Failed to fetch subscription status from API.', statusRes.status, errText);
@@ -263,6 +265,10 @@ function PricingBilling({ user }) {
             
             // Reload billing statement and status details
             await fetchSubscriptionAndBillingData();
+            // Real plan change: drop the shared cache and tell every component
+            // (Sidebar, Dashboard, etc.) to show the new tier.
+            invalidatePlanCache();
+            window.dispatchEvent(new Event('planChanged'));
 
             // Redirect to success route
             navigate('/payment-success', {
@@ -333,6 +339,9 @@ function PricingBilling({ user }) {
       }
       setSuccessMsg('Successfully downgraded to the Free Tier!');
       await fetchSubscriptionAndBillingData();
+      // Real plan change: drop the shared cache and notify other components.
+      invalidatePlanCache();
+      window.dispatchEvent(new Event('planChanged'));
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -914,7 +923,7 @@ function PricingBilling({ user }) {
                 <td className="comparison-td" style={{ textAlign: 'center' }}>{t('pricing_unlimited', 'Unlimited')}</td>
               </tr>
               <tr>
-                <td className="comparison-td">{t('pricing_feature_ocr', 'Groq AI OCR line-item extraction')}</td>
+                <td className="comparison-td">{t('pricing_feature_ocr', 'Gemini AI invoice extraction')}</td>
                 <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>{t('pricing_ocr_limited', 'Limited (Header only)')}</td>
                 <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
@@ -954,13 +963,13 @@ function PricingBilling({ user }) {
                 <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
-                    <span>{t('pricing_llama_assistant', 'Llama 3.3 Assistant')}</span>
+                    <span>{t('pricing_ai_assistant', 'AI Assistant')}</span>
                   </div>
                 </td>
                 <td className="comparison-td" style={{ textAlign: 'center', color: 'var(--success)', display: 'table-cell' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17 4 12"/></svg>
-                    <span>{t('pricing_llama_assistant', 'Llama 3.3 Assistant')}</span>
+                    <span>{t('pricing_ai_assistant', 'AI Assistant')}</span>
                   </div>
                 </td>
               </tr>
@@ -1052,7 +1061,7 @@ function PricingBilling({ user }) {
             },
             {
               q: "How accurate is the AI Bill OCR extraction?",
-              a: "Our AI bill extraction uses Llama 3.3 70B via Groq to parse invoices. It achieves 99% accuracy on standard invoices, identifying supplier names, GSTINs, tax lines, categories, and totals automatically."
+              a: "Our AI invoice extraction uses Google Gemini to parse invoices with high accuracy, identifying supplier names, GSTINs, tax lines, categories, and totals automatically. Extraction quality depends on image clarity."
             }
           ].map((faq, idx) => {
             const isFaqOpen = !!faqExpanded[idx];
@@ -1153,7 +1162,7 @@ function PricingBilling({ user }) {
                 <strong style={{ fontSize: '1.05rem', fontWeight: 800 }}>GST Buddy AI</strong>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-                Automating finance compliance, invoice extraction, and returns drafting using Groq Llama 3.3.
+                Automating finance compliance, invoice extraction, and returns drafting using Google Gemini AI.
               </p>
               
               {/* Badges */}

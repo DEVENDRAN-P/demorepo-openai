@@ -86,17 +86,32 @@ function GSTForms({ user }) {
   };
 
   const generateGSTR3B = (billsList) => {
-    const totalTaxable = billsList.reduce((sum, bill) => sum + (bill.amount || 0), 0);
-    const totalTax = billsList.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
-    const inputCredit = totalTax; // 100% actual input tax credit
-    const netPayable = Math.max(0, totalTax * 1.5 - inputCredit); // Mock sales tax liability 1.5x purchases
+    // All values are deterministic — computed directly from uploaded invoice data
+    // [CALCULATED] No AI involvement in these financial figures
+    const totalTaxable = billsList.reduce((sum, bill) => sum + (Number(bill.amount) || 0), 0);
+    const totalCGST = billsList.reduce((sum, bill) => sum + (Number(bill.taxBreakdown?.cgst) || Number(bill.taxAmount) / 2 || 0), 0);
+    const totalSGST = billsList.reduce((sum, bill) => sum + (Number(bill.taxBreakdown?.sgst) || Number(bill.taxAmount) / 2 || 0), 0);
+    const totalIGST = billsList.reduce((sum, bill) => sum + (Number(bill.taxBreakdown?.igst) || 0), 0);
+    const totalTax = totalCGST + totalSGST + totalIGST;
+
+    // ITC: input tax credit from valid GSTIN invoices
+    const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    const itcEligibleBills = billsList.filter(b => b.gstin && GSTIN_RE.test((b.gstin || '').toUpperCase()));
+    const itcAvailable = itcEligibleBills.reduce((sum, b) => sum + (Number(b.taxAmount) || 0), 0);
+
+    // Net payable = total tax on purchases (as expense-side ITC claim)
+    // If this is a purchase ledger, ITC offsets payable; net = max 0
+    const netPayable = Math.max(0, totalTax - itcAvailable);
 
     setGstr3bData({
-      outwardSupplies: totalTaxable * 1.5,
+      outwardSupplies: totalTaxable,
       inwardSupplies: totalTaxable,
-      totalTax: totalTax * 1.5,
-      itc: inputCredit,
-      netPayable: netPayable,
+      cgst: Math.round(totalCGST),
+      sgst: Math.round(totalSGST),
+      igst: Math.round(totalIGST),
+      totalTax: Math.round(totalTax),
+      itc: Math.round(itcAvailable),
+      netPayable: Math.round(netPayable),
     });
   };
 

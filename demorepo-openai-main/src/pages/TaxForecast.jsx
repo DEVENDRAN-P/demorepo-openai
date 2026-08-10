@@ -1,21 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserBills } from '../services/firebaseDataService';
+import { fetchActivePlan } from '../services/subscriptionService';
 
 function TaxForecast({ user }) {
   const [forecastData, setForecastData] = useState([]);
   const [liability, setLiability] = useState(0);
+  const [itcTotal, setItcTotal] = useState(0);
+  const [invoiceCount, setInvoiceCount] = useState(0);
+  const [confidence, setConfidence] = useState('Low');
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   const [activePlan, setActivePlan] = useState(() => {
     return localStorage.getItem('saas_active_plan') || 'free';
   });
 
+  // Resolve the ACTUAL plan from the server. localStorage is only a display cache —
+  // entitlement is always enforced by the backend.
+  useEffect(() => {
+    let mounted = true;
+    fetchActivePlan().then((plan) => {
+      if (mounted) setActivePlan(plan);
+    });
+    return () => { mounted = false; };
+  }, [user?.uid]);
+
   useEffect(() => {
     const handlePlanChanged = () => {
-      setActivePlan(localStorage.getItem('saas_active_plan') || 'free');
+      fetchActivePlan().then((plan) => setActivePlan(plan));
     };
     window.addEventListener('planChanged', handlePlanChanged);
     return () => window.removeEventListener('planChanged', handlePlanChanged);
@@ -36,22 +50,57 @@ function TaxForecast({ user }) {
     getUserBills(user.uid)
       .then(fetched => {
         const filtered = fetched.filter(b => {
-          if (!b.businessId) return activeBusinessId === 'apex_retailers';
+          if (!activeBusinessId) return true; // show all when no business selected
+          if (!b.businessId) return true; // include invoices without explicit business
           return b.businessId === activeBusinessId;
         });
 
-        // Compute forecast mock charts
-        const baseGST = filtered.reduce((sum, b) => sum + (b.taxAmount || 0), 0) || 12000;
-        setLiability(baseGST * 1.5);
+        // Deterministic forecast — computed ONLY from the user's stored
+        // invoices. No AI magic, no hardcoded multipliers, no fake fallback
+        // base (e.g. ₹12,000) when the user has no data.
+        const GSTIN_REGEX = /^[0-9]{2}[A-Za-z0-9]{10}[0-9A-Za-z]{2}$/;
+        const monthly = new Map(); // "YYYY-MM" -> { liability, credit }
+        for (const b of filtered) {
+          const d = new Date(b.invoiceDate || b.createdAt || Date.now());
+          if (Number.isNaN(d.getTime())) continue;
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const entry = monthly.get(key) || { liability: 0, credit: 0 };
+          entry.liability += b.taxAmount || 0;
+          const gstin = String(b.gstin || '').trim();
+          if (GSTIN_REGEX.test(gstin) && !gstin.toUpperCase().includes('XXXXX')) {
+            entry.credit += b.taxAmount || 0;
+          }
+          monthly.set(key, entry);
+        }
 
-        const months = ['Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026'];
-        const chart = months.map((m, idx) => ({
-          month: m,
-          liability: Math.round(baseGST * (1.2 + idx * 0.1)),
-          credit: Math.round(baseGST * (1.0 + idx * 0.05)),
-          savings: Math.round(baseGST * 0.15)
-        }));
+        const monthKeys = [...monthly.keys()].sort();
+        const last3 = monthKeys.slice(-3).map((k) => monthly.get(k).liability);
+        const avgMonthly = last3.length ? last3.reduce((s, v) => s + v, 0) / last3.length : 0;
+        const latestLiability = monthKeys.length ? monthly.get(monthKeys[monthKeys.length - 1]).liability : 0;
+        const nextEstimate = avgMonthly > 0 ? Math.round(avgMonthly) : latestLiability;
+
+        // Chart: up to 4 actual months + next-month projection (clearly marked)
+        const now = new Date();
+        const nextKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const chart = monthKeys.slice(-4).map((k) => {
+          const e = monthly.get(k);
+          return {
+            month: k,
+            liability: Math.round(e.liability),
+            credit: Math.round(e.credit),
+            savings: 0,
+            projected: false,
+          };
+        });
+        if (nextEstimate > 0 && !chart.some((c) => c.month === nextKey)) {
+          chart.push({ month: `${nextKey} (proj.)`, liability: nextEstimate, credit: 0, savings: 0, projected: true });
+        }
+
         setForecastData(chart);
+        setLiability(nextEstimate);
+        setItcTotal(monthKeys.reduce((s, k) => s + monthly.get(k).credit, 0));
+        setInvoiceCount(filtered.length);
+        setConfidence(filtered.length >= 6 ? 'High' : filtered.length >= 2 ? 'Medium' : 'Low');
       })
       .catch(e => console.error(e));
   }, [user?.uid, activeBusinessId]);
@@ -72,23 +121,23 @@ function TaxForecast({ user }) {
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Next Month Est. Liability</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{liability.toLocaleString()}</div>
-          <span style={{ fontSize: '0.675rem', color: 'var(--success)' }}>Confidence: 94% (High)</span>
+          <span style={{ fontSize: '0.675rem', color: confidence === 'High' ? 'var(--success)' : 'var(--warning)' }}>Confidence: {confidence}</span>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--success)' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Expected Credit (ITC)</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--success)' }}>
-            -₹{(liability / 1.5).toLocaleString()}
+            -₹{itcTotal.toLocaleString()}
           </div>
-          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>Based on current expense speed</span>
+          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>From invoices with valid supplier GSTIN ({invoiceCount} invoices)</span>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Estimated Tax Savings</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recommended Cash Reserve</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-secondary-light)' }}>
-            ₹{(liability * 0.15).toLocaleString()}
+            ₹{Math.round(liability * 0.1).toLocaleString()}
           </div>
-          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>From auto HSN & supplier audit corrections</span>
+          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>10% buffer of next-month estimate (recommendation)</span>
         </div>
       </div>
 
@@ -132,6 +181,11 @@ function TaxForecast({ user }) {
         )}
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Next 4-Months Projected GST Balance</h3>
         
+        {forecastData.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            No business data yet — upload invoices to generate a GST forecast.
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={forecastData}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
@@ -139,11 +193,12 @@ function TaxForecast({ user }) {
             <YAxis stroke="var(--text-secondary)" style={{ fontSize: '0.75rem' }} />
             <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
             <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
-            <Bar dataKey="liability" fill="#6366f1" name="Sales GST Liability" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="credit" fill="#10b981" name="Purchases Input Credit" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="savings" fill="#14b8a6" name="Projected Savings" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="liability" fill="#6366f1" name="GST (computed)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="credit" fill="#10b981" name="ITC Credit (computed)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="savings" fill="#14b8a6" name="Recommended Reserve" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Predictive Scenario Simulator */}
@@ -185,23 +240,25 @@ function TaxForecast({ user }) {
           </div>
         )}
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg></span> Scenario-based Cash Flow Forecast
+          <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg></span> Cash Flow Readiness
         </h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Evaluate scenario impacts on cash reserving guidelines.
+          Figures are computed from your recorded invoices.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }} className="grid">
           <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Best Case Scenario (20% Revenue growth)</span>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--success)' }}>
-              ₹{Math.round(liability * 1.8).toLocaleString()} Net Cash Reserve
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Computed Next-Month GST Estimate</span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-primary-light)' }}>
+              ₹{liability.toLocaleString()}
             </div>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Average of your last 3 months of recorded GST.</span>
           </div>
           <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Stress Case Scenario (Supplier non-filing loss)</span>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--error)' }}>
-              ₹{Math.round(liability * 0.4).toLocaleString()} Reserving Buffer Required
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recommended Reserve (10% buffer)</span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--warning)' }}>
+              ₹{Math.round(liability * 0.1).toLocaleString()}
             </div>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Keep aside before the next filing period.</span>
           </div>
         </div>
       </div>

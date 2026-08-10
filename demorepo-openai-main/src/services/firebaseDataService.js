@@ -27,15 +27,9 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getBytes,
-  deleteObject,
-  listAll,
-  getMetadata,
-} from "firebase/storage";
-import { db, auth, storage } from "../config/firebase";
+import { db, auth } from "../config/firebase";
+import { getStorageInstance } from "../config/firebase";
+import { ENABLE_DOCUMENT_STORAGE } from "../config/features";
 
 // ========================================
 // IN-MEMORY CACHE
@@ -193,8 +187,16 @@ export const saveUserBill = async (billData) => {
       // System fields
       userId: userId,
       extractionConfidence: billData.extractionConfidence || "medium",
+      ocrSource: billData.ocrSource || "",
+      createdAt: billData.createdAt || serverTimestamp(),
       uploadedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+
+      // HSN/SAC codes
+      hsn: billData.hsn || "",
+
+      // Line items (preserved verbatim from extraction)
+      lineItems: billData.lineItems || [],
     });
 
     console.log("✅ Bill saved:", docRef.id);
@@ -491,6 +493,12 @@ export const saveUserSettings = async (settings) => {
         gstinRequired: settings.gstinRequired !== false,
         autoClassifyExpenses: settings.autoClassifyExpenses !== false,
 
+        // AI & automation preferences (real persistence)
+        aiConfidenceThreshold: settings.aiConfidenceThreshold ?? 85,
+        autoApproveHighConfidence: settings.autoApproveHighConfidence !== false,
+        ocrEngine: settings.ocrEngine || "tesseract-v5",
+        reminderSchedule: settings.reminderSchedule || "3days_before",
+
         // System fields
         updatedAt: serverTimestamp(),
       },
@@ -523,6 +531,10 @@ export const getUserSettings = async () => {
         theme: "light",
         language: "en",
         autoClassifyExpenses: true,
+        aiConfidenceThreshold: 85,
+        autoApproveHighConfidence: true,
+        ocrEngine: "tesseract-v5",
+        reminderSchedule: "3days_before",
       };
     }
 
@@ -778,19 +790,40 @@ export const deleteAllUserData = async () => {
 };
 
 // ========================================
-// FIREBASE STORAGE - FILE MANAGEMENT
+// FIREBASE STORAGE - FILE MANAGEMENT (OPTIONAL)
 // ========================================
+// Cloud Storage is NOT required. The default invoice workflow never calls
+// these functions — the uploaded File lives only in browser memory while it
+// is OCR'd / analyzed, and only structured metadata is saved to Firestore.
+//
+// These helpers exist solely for the OPTIONAL future document archive,
+// gated behind ENABLE_DOCUMENT_STORAGE (default: false). When disabled they
+// return a graceful no-op and never touch Firebase Storage — no bucket, no
+// CORS setup, no billing upgrade required.
+
+const storageDisabledResult = () => ({
+  success: false,
+  skipped: true,
+  reason: "Document storage is disabled (ENABLE_DOCUMENT_STORAGE=false). " +
+    "Invoice processing runs entirely in memory; only metadata is saved to Firestore.",
+});
+
+const storageDisabledList = () => [];
 
 /**
- * Upload a bill document to Firebase Storage
+ * Upload a bill document to Firebase Storage (optional archive only)
  * @param {File} file - The file to upload
  * @param {string} billId - Optional bill ID for organization
  * @returns {Object} - { success, downloadUrl, storagePath }
  */
 export const uploadBillDocument = async (file, billId = null) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
     if (!file) throw new Error("No file provided");
+
+    const storage = await getStorageInstance();
+    const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
 
     // Generate unique filename
     const timestamp = new Date().getTime();
@@ -816,7 +849,6 @@ export const uploadBillDocument = async (file, billId = null) => {
     console.log("✅ File uploaded:", uploadResult.ref.fullPath);
 
     // Get download URL
-    const { getDownloadURL } = await import("firebase/storage");
     const downloadUrl = await getDownloadURL(uploadResult.ref);
 
     return {
@@ -834,9 +866,10 @@ export const uploadBillDocument = async (file, billId = null) => {
 };
 
 /**
- * Upload multiple files in batch
+ * Upload multiple files in batch (optional archive only)
  */
 export const uploadBillDocumentsBatch = async (files, billId = null) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return [];
   try {
     const uploadPromises = files.map((file) =>
       uploadBillDocument(file, billId),
@@ -852,9 +885,10 @@ export const uploadBillDocumentsBatch = async (files, billId = null) => {
 };
 
 /**
- * Download a bill document
+ * Download a bill document (optional archive only)
  */
 export const downloadBillDocument = async (storagePath) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
 
@@ -863,6 +897,8 @@ export const downloadBillDocument = async (storagePath) => {
       throw new Error("Access denied: File does not belong to you");
     }
 
+    const storage = await getStorageInstance();
+    const { ref, getBytes } = await import("firebase/storage");
     const storageRef = ref(storage, storagePath);
     const fileBytes = await getBytes(storageRef);
 
@@ -875,9 +911,10 @@ export const downloadBillDocument = async (storagePath) => {
 };
 
 /**
- * Delete a bill document from storage
+ * Delete a bill document from storage (optional archive only)
  */
 export const deleteBillDocument = async (storagePath) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
 
@@ -886,6 +923,8 @@ export const deleteBillDocument = async (storagePath) => {
       throw new Error("Access denied: File does not belong to you");
     }
 
+    const storage = await getStorageInstance();
+    const { ref, deleteObject } = await import("firebase/storage");
     const storageRef = ref(storage, storagePath);
     await deleteObject(storageRef);
 
@@ -898,11 +937,14 @@ export const deleteBillDocument = async (storagePath) => {
 };
 
 /**
- * Get all documents for a bill
+ * Get all documents for a bill (optional archive only)
  */
 export const getBillDocuments = async (billId) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledList();
   try {
     const userId = getCurrentUserId();
+    const storage = await getStorageInstance();
+    const { ref, listAll, getMetadata, getDownloadURL } = await import("firebase/storage");
     const billPath = `users/${userId}/bills/${billId}/`;
     const folderRef = ref(storage, billPath);
 
@@ -911,7 +953,6 @@ export const getBillDocuments = async (billId) => {
 
     for (const itemRef of items.files) {
       const metadata = await getMetadata(itemRef);
-      const { getDownloadURL } = await import("firebase/storage");
       const downloadUrl = await getDownloadURL(itemRef);
 
       documentsData.push({
@@ -934,12 +975,16 @@ export const getBillDocuments = async (billId) => {
 };
 
 /**
- * Upload GST form document
+ * Upload GST form document (optional archive only)
  */
 export const uploadGSTFormDocument = async (file, formId) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
     if (!file) throw new Error("No file provided");
+
+    const storage = await getStorageInstance();
+    const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
 
     const timestamp = new Date().getTime();
     const fileName = `${file.name.split(".")[0]}_${timestamp}.${file.name.split(".").pop()}`;
@@ -958,7 +1003,6 @@ export const uploadGSTFormDocument = async (file, formId) => {
     };
 
     const uploadResult = await uploadBytes(storageRef, file, metadata);
-    const { getDownloadURL } = await import("firebase/storage");
     const downloadUrl = await getDownloadURL(uploadResult.ref);
 
     console.log("✅ GST Form document uploaded:", uploadResult.ref.fullPath);
@@ -976,12 +1020,16 @@ export const uploadGSTFormDocument = async (file, formId) => {
 };
 
 /**
- * Upload supporting document (receipt, invoice, etc.)
+ * Upload supporting document (receipt, invoice, etc.) — optional archive only
  */
 export const uploadSupportingDocument = async (file, documentType) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
     if (!file) throw new Error("No file provided");
+
+    const storage = await getStorageInstance();
+    const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
 
     const timestamp = new Date().getTime();
     const fileName = `${documentType}_${timestamp}_${file.name}`;
@@ -1000,7 +1048,6 @@ export const uploadSupportingDocument = async (file, documentType) => {
     };
 
     const uploadResult = await uploadBytes(storageRef, file, metadata);
-    const { getDownloadURL } = await import("firebase/storage");
     const downloadUrl = await getDownloadURL(uploadResult.ref);
 
     console.log("✅ Supporting document uploaded:", uploadResult.ref.fullPath);
@@ -1019,11 +1066,14 @@ export const uploadSupportingDocument = async (file, documentType) => {
 };
 
 /**
- * Get storage usage for user
+ * Get storage usage for user (optional archive only)
  */
 export const getUserStorageUsage = async () => {
+  if (!ENABLE_DOCUMENT_STORAGE) return { totalSize: 0, sizeInMB: "0", fileCount: 0 };
   try {
     const userId = getCurrentUserId();
+    const storage = await getStorageInstance();
+    const { ref, listAll, getMetadata } = await import("firebase/storage");
     const userFolderRef = ref(storage, `users/${userId}/`);
 
     const items = await listAll(userFolderRef);
@@ -1057,9 +1107,10 @@ export const getUserStorageUsage = async () => {
 };
 
 /**
- * Get file content as Blob (for preview)
+ * Get file content as Blob (for preview) — optional archive only
  */
 export const getFileContentAsBlob = async (storagePath) => {
+  if (!ENABLE_DOCUMENT_STORAGE) return storageDisabledResult();
   try {
     const userId = getCurrentUserId();
 
@@ -1068,6 +1119,8 @@ export const getFileContentAsBlob = async (storagePath) => {
       throw new Error("Access denied");
     }
 
+    const storage = await getStorageInstance();
+    const { ref, getBytes } = await import("firebase/storage");
     const storageRef = ref(storage, storagePath);
     const fileBytes = await getBytes(storageRef);
     return new Blob([fileBytes]);

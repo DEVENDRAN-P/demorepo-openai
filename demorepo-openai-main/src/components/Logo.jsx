@@ -1,17 +1,19 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function Logo({ variant = 'main', size, className, style }) {
-  const logoSrc = "/GST_LOGO.jpeg";
-  
+  const logoSrc = "/gstlog.svg";
+  const { t } = useTranslation();
+
   if (variant === 'icon') {
     return (
-      <img 
-        src={logoSrc} 
-        alt="GST Logo" 
-        width={size || '40px'} 
-        height={size || '40px'} 
-        className={className} 
-        style={{ borderRadius: '8px', objectFit: 'cover', ...style }}
+      <img
+        src={logoSrc}
+        alt={t('app_name')}
+        width={size || '40px'}
+        height={size || '40px'}
+        className={className}
+        style={{ borderRadius: '8px', objectFit: 'contain', ...style }}
       />
     );
   }
@@ -19,12 +21,12 @@ export function Logo({ variant = 'main', size, className, style }) {
   if (variant === 'sidebar') {
     return (
       <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...style }}>
-        <img 
-          src={logoSrc} 
-          alt="GST Logo" 
-          width="32px" 
-          height="32px" 
-          style={{ borderRadius: '6px', objectFit: 'cover' }}
+        <img
+          src={logoSrc}
+          alt={t('app_name')}
+          width="32px"
+          height="32px"
+          style={{ borderRadius: '6px', objectFit: 'contain' }}
         />
         <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
           GST Buddy <span style={{ color: 'var(--theme-primary, #6366f1)' }}>AI</span>
@@ -33,18 +35,17 @@ export function Logo({ variant = 'main', size, className, style }) {
     );
   }
 
-  // Default / main / white
   const textColor = variant === 'white' ? '#ffffff' : 'var(--text-primary)';
   const secondaryColor = variant === 'white' ? '#9ca3af' : 'var(--text-secondary)';
-  
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', ...style }} className={className}>
-      <img 
-        src={logoSrc} 
-        alt="GST Logo" 
-        width="45px" 
-        height="45px" 
-        style={{ borderRadius: '8px', objectFit: 'cover' }}
+      <img
+        src={logoSrc}
+        alt={t('app_name')}
+        width="45px"
+        height="45px"
+        style={{ borderRadius: '8px', objectFit: 'contain' }}
       />
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
         <span style={{ fontSize: '1.25rem', fontWeight: 800, color: textColor, letterSpacing: '-0.5px' }}>

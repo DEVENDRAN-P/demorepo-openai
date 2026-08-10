@@ -9,8 +9,12 @@
 export const getUserBusinesses = (user) => {
   if (!user || !user.uid) return [];
 
-  const demoEmails = ['demo@shop.com', 'devendranprabhakar2007@gmail.com'];
-  if (demoEmails.includes(user.email)) {
+  // Demo businesses are served ONLY when demo mode is explicitly enabled
+  // (REACT_APP_ENABLE_DEMO_DATA=true) AND the account is the designated demo
+  // email. In production every user gets their own real data — no demo fallback.
+  const enableDemoData = process.env.REACT_APP_ENABLE_DEMO_DATA === 'true';
+  const demoEmails = ['demo@shop.com'];
+  if (enableDemoData && demoEmails.includes(user.email)) {
     return [
       { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', state: 'Karnataka', type: 'Retail & Distribution', owner: 'Devendra Prabhakar', complianceScore: 94, compliance: 94, status: 'Ready' },
       { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', state: 'Maharashtra', type: 'IT Services & Consulting', owner: 'Devendra Prabhakar', complianceScore: 88, compliance: 88, status: 'Auditing' },

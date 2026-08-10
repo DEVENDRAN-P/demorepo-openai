@@ -1,12 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getUserBills } from '../services/firebaseDataService';
-
-const BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', state: 'Karnataka', type: 'Retail & Distribution' },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', state: 'Maharashtra', type: 'IT Services & Consulting' },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', state: 'Delhi', type: 'Transport & Warehouse' }
-];
+import { aiChatStream } from '../services/aiService';
 
 function AIAssistant({ user }) {
   const { i18n } = useTranslation();
@@ -20,19 +15,23 @@ function AIAssistant({ user }) {
   const [bills, setBills] = useState([]);
   const [activeBusiness, setActiveBusiness] = useState(null);
 
-  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
-
   // Load business invoices context
   useEffect(() => {
     if (!user?.uid) return;
-    const businessId = localStorage.getItem('activeBusinessId') || 'apex_retailers';
-    const biz = BUSINESSES.find(b => b.id === businessId) || BUSINESSES[0];
+    const businessId = localStorage.getItem('activeBusinessId') || null;
+    // Read business profile from localStorage (set by real business selector in Sidebar)
+    let biz = null;
+    try {
+      const raw = localStorage.getItem('activeBusinessProfile');
+      if (raw) biz = JSON.parse(raw);
+    } catch (e) {}
     setActiveBusiness(biz);
 
     getUserBills(user.uid)
       .then(allBills => {
         const filtered = allBills.filter(b => {
-          if (!b.businessId) return businessId === 'apex_retailers';
+          if (!businessId) return true;
+          if (!b.businessId) return true;
           return b.businessId === businessId;
         });
         setBills(filtered);
@@ -49,7 +48,7 @@ function AIAssistant({ user }) {
       } else if (lang === 'ta') {
         return `வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். ${activeBusiness?.name || 'Apex Retailers'} க்கான வரி கணக்கீடுகள் மற்றும் தணிக்கைகளை செய்ய நான் தயாராக உள்ளேன். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?`;
       }
-      return `Hello! I'm your AI GST Accountant powered by Groq. I have loaded context for "${activeBusiness?.name || 'Apex Retailers'}" and audited your ${bills.length} invoices. How may I assist you with GSTR return prep, ITC matching, or tax forecasting today?`;
+      return `Hello! I'm your AI GST Accountant powered by Google Gemini. I have loaded context for "${activeBusiness?.name || 'Apex Retailers'}" and audited your ${bills.length} invoices. How may I assist you with GSTR return prep, ITC matching, or tax forecasting today?`;
     };
 
     setMessages([
@@ -69,48 +68,37 @@ function AIAssistant({ user }) {
     scrollToBottom();
   }, [messages]);
 
-  const callGroqAPI = async (userMessage) => {
+  const callAI = async (userMessage) => {
     try {
       const updateStreamingMessage = (id, text) => {
         setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text } : msg)));
       };
 
-      const systemPrompt = `You are "GST Buddy AI Accountant", an elite corporate tax auditor and CPA for the Indian business "${activeBusiness?.name || 'Apex Retailers'}" (GSTIN: ${activeBusiness?.gstin || '29ABCDE1234F2Z5'}, State: ${activeBusiness?.state || 'Karnataka'}).
-You have loaded the following invoices as active context:
-${bills.length === 0 ? '- No invoices uploaded yet.' : bills.map((b, i) => `- Inv #${b.invoiceNumber} from ${b.supplierName} | Date: ${b.invoiceDate} | Taxable: ₹${b.amount} | GST: ₹${b.taxAmount} | Total: ₹${b.totalAmount} | Category: ${b.expenseType} | Status: ${b.filed ? 'Filed' : 'Pending'}`).join('\n')}
+      const invoiceSummary = bills.length === 0
+        ? 'No invoices uploaded yet.'
+        : bills.map((b, i) => `- Inv #${b.invoiceNumber} from ${b.supplierName} | Date: ${b.invoiceDate} | Taxable: ₹${b.amount} | GST: ₹${b.taxAmount} | Total: ₹${b.totalAmount} | Category: ${b.expenseType} | Status: ${b.filed ? 'Filed' : 'Pending'}`).join('\n');
 
-Rules for responding:
-1. Speak with absolute precision, referencing specific invoice numbers, dates, and amounts.
-2. Structure your response under clear headers:
-   - **Answer**: The direct response to the user's query.
-   - **Reasoning / Evidence**: Reference specific GST acts, CGST/SGST rules, or invoice line items.
-   - **Action Item**: Actionable next step for the shopkeeper/CFO.
-3. Be professional, direct, and explainable. No black box responses.
-4. Keep responses detailed but concise enough to scan quickly.`;
+      const conversation = messages
+        .filter((m) => m.type === 'user' || (m.type === 'bot' && m.text))
+        .map((m) => ({
+          role: m.type === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        }));
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
+      const language = i18n.language === 'hi' ? 'hi' : i18n.language === 'ta' ? 'ta' : 'en';
+
+      const stream = await aiChatStream({
+        messages: conversation,
+        business: {
+          name: activeBusiness?.name || 'Apex Retailers',
+          gstin: activeBusiness?.gstin || '29ABCDE1234F2Z5',
+          state: activeBusiness?.state || 'Karnataka',
         },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.2,
-          max_tokens: 1024,
-          stream: true,
-        }),
+        invoiceSummary,
+        language,
       });
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const reader = response.body.getReader();
+      const reader = stream.getReader();
       const decoder = new TextDecoder();
       let fullResponse = '';
 
@@ -128,24 +116,10 @@ Rules for responding:
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content || '';
-              if (content) {
-                fullResponse += content;
-                updateStreamingMessage(tempMessageId, fullResponse);
-              }
-            } catch (e) { }
-          }
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk) {
+          fullResponse += chunk;
+          updateStreamingMessage(tempMessageId, fullResponse);
         }
       }
 
@@ -173,12 +147,12 @@ Rules for responding:
     setLoading(true);
 
     try {
-      await callGroqAPI(queryText);
+      await callAI(queryText);
     } catch (error) {
       const errorMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        text: "I apologize, but I'm having trouble connecting to the AI Accountant service right now. Please try again. Action item: verify network connection and Groq API key configuration.",
+        text: "I apologize, but I'm having trouble connecting to the AI Accountant service right now. Please try again. Action item: verify your network connection and sign-in session.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {

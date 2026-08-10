@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUserBills, updateUserBill, deleteUserBill } from '../services/firebaseDataService';
-import { clearAndReseedInvoices } from '../services/seederService';
+import { getUserBills, updateUserBill, deleteUserBill, logUserActivity } from '../services/firebaseDataService';
 import { scrollToTop } from '../utils/scroll';
 
 function Invoices({ user }) {
@@ -9,7 +8,7 @@ function Invoices({ user }) {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   // Filter & Search States
@@ -52,7 +51,9 @@ function Invoices({ user }) {
     getUserBills(user.uid)
       .then(fetched => {
         const filtered = fetched.filter(b => {
-          if (!b.businessId) return activeBusinessId === 'apex_retailers';
+          // If no business selected, show all invoices
+          if (!activeBusinessId) return true;
+          if (!b.businessId) return true; // invoices without a businessId are visible to all
           return b.businessId === activeBusinessId;
         });
         setBills(filtered);
@@ -143,7 +144,15 @@ function Invoices({ user }) {
     setLoading(true);
     try {
       for (const id of selectedIds) {
+        const invoice = bills.find(b => b.id === id);
         await updateUserBill(id, { filed: true, status: 'filed', filedDate: new Date().toISOString() });
+        await logUserActivity({
+          action: 'file_gst',
+          details: {
+            formType: 'GSTR-1',
+            invoiceNumber: invoice?.invoiceNumber || 'INV-AUTO'
+          }
+        });
       }
       setSaveIndicator(`Successfully filed ${selectedIds.length} returns!`);
       setSelectedIds([]);
@@ -164,7 +173,14 @@ function Invoices({ user }) {
     setLoading(true);
     try {
       for (const id of selectedIds) {
+        const invoice = bills.find(b => b.id === id);
         await deleteUserBill(id);
+        await logUserActivity({
+          action: 'delete_bill',
+          details: {
+            invoiceNumber: invoice?.invoiceNumber || 'INV-AUTO'
+          }
+        });
       }
       setSaveIndicator(`Successfully deleted ${selectedIds.length} invoices.`);
       setSelectedIds([]);
@@ -182,7 +198,15 @@ function Invoices({ user }) {
   const handleMarkAsFiledSingle = async (id, e) => {
     e.stopPropagation();
     try {
+      const invoice = bills.find(b => b.id === id);
       await updateUserBill(id, { filed: true, status: 'filed', filedDate: new Date().toISOString() });
+      await logUserActivity({
+        action: 'file_gst',
+        details: {
+          formType: 'GSTR-1',
+          invoiceNumber: invoice?.invoiceNumber || 'INV-AUTO'
+        }
+      });
       setSaveIndicator('Invoice filed successfully.');
       loadInvoices();
       if (previewInvoice?.id === id) {
@@ -208,25 +232,6 @@ function Invoices({ user }) {
     a.download = `GST_Buddy_Invoices_${activeBusinessId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleResetReseed = async () => {
-    if (!user?.uid) return;
-    if (!window.confirm("This will clear all current invoices and restore the default 8 demo invoices. Continue?")) return;
-    
-    setLoading(true);
-    try {
-      await clearAndReseedInvoices(user.uid);
-      setSaveIndicator("Demo data reseeded successfully!");
-      loadInvoices();
-      window.dispatchEvent(new Event('billUpdated'));
-      setTimeout(() => setSaveIndicator(''), 3000);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to reset and reseed invoices.");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleToggleSort = (field) => {
@@ -270,7 +275,6 @@ function Invoices({ user }) {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button onClick={handleResetReseed} disabled={loading} className="btn btn-outline" style={{ fontSize: '0.825rem', borderColor: 'var(--theme-primary)', color: 'var(--theme-primary)', opacity: loading ? 0.6 : 1, cursor: loading ? 'default' : 'pointer' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.56-.56"/></svg> Reset & Reseed</button>
           <button onClick={handleExportCSV} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>Export CSV</button>
           <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Upload Invoice</button>
         </div>

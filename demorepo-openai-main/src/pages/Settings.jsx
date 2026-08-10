@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDarkMode } from '../context/DarkModeContext';
-import { getUserProfile, saveUserProfile } from '../services/firebaseDataService';
+import { getUserProfile, saveUserProfile, getUserSettings, saveUserSettings } from '../services/firebaseDataService';
 import { useTranslation } from 'react-i18next';
 
 function Settings({ user }) {
@@ -24,8 +24,8 @@ function Settings({ user }) {
     pincode: '',
     gstin: '',
     filingFrequency: 'monthly',
-    companyRegistrationNo: 'U72200KA2024PTC182390',
-    directorDIN: 'DIN-09823122, DIN-08723910'
+    companyRegistrationNo: '',
+    directorDIN: ''
   });
 
   // AI & Automation States
@@ -36,15 +36,11 @@ function Settings({ user }) {
     reminderSchedule: '3days_before'
   });
 
-  // API Key State
-  const [apiKeys, setApiKeys] = useState([
-    { name: 'Production Client Token', key: 'gst_live_8fbc2e309ad9211ec189283f', status: 'Active', created: '2026-06-15' }
-  ]);
-  const [showNewKeyModal, setShowNewKeyModal] = useState(false);
-  const [newKeyName, setNewKeyName] = useState('');
-
-  // 2FA Security states
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  // API key management is a server-side Business-plan feature. Keys are never
+  // generated in the browser — a client-side key manager would be fake and
+  // misleading. 2FA is not implemented server-side yet, so its toggle stays
+  // disabled rather than pretending to enable it.
+  const [twoFactorEnabled] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -101,26 +97,37 @@ function Settings({ user }) {
     }
   };
 
-  const handleGenerateApiKey = () => {
-    if (!newKeyName.trim()) return;
-    const randomHex = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-    const newKey = {
-      name: newKeyName,
-      key: `gst_live_${randomHex}`,
-      status: 'Active',
-      created: new Date().toISOString().split('T')[0]
-    };
-    setApiKeys([...apiKeys, newKey]);
-    setNewKeyName('');
-    setShowNewKeyModal(false);
-    setSaveIndicator('✅ New API Access Token generated!');
-    setTimeout(() => setSaveIndicator(''), 3000);
-  };
+  // Load saved automation rules from Firestore (real persistence)
+  useEffect(() => {
+    if (!user?.uid) return;
+    getUserSettings()
+      .then((s) => {
+        if (!s) return;
+        setAiConfig((prev) => ({
+          confidenceThreshold: s.aiConfidenceThreshold ?? prev.confidenceThreshold,
+          autoApproveHighConfidence:
+            s.autoApproveHighConfidence !== undefined ? s.autoApproveHighConfidence : prev.autoApproveHighConfidence,
+          ocrEngine: s.ocrEngine || prev.ocrEngine,
+          reminderSchedule: s.reminderSchedule || prev.reminderSchedule,
+        }));
+      })
+      .catch((err) => console.error('Error loading automation settings:', err));
+  }, [user?.uid]);
 
-  const handleDeleteApiKey = (keyToDelete) => {
-    if (window.confirm('Revoke this API Key immediately? All integrations calling this token will fail.')) {
-      setApiKeys(apiKeys.filter(k => k.key !== keyToDelete));
-      setSaveIndicator('ℹ️ API Token revoked successfully.');
+  const handleSaveAiRules = async () => {
+    try {
+      await saveUserSettings({
+        aiConfidenceThreshold: aiConfig.confidenceThreshold,
+        autoApproveHighConfidence: aiConfig.autoApproveHighConfidence,
+        ocrEngine: aiConfig.ocrEngine,
+        reminderSchedule: aiConfig.reminderSchedule,
+      });
+      setIsDirty(false);
+      setSaveIndicator('✅ AI and automation configurations saved!');
+    } catch (err) {
+      console.error(err);
+      setSaveIndicator('❌ Error saving AI automation rules.');
+    } finally {
       setTimeout(() => setSaveIndicator(''), 3000);
     }
   };
@@ -436,34 +443,18 @@ function Settings({ user }) {
                   <input 
                     type="checkbox" 
                     checked={twoFactorEnabled} 
-                    onChange={(e) => {
-                      setTwoFactorEnabled(e.target.checked);
-                      setSaveIndicator(e.target.checked ? '✅ Two-Factor Authentication enabled!' : 'ℹ️ Two-Factor Authentication disabled.');
-                      setTimeout(() => setSaveIndicator(''), 3000);
-                    }}
-                    style={{ width: '42px', height: '20px', cursor: 'pointer' }}
+                    disabled
+                    style={{ width: '42px', height: '20px', cursor: 'not-allowed', opacity: 0.5 }}
                   />
+                  <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)', display: 'block', marginTop: '0.25rem' }}>Coming soon — requires server-side OTP verification.</span>
                 </div>
               </div>
 
               <div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Connected Devices & Sessions</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.25rem', fontSize: '0.8rem' }}>
-                  <div style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                    <div>
-                      <strong>Google Chrome (Windows 11) - Current Session</strong>
-                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>IP Address: 192.168.1.45 | Location: Bangalore, India</span>
-                    </div>
-                    <span className="badge-premium badge-excellent" style={{ alignSelf: 'center', fontSize: '0.65rem' }}>Active</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
-                    <div>
-                      <strong>Apple Safari (iPhone iOS 17)</strong>
-                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>IP Address: 103.45.22.112 | Location: Bangalore, India</span>
-                    </div>
-                    <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem', alignSelf: 'center' }} onClick={() => alert('Session terminated successfully.')}>Revoke</button>
-                  </div>
-                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '1rem', lineHeight: '1.5' }}>
+                  Session management is not yet available. Signing out ends the current session; Firebase handles token expiry automatically.
+                </p>
               </div>
             </div>
           )}
@@ -521,11 +512,7 @@ function Settings({ user }) {
                 </select>
               </div>
 
-              <button onClick={() => {
-                setIsDirty(false);
-                setSaveIndicator('✅ AI and automation configurations saved!');
-                setTimeout(() => setSaveIndicator(''), 3000);
-              }} className="btn btn-primary" style={{ width: 'fit-content', marginLeft: 'auto', padding: '0.5rem 1rem' }}>
+              <button onClick={handleSaveAiRules} className="btn btn-primary" style={{ width: 'fit-content', marginLeft: 'auto', padding: '0.5rem 1rem' }}>
                 Save AI Rules
               </button>
             </div>
@@ -537,27 +524,12 @@ function Settings({ user }) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>API Access Tokens</h3>
-                  <button onClick={() => setShowNewKeyModal(true)} className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>+ Generate Token</button>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
-                  {apiKeys.length === 0 ? (
-                    <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '1rem 0' }}>No API keys active in this workspace.</div>
-                  ) : (
-                    apiKeys.map(k => (
-                      <div key={k.key} style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', fontSize: '0.8rem', gap: '1rem' }}>
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '0.85rem' }}>{k.name}</strong>
-                          <code style={{ display: 'block', fontSize: '0.725rem', color: 'var(--theme-secondary-light)', marginTop: '0.25rem' }}>{k.key}</code>
-                          <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Created: {k.created}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'center', marginLeft: 'auto' }}>
-                          <button onClick={() => { navigator.clipboard.writeText(k.key); alert('API Key copied!'); }} className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem' }}>Copy</button>
-                          <button onClick={() => handleDeleteApiKey(k.key)} className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.675rem', borderColor: 'var(--error)', color: 'var(--error)' }}>Revoke</button>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '1.5rem 1rem', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    API access is included with the <strong>Business plan</strong>. Keys are issued and managed server-side — they cannot be generated from the browser for security reasons. Upgrade to Business to enable API integrations.
+                  </div>
                 </div>
               </div>
 
@@ -569,14 +541,14 @@ function Settings({ user }) {
                       <strong>Tally Prime ERP Integration</strong>
                       <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Auto-sync vetted invoices directly into accounting ledgers.</span>
                     </div>
-                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center' }} onClick={() => alert('Tally Prime connection request initiated.')}>Connect</button>
+                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>Coming soon</button>
                   </div>
                   <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
                     <div>
                       <strong>Zoho Books Workspace Sync</strong>
                       <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Sync real-time tax credits between platforms.</span>
                     </div>
-                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center' }} onClick={() => alert('Zoho Books connection request initiated.')}>Connect</button>
+                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>Coming soon</button>
                   </div>
                 </div>
               </div>
@@ -586,29 +558,6 @@ function Settings({ user }) {
         </div>
 
       </div>
-
-      {/* New API Token Modal */}
-      {showNewKeyModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '1.5rem', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '400px', border: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem' }}>Generate API Key</h3>
-            
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>API Key Name</label>
-            <input 
-              type="text" 
-              value={newKeyName} 
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="e.g. Tally Sync Token"
-              style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1.25rem', outline: 'none' }}
-            />
-
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setShowNewKeyModal(false); setNewKeyName(''); }} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Cancel</button>
-              <button onClick={handleGenerateApiKey} className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Generate</button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
