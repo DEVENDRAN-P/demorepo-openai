@@ -123,8 +123,7 @@ function BusinessDirectory({ user }) {
 
 
   const team = [
-    { name: 'Devendra Prabhakar', role: 'Administrator / CFO', email: 'devendranprabhakar2007@gmail.com', status: 'Active' },
-    { name: 'Staff Member', role: 'Billing Accountant', email: 'billing@gstbuddy.ai', status: 'Active' }
+    { name: user?.name || user?.displayName || 'Business Owner', role: 'Administrator / CFO', email: user?.email || '', status: 'Active' },
   ];
 
   return (

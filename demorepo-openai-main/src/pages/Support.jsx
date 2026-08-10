@@ -115,7 +115,7 @@ function Support({ user }) {
         },
         {
             channel: t('email_channel'),
-            info: 'devendranprabhakar2007@gmail.com',
+            info: 'support@gstbuddy.ai',
             action: t('send_email_action')
         },
         {

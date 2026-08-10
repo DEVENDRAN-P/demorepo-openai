@@ -1,88 +1,48 @@
-const { initializeApp, getApps, cert } = require("firebase-admin");
 const { getAuth } = require("firebase-admin/auth");
+const { getApps, initializeApp, cert } = require("firebase-admin");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
-const { 
-  getUserSubscription, 
-  updateUserSubscription, 
-  getPaymentHistory 
+const {
+  getUserSubscription,
+  updateUserSubscription,
+  getPaymentHistory,
 } = require("./_utils/database");
 
-// ==========================================
-// 🔍 PRODUCTION ENVIRONMENT AUDIT ON BOOT
-// ==========================================
-function auditBillingEnvironment() {
-  console.log("=== 🔍 SYSTEM AUDIT: STARTING BILLING API ENVIRONMENT CHECK ===");
-  
-  const requiredRazorpay = ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"];
-  requiredRazorpay.forEach(key => {
-    if (!process.env[key] || process.env[key].trim() === "") {
-      console.error(`❌ [CRITICAL ERROR] Missing required environment variable: ${key}`);
-    } else {
-      console.log(`✓ ${key} is configured (Length: ${process.env[key].length})`);
-    }
-  });
-
-  const firebaseKeys = ["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"];
-  let hasFirebaseCreds = true;
-  firebaseKeys.forEach(key => {
-    if (!process.env[key] || process.env[key].trim() === "") {
-      console.warn(`⚠️ [WARNING] Missing optional Firebase environment variable: ${key}`);
-      hasFirebaseCreds = false;
-    } else {
-      console.log(`✓ Firebase variable ${key} is configured`);
-    }
-  });
-
-  if (!hasFirebaseCreds) {
-    console.log("ℹ️ Database layer will run in fail-safe Local Mock Mode.");
-  } else {
-    console.log("ℹ️ Database layer will connect to Live Cloud Firestore.");
-  }
-  
-  console.log("===============================================================");
+// Validate required env vars at startup (safe — no secret values logged)
+const missingRazorpay = ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"].filter(
+  (k) => !process.env[k]
+);
+if (missingRazorpay.length > 0) {
+  console.error(JSON.stringify({
+    type: "billing_startup_error",
+    message: "Missing Razorpay credentials",
+    keys: missingRazorpay,
+  }));
 }
 
-auditBillingEnvironment();
-
-// ==========================================
-// 🔑 ROBUST FIREBASE AUTH INSTATIATION
-// ==========================================
+// Firebase Auth — reuse the already-initialized app if available,
+// otherwise initialize with service account credentials.
 let authInstance = null;
 
 function getFirebaseAuth() {
   if (authInstance) return authInstance;
 
-  console.log("🔄 Initializing Firebase Auth Service...");
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (getApps().length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || "finalopenai-fc9c5";
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-    try {
-      if (clientEmail && privateKey) {
-        console.log(`🔑 Authenticating Auth service for project '${projectId}' using Service Account Cert...`);
-        initializeApp({
-          credential: cert({
-            projectId: projectId,
-            clientEmail: clientEmail,
-            privateKey: privateKey.replace(/\\n/g, '\n')
-          })
-        });
-      } else {
-        console.log(`ℹ️ Initializing Auth service for project '${projectId}' with default context configuration...`);
-        initializeApp({
-          projectId: projectId
-        });
-      }
-    } catch (err) {
-      console.warn("⚠️ Firebase Admin Auth initialization exception:", err.message);
-      try {
-        initializeApp({ projectId: projectId });
-      } catch (innerErr) {
-        // App already exists or error
-      }
+    if (clientEmail && privateKey && projectId) {
+      initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, "\n"),
+        }),
+      });
+    } else {
+      // Let Firebase use Application Default Credentials
+      initializeApp({ projectId: projectId || undefined });
     }
   }
 
@@ -100,19 +60,13 @@ const handleStatus = async (req, res, decodedToken) => {
   console.log(`📥 [GET /api/subscription/status] Request received for UID: ${uid}`);
   
   try {
-    console.log(`🔍 [status] Fetching subscription details from database...`);
     const subscription = await getUserSubscription(uid);
-    console.log(`✅ [status] Return details for user:`, subscription);
-    return res.status(200).json({
-      success: true,
-      subscription: subscription
-    });
+    return res.status(200).json({ success: true, subscription });
   } catch (error) {
-    console.error("❌ [status] Error fetching subscription status:", error);
-    return res.status(500).json({ 
+    console.error(JSON.stringify({ type: "billing_status_error", uid, error: error.message }));
+    return res.status(500).json({
       success: false,
-      message: "Detailed subscription fetch error: " + error.message, 
-      stack: error.stack 
+      error: "Failed to fetch subscription status. Please try again.",
     });
   }
 };
@@ -123,16 +77,13 @@ const handleHistory = async (req, res, decodedToken) => {
   console.log(`📥 [GET /api/payment/history] Request received for UID: ${uid}`);
   
   try {
-    console.log(`🔍 [history] Querying billing ledger entries...`);
     const transactions = await getPaymentHistory(uid);
-    console.log(`✅ [history] Found ${transactions.length} transactions.`);
-    return res.status(200).json(transactions); // Maintain direct array return for table compatibility
+    return res.status(200).json(transactions);
   } catch (error) {
-    console.error("❌ [history] Error fetching payment history:", error);
-    return res.status(500).json({ 
+    console.error(JSON.stringify({ type: "billing_history_error", uid, error: error.message }));
+    return res.status(500).json({
       success: false,
-      message: "Detailed payment history fetch error: " + error.message, 
-      stack: error.stack 
+      error: "Failed to fetch payment history. Please try again.",
     });
   }
 };
@@ -205,11 +156,10 @@ const handleCreateOrder = async (req, res, decodedToken) => {
       key_id: razorpayKeyId
     });
   } catch (error) {
-    console.error("❌ [create-order] Error in order creation execution flow:", error);
-    return res.status(500).json({ 
+    console.error(JSON.stringify({ type: "billing_create_order_error", planId, error: error.message }));
+    return res.status(500).json({
       success: false,
-      message: "Razorpay order creation exception: " + error.message, 
-      stack: error.stack 
+      error: "Failed to create payment order. Please try again.",
     });
   }
 };
@@ -254,23 +204,21 @@ const handleVerify = async (req, res, decodedToken) => {
       return res.status(400).json({ success: false, error: "Transaction already processed" });
     }
 
-    // 2. Perform HMAC SHA256 Signature Verification
-    const isReset = planId === "free" && razorpay_signature === "reset_signature";
-    if (isReset) {
-      console.log("ℹ️ Test Reset: Downgrading user to Free plan.");
-    } else {
-      console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
-      const generatedSignature = crypto
-        .createHmac("sha256", razorpayKeySecret)
-        .update(razorpay_order_id + "|" + razorpay_payment_id)
-        .digest("hex");
+    // 2. Perform HMAC SHA256 Signature Verification.
+    // Every plan change — including downgrades — must carry a valid Razorpay
+    // signature. There is NO test bypass: a missing or mismatched signature is
+    // always rejected so clients can never self-authorize plan changes.
+    console.log("🔒 [verify] Performing HMAC SHA256 signature verification...");
+    const generatedSignature = crypto
+      .createHmac("sha256", razorpayKeySecret)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
 
-      if (generatedSignature !== razorpay_signature) {
-        console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
-        return res.status(400).json({ success: false, error: "Invalid payment signature" });
-      }
-      console.log("✅ [verify] Signature validation passed.");
+    if (!razorpay_signature || generatedSignature !== razorpay_signature) {
+      console.error("❌ [verify] Razorpay signature mismatch! Verification validation failed.");
+      return res.status(400).json({ success: false, error: "Invalid payment signature" });
     }
+    console.log("✅ [verify] Signature validation passed.");
 
     // 3. Update subscription state & log transaction in database
     console.log("✍️ [verify] Updating subscription state and writing ledger entries...");
@@ -292,11 +240,10 @@ const handleVerify = async (req, res, decodedToken) => {
 
     return res.status(200).json({ success: true, message: "Subscription upgraded successfully" });
   } catch (error) {
-    console.error("❌ [verify] Verification error occurred:", error);
-    return res.status(500).json({ 
+    console.error(JSON.stringify({ type: "billing_verify_error", uid, error: error.message }));
+    return res.status(500).json({
       success: false,
-      message: "Internal signature verification exception: " + error.message, 
-      stack: error.stack 
+      error: "Payment verification failed. Please contact support if funds were deducted.",
     });
   }
 };
@@ -305,15 +252,9 @@ const handleVerify = async (req, res, decodedToken) => {
 // 🚀 MAIN ROUTER HANDLER
 // ==========================================
 module.exports = async (req, res) => {
-  // CORS configuration
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  const { handleCors, setCorsHeaders } = require("./_utils/cors");
+  if (handleCors(req, res)) return;
+  setCorsHeaders(res, req);
 
   console.log(`📡 [Billing Router] Request received. Path: ${req.url}, Method: ${req.method}`);
 
@@ -339,18 +280,13 @@ module.exports = async (req, res) => {
 
     let decodedToken;
     try {
-      console.log("🔐 [auth] Verifying Firebase ID Token with Auth Service...");
       const authService = getFirebaseAuth();
       decodedToken = await authService.verifyIdToken(idToken);
-      console.log(`👤 [auth] Token verified successfully. UID: ${decodedToken.uid}`);
     } catch (authError) {
-      console.error("❌ [auth] Firebase ID Token verification failed. Complete Error Details:", authError);
-      return res.status(401).json({ 
-        success: false, 
-        error: "Unauthorized: Invalid token",
-        message: authError.message,
-        code: authError.code,
-        stack: authError.stack
+      console.error(JSON.stringify({ type: "billing_auth_error", code: authError.code, error: authError.message }));
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Invalid or expired token. Please sign in again.",
       });
     }
 
@@ -371,12 +307,10 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, error: `Not found: action '${action}' for method ${req.method}` });
     }
   } catch (err) {
-    console.error("❌ [Billing Router] Critical exception caught in main routing loop:", err);
-    return res.status(500).json({ 
+    console.error(JSON.stringify({ type: "billing_router_error", error: err.message }));
+    return res.status(500).json({
       success: false,
-      error: "Internal routing error", 
-      message: err.message, 
-      stack: err.stack 
+      error: "An unexpected error occurred. Please try again.",
     });
   }
 };

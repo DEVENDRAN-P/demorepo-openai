@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getUserBills } from '../services/firebaseDataService';
+import { getUserBills, getUserActivityLogs } from '../services/firebaseDataService';
+import { getUserBusinesses } from '../utils/businessHelper';
 
-const INITIAL_BUSINESSES = [
-  { id: 'apex_retailers', name: 'Apex Retailers', gstin: '29ABCDE1234F2Z5', state: 'Karnataka', type: 'Retail & Distribution', complianceScore: 94 },
-  { id: 'nexgen_solutions', name: 'NexGen Software Solutions', gstin: '27XYZAB5678C1Z0', state: 'Maharashtra', type: 'IT Services & Consulting', complianceScore: 88 },
-  { id: 'phoenix_logistics', name: 'Phoenix Logistics', gstin: '07AAACP1234A1Z9', state: 'Delhi', type: 'Transport & Warehouse', complianceScore: 76 }
-];
+const buildActivityTitle = (log) => {
+  const action = log.action || 'activity';
+  const inv = log.details?.invoiceNumber;
+  if (inv) return `${action} — Invoice #${inv}`;
+  return action.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const formatLogDate = (ts) => {
+  if (!ts) return '';
+  const d = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString();
+};
 
 function GlobalSearch({ user }) {
   const navigate = useNavigate();
@@ -24,13 +33,8 @@ function GlobalSearch({ user }) {
   const [matchedVendors, setMatchedVendors] = useState([]);
   const [matchedActivities, setMatchedActivities] = useState([]);
 
-  // Static mock activities to search
-  const recentActivities = [
-    { title: "Invoice INV-9821-20 uploaded", type: "Invoice", date: "Today, 10:24 AM" },
-    { title: "Generated GSTR-1 Return Draft Summary", type: "GST return", date: "Yesterday, 4:18 PM" },
-    { title: "UPI payment of Pro plan verified", type: "Billing", date: "Jul 26, 2026" },
-    { title: "Switched workspace to NexGen Solutions", type: "Workspace", date: "Jul 25, 2026" }
-  ];
+  // Real activity log entries (loaded from Firestore on mount)
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -39,13 +43,22 @@ function GlobalSearch({ user }) {
       .then(fetched => {
         setBills(fetched);
         
-        // Fetch businesses from localStorage or fall back
-        const savedBiz = localStorage.getItem('saas_businesses');
-        const bizList = savedBiz ? JSON.parse(savedBiz) : INITIAL_BUSINESSES;
-        setBusinesses(bizList);
+        // Businesses come from the user's own data (businessHelper)
+        setBusinesses(getUserBusinesses(user));
+        // Activities come from the user's real Firestore activity log
+        getUserActivityLogs(user.uid)
+          .then((logs) => {
+            setActivities((logs || []).map((l) => ({
+              title: buildActivityTitle(l),
+              type: l.action || 'activity',
+              date: formatLogDate(l.timestamp),
+            })));
+          })
+          .catch(() => setActivities([]));
       })
       .catch(e => console.error(e))
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   const executeIntelligentSearch = () => {
@@ -97,7 +110,7 @@ function GlobalSearch({ user }) {
     );
 
     // 4. Search Workspace Activities
-    const activitiesRes = recentActivities.filter(act => 
+    const activitiesRes = activities.filter(act => 
       act.title.toLowerCase().includes(lowercase) ||
       act.type.toLowerCase().includes(lowercase)
     );
@@ -111,7 +124,7 @@ function GlobalSearch({ user }) {
   useEffect(() => {
     executeIntelligentSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, bills, businesses]);
+  }, [query, bills, businesses, activities]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -287,4 +300,3 @@ function GlobalSearch({ user }) {
 }
 
 export default GlobalSearch;
-export { INITIAL_BUSINESSES };

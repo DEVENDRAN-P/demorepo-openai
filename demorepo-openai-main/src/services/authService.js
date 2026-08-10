@@ -14,44 +14,6 @@ import { auth, db, googleProvider } from "../config/firebase";
 import { perf } from "./perfService";
 
 /**
- * Suppress Cross-Origin-Opener-Policy console warnings and popup cancellations
- * These warnings occur when Firebase checks window.closed on cross-origin popups
- * Popup-closed-by-user errors are handled gracefully in components
- * The warnings don't affect functionality, just create console noise
- */
-if (typeof window !== "undefined") {
-  const originalError = console.error;
-  const originalWarn = console.warn;
-
-  // Suppress COOP, policy warnings, and popup cancellation errors
-  console.error = function (...args) {
-    const message = args.join(" ");
-    if (
-      message.includes("Cross-Origin-Opener-Policy") ||
-      message.includes("window.closed") ||
-      message.includes("Cross-Origin-Embedder-Policy") ||
-      message.includes("popup-closed-by-user")
-    ) {
-      return; // Silently suppress
-    }
-    originalError.apply(console, args);
-  };
-
-  console.warn = function (...args) {
-    const message = args.join(" ");
-    if (
-      message.includes("Cross-Origin-Opener-Policy") ||
-      message.includes("window.closed") ||
-      message.includes("Cross-Origin-Embedder-Policy") ||
-      message.includes("popup-closed-by-user")
-    ) {
-      return; // Silently suppress
-    }
-    originalWarn.apply(console, args);
-  };
-}
-
-/**
  * Sign up a new user with email and password - OPTIMIZED for speed
  * @param {string} email - User email
  * @param {string} password - User password

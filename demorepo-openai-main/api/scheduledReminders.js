@@ -11,15 +11,13 @@
  * 4. Returns statistics
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const nodemailer = require("nodemailer");
+const { getDb, verifyCronAuth } = require("./lib/admin");
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = admin.firestore();
+// Initializes Firebase Admin with explicit service-account credentials and
+// fails clearly if they are missing (see lib/admin.js).
+const db = getDb();
 
 /**
  * Get configured Brevo transporter
@@ -234,6 +232,15 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Verify authorization (Vercel Cron or Admin Key). Fails closed — there is
+  // deliberately no environment bypass because this endpoint sends real emails.
+  if (!verifyCronAuth(req)) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid or missing authorization",
+    });
+  }
+
   console.log("🔔 [SCHEDULED REMINDERS] Starting bill reminder check...");
   console.log(`   Time: ${new Date().toISOString()}`);
   console.log(`   Method: ${req.method}`);
@@ -349,7 +356,7 @@ module.exports = async (req, res) => {
                 type: reminderType,
                 subject: emailContent.subject,
                 emailSent: userEmail,
-                sentDate: admin.firestore.FieldValue.serverTimestamp(),
+                sentDate: FieldValue.serverTimestamp(),
                 status: "sent",
                 messageId: info.messageId,
               });
@@ -362,8 +369,7 @@ module.exports = async (req, res) => {
               .doc(bill.id)
               .update({
                 reminderSent: true,
-                reminderSentDate:
-                  admin.firestore.FieldValue.serverTimestamp(),
+                reminderSentDate: FieldValue.serverTimestamp(),
               });
 
             stats.remindersSent++;

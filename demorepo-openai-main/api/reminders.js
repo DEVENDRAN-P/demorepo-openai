@@ -23,15 +23,13 @@
  * }
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const nodemailer = require("nodemailer");
+const { getDb, verifyCronAuth } = require("./lib/admin");
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = admin.firestore();
+// Initializes Firebase Admin with explicit service-account credentials and
+// fails clearly if they are missing (see lib/admin.js).
+const db = getDb();
 
 /**
  * Configure Brevo SMTP transporter
@@ -191,27 +189,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Verify authorization (Vercel Cron or Admin Key)
-  const authHeader = req.headers.authorization;
-  const cron_secret = process.env.CRON_SECRET;
-  const admin_key = process.env.ADMIN_KEY;
-
-  const isVercelCron = cron_secret && authHeader === `Bearer ${cron_secret}`;
-  const hasAdminKey =
-    admin_key &&
-    (req.query.adminKey === admin_key || req.headers["x-admin-key"] === admin_key);
-
-  // For GET requests, also check for dev mode
-  const isDev = process.env.NODE_ENV === "development";
-
-  if (!isVercelCron && !hasAdminKey && !(isDev && req.method === "GET")) {
+  // Verify authorization (Vercel Cron or Admin Key). Fails closed — there is
+  // deliberately no environment bypass because this endpoint sends real emails.
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({
       error: "Unauthorized",
       message: "Invalid or missing authorization",
     });
   }
 
-  Console.log("🔔 [SCHEDULED REMINDERS] Starting...");
+  console.log("🔔 [SCHEDULED REMINDERS] Starting...");
 
   let stats = {
     usersChecked: 0,
@@ -279,7 +266,7 @@ module.exports = async (req, res) => {
                 type: "scheduled",
                 subject: emailContent.subject,
                 emailSent: userEmail,
-                sentDate: admin.firestore.FieldValue.serverTimestamp(),
+                sentDate: FieldValue.serverTimestamp(),
                 status: "sent",
               });
 
@@ -291,8 +278,7 @@ module.exports = async (req, res) => {
               .doc(bill.id)
               .update({
                 reminderSent: true,
-                reminderSentDate:
-                  admin.firestore.FieldValue.serverTimestamp(),
+                reminderSentDate: FieldValue.serverTimestamp(),
               });
 
             stats.remindersSent++;

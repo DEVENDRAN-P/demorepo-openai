@@ -403,7 +403,13 @@ function generateUrgentEmailContent(bill) {
  * Auth: Requires admin token
  */
 exports.triggerBillReminders = functions.https.onRequest(async (req, res) => {
-  // Add authentication check here
+  // DEPRECATED ENDPOINT — require admin authentication
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers.authorization || "";
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: "Unauthorized — this endpoint is deprecated" });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

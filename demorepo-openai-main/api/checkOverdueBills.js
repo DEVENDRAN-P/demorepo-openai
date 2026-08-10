@@ -11,15 +11,13 @@
  * 4. No user action needed - fully automatic!
  */
 
-const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const nodemailer = require("nodemailer");
+const { getDb, verifyCronAuth } = require("./lib/admin");
 
-// Initialize Firebase
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = admin.firestore();
+// Initializes Firebase Admin with explicit service-account credentials and
+// fails clearly if they are missing (see lib/admin.js).
+const db = getDb();
 
 /**
  * Configure Brevo SMTP
@@ -294,7 +292,7 @@ async function checkOverdueBillsAndSend() {
                 type: "overdue",
                 subject: emailContent.subject,
                 emailSent: userEmail,
-                sentDate: admin.firestore.FieldValue.serverTimestamp(),
+                sentDate: FieldValue.serverTimestamp(),
                 daysOverdue: daysOverdue,
                 status: "sent",
                 messageId: info.messageId,
@@ -345,6 +343,15 @@ module.exports = async (req, res) => {
   // Allow GET and POST
   if (!["GET", "POST"].includes(req.method)) {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Verify authorization (Vercel Cron or Admin Key). Fails closed — there is
+  // deliberately no environment bypass because this endpoint sends real emails.
+  if (!verifyCronAuth(req)) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid or missing authorization",
+    });
   }
 
   try {

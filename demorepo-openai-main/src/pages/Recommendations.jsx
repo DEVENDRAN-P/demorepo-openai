@@ -4,7 +4,7 @@ import { getUserBusinesses } from '../utils/businessHelper';
 
 function Recommendations({ user }) {
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   useEffect(() => {
@@ -30,7 +30,7 @@ function Recommendations({ user }) {
     if (!user?.uid) return;
     getUserBills(user.uid)
       .then(fetched => {
-        const firstBizId = userBusinesses[0]?.id || 'apex_retailers';
+        const firstBizId = userBusinesses[0]?.id || '';
         const filtered = fetched.filter(b => {
           if (!b.businessId) return activeBusinessId === firstBizId;
           return b.businessId === activeBusinessId;
@@ -42,29 +42,99 @@ function Recommendations({ user }) {
   }, [user?.uid, activeBusinessId, userBusinesses]);
 
 
-  const list = [
-    {
-      title: 'Claim BSNL Telecom ITC credit',
-      desc: 'Contact BSNL customer helpline or login to the billing portal to add your active GSTIN number. Once registered, all monthly broadband bills will carry your GST credit.',
-      category: 'Tax Savings',
-      priority: 'High',
-      saving: '₹2,800/year'
-    },
-    {
-      title: 'Fix math discrepancy on supplier bill',
-      desc: 'Verify calculations breakdown in invoice #INV-AUTO. Contact supplier if there is an error in their billing systems, or correct the entry manually.',
-      category: 'Correction',
-      priority: 'Medium',
-      saving: 'Audit Safety'
-    },
-    {
-      title: 'Lock GSTR returns before quarterly deadline',
-      desc: 'File GSTR-1 and GSTR-3B filings. Delayed returns incur penalty fees on portal.',
-      category: 'Compliance',
-      priority: 'High',
-      saving: 'Fine Prevention'
+  // Generate data-driven recommendations from actual bills
+  const list = React.useMemo(() => {
+    if (!bills || bills.length === 0) return [];
+
+    const recommendations = [];
+    const totalTax = bills.reduce((s, b) => s + (b.taxAmount || 0), 0);
+    const totalAmount = bills.reduce((s, b) => s + (b.totalAmount || 0), 0);
+
+    // Check for missing GSTIN on invoices
+    const missingGSTIN = bills.filter(b => !b.supplierGstin && !b.gstin);
+    if (missingGSTIN.length > 0) {
+      recommendations.push({
+        title: `${missingGSTIN.length} invoice(s) missing supplier GSTIN`,
+        desc: `Invoices without a valid supplier GSTIN cannot be used for Input Tax Credit claims. Review and update the GSTIN on these invoices to preserve your ITC eligibility.`,
+        category: 'ITC',
+        priority: 'High',
+        saving: `Up to ₹${missingGSTIN.reduce((s, b) => s + (b.taxAmount || 0), 0).toLocaleString('en-IN')} in ITC`
+      });
     }
-  ];
+
+    // Check for tax anomalies (tax > 50% of amount suggests possible error)
+    const highTaxBills = bills.filter(b => {
+      const amt = b.taxableAmount || b.amount || 0;
+      const tax = b.taxAmount || 0;
+      return amt > 0 && tax / amt > 0.5;
+    });
+    if (highTaxBills.length > 0) {
+      recommendations.push({
+        title: 'Review invoices with unusually high tax',
+        desc: `${highTaxBills.length} invoice(s) have tax amounts exceeding 50% of the taxable value. This may indicate a data entry error or unusual transaction that should be verified.`,
+        category: 'Audit',
+        priority: 'Medium',
+        saving: 'Audit Safety'
+      });
+    }
+
+    // ITC optimization
+    if (totalTax > 0) {
+      recommendations.push({
+        title: 'Maximize Input Tax Credit',
+        desc: `Your total tax paid across ${bills.length} invoices is ₹${totalTax.toLocaleString('en-IN')}. Ensure all eligible purchase invoices are uploaded to claim maximum ITC before the filing deadline.`,
+        category: 'Tax Savings',
+        priority: 'High',
+        saving: `Up to ₹${totalTax.toLocaleString('en-IN')}`
+      });
+    }
+
+    // Filing deadline reminder
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    if (dayOfMonth >= 15) {
+      recommendations.push({
+        title: 'GSTR filing deadline approaching',
+        desc: `GSTR-1 is due on the 11th and GSTR-3B on the 20th of next month. Ensure all invoices for the current period are uploaded and verified before the deadline to avoid late fees.`,
+        category: 'Compliance',
+        priority: dayOfMonth >= 18 ? 'High' : 'Medium',
+        saving: 'Fine Prevention'
+      });
+    }
+
+    // Vendor analysis
+    const vendorMap = {};
+    bills.forEach(b => {
+      const name = b.supplierName || b.vendorName || 'Unknown';
+      vendorMap[name] = (vendorMap[name] || 0) + (b.totalAmount || 0);
+    });
+    const topVendors = Object.entries(vendorMap).sort((a, b) => b[1] - a[1]);
+    if (topVendors.length > 0) {
+      const [topName, topAmount] = topVendors[0];
+      const concentration = totalAmount > 0 ? Math.round((topAmount / totalAmount) * 100) : 0;
+      if (concentration > 50) {
+        recommendations.push({
+          title: `High vendor concentration: ${topName}`,
+          desc: `${concentration}% of your expenses come from a single vendor (${topName}). Consider diversifying suppliers to reduce dependency risk and potentially negotiate better GST terms.`,
+          category: 'Business',
+          priority: 'Medium',
+          saving: 'Risk Reduction'
+        });
+      }
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push({
+        title: 'Upload more invoices',
+        desc: 'Add more invoices to receive personalized tax optimization and compliance recommendations.',
+        category: 'Getting Started',
+        priority: 'Low',
+        saving: 'N/A'
+      });
+    }
+
+    return recommendations;
+  }, [bills]);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>

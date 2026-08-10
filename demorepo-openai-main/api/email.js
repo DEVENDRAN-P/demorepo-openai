@@ -28,18 +28,12 @@
  */
 
 const nodemailer = require("nodemailer");
+const { verifyAuth, AiHttpError } = require("./lib/admin");
+const { handleCors, setCorsHeaders } = require("./_utils/cors");
 
 module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+  if (handleCors(req, res)) return;
+  setCorsHeaders(res, req);
 
   // GET endpoint for diagnostics
   if (req.method === "GET") {
@@ -65,6 +59,17 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed. Use POST /api/email",
+    });
+  }
+
+  // Require a valid Firebase ID token — this endpoint sends emails from the
+  // Brevo account, so it must never be usable by unauthenticated callers.
+  try {
+    await verifyAuth(req);
+  } catch (authErr) {
+    const status = authErr && authErr.status ? authErr.status : 401;
+    return res.status(status).json({
+      error: authErr && authErr.safeMessage ? authErr.safeMessage : "Authentication required.",
     });
   }
 

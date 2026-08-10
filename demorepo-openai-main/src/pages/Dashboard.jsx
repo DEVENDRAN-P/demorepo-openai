@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ReminderPanel from '../components/ReminderPanel';
 import GSTFilingStatus from '../components/GSTFilingStatus';
 import PenaltyLateFeeEstimator from '../components/PenaltyLateFeeEstimator';
 import { getUserBills } from '../services/firebaseDataService';
-import { auth } from '../config/firebase';
+import { aiChat } from '../services/aiService';
+import { fetchActivePlan } from '../services/subscriptionService';
 
 import { getUserBusinesses } from '../utils/businessHelper';
 
@@ -59,6 +61,7 @@ const IconRobot = () => (
 
 function Dashboard({ user }) {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [bills, setBills] = useState([]);
   const [loadingBills, setLoadingBills] = useState(true);
   const [activePlan, setActivePlan] = useState('free');
@@ -93,39 +96,18 @@ function Dashboard({ user }) {
   const [agentResponse, setAgentResponse] = useState('');
   const [agentLoading, setAgentLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const GROQ_API_KEY = process.env.REACT_APP_GROQ_API_KEY || '';
 
-  // Fetch subscription tier status
-  const getApiUrl = (path) => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      if (window.location.port !== '5000') {
-        return `http://localhost:5000${path}`;
-      }
-    }
-    return path;
-  };
-
+  // Fetch subscription tier status through the deduplicated service.
+  // fetchActivePlan() resolves the plan from /api/subscription/status ONCE per
+  // page load (module-level cache) and is shared with the Sidebar and every
+  // other page — no duplicate requests, no forced token refresh, and it reads
+  // the correct response shape (data.subscription.subscriptionPlan).
   useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        const token = await currentUser.getIdToken(true);
-        const res = await fetch(getApiUrl('/api/subscription/status'), {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const plan = data.subscriptionPlan || 'free';
-          setActivePlan(plan);
-          localStorage.setItem('saas_active_plan', plan);
-          window.dispatchEvent(new Event('planChanged'));
-        }
-      } catch (err) {
-        console.error('Error fetching subscription status in Dashboard:', err);
-      }
-    };
-    fetchStatus();
+    let mounted = true;
+    fetchActivePlan().then((plan) => {
+      if (mounted) setActivePlan(plan);
+    });
+    return () => { mounted = false; };
   }, [user]);
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -151,7 +133,7 @@ function Dashboard({ user }) {
       setLoadingBills(false);
       return;
     }
-    setLoadingBills(true);
+    // Fetch bills directly — no automatic seeding
     getUserBills(user.uid)
       .then(fetchedBills => {
         setBills(fetchedBills);
@@ -202,13 +184,18 @@ function Dashboard({ user }) {
   const totalGSTAmount = businessBills.reduce((sum, b) => sum + (b.taxAmount || 0), 0);
   const totalInvoiceAmount = businessBills.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
-  // Financial Metrics
-  const revenue = totalInvoiceAmount * 1.5;
-  const expenses = totalInvoiceAmount;
-  const gstPayable = totalGSTAmount * 1.5;
-  const inputTaxCredit = totalGSTAmount;
-  const netPayable = Math.max(0, gstPayable - inputTaxCredit);
-  const costSavings = Math.round(totalInvoiceAmount * 0.06);
+  // Financial Metrics — computed ONLY from the user's stored invoices.
+  // Purchase invoices record spend and GST (input tax credit). Sales revenue
+  // and GST payable CANNOT be derived from purchase invoices, so they render
+  // as "—" instead of fabricated estimates with arbitrary multipliers.
+  const expenses = totalInvoiceAmount;       // recorded purchase spend (real)
+  const inputTaxCredit = totalGSTAmount;     // GST on purchase invoices (ITC, real)
+  // eslint-disable-next-line no-unused-vars
+  const netPayable = 0;                      // requires sales/outward-supply data
+  const revenue = null;                      // requires sales invoices
+  const gstPayable = null;                   // requires sales data
+  // eslint-disable-next-line no-unused-vars
+  const costSavings = null;                  // not computed
 
   // Business Health Score calculations
   const totalVerified = businessBills.filter(b => b.status === 'approved' || b.filed).length;
@@ -261,55 +248,48 @@ function Dashboard({ user }) {
     setAgentLoading(true);
     setAgentResponse('');
     try {
-      const systemPrompt = `You are "GST Buddy Finance Agent", a world-class AI Accountant & CFO for the business "${activeBusiness.name}" (GSTIN: ${activeBusiness.gstin}, State: ${activeBusiness.state}).
-The current financials for this business are:
-- Monthly Revenue: ₹${revenue.toLocaleString()}
-- Monthly Expenses: ₹${expenses.toLocaleString()}
-- Estimated GST Liability: ₹${gstPayable.toLocaleString()}
-- Input Tax Credit (ITC) Available: ₹${inputTaxCredit.toLocaleString()}
-- Net Tax Payable: ₹${netPayable.toLocaleString()}
-- Total Invoices Captured: ${totalBillsUploaded}
-- Outstanding Filings: ${pendingFilings}
-- Compliance Score: ${complianceScore}%
-- Business Health Rating: ${healthScore}% (${healthRating.label})
+      const invoiceSummary = businessBills.length === 0
+        ? 'No invoices uploaded yet.'
+        : businessBills.slice(0, 40).map((b, i) => `- Inv #${b.invoiceNumber} from ${b.supplierName} | Date: ${b.invoiceDate} | Taxable: ₹${b.amount} | GST: ₹${b.taxAmount} | Total: ₹${b.totalAmount} | Category: ${b.expenseType} | Status: ${b.filed ? 'Filed' : 'Pending'}`).join('\n');
 
-When responding to the user query, structure your response explicitly under these sections:
-- **Decision/Action**: What the AI did or recommends.
-- **Evidence/Reasoning**: Specific numbers, rules or invoice parameters backing this up.
-- **Business Impact**: Tax savings, compliance risk reduction, or workflow hours saved.
-- **Next Action**: Step-by-step recommendation for the user.
-
-Ensure your tone is premium, professional, and explainable. No vague answers.`;
-
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
+      const result = await aiChat({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `Context financials for ${activeBusiness.name} (GSTIN: ${activeBusiness.gstin}, State: ${activeBusiness.state}):`,
+              `- Recorded Purchase Expenses: ₹${expenses.toLocaleString()}`,
+              `- Input Tax Credit (ITC) Available: ₹${inputTaxCredit.toLocaleString()}`,
+              `- GST Payable: not derivable from purchase invoices (requires sales data)`,
+              `- Total Invoices Captured: ${totalBillsUploaded}`,
+              `- Outstanding Filings: ${pendingFilings}`,
+              `- Compliance Score: ${complianceScore}%`,
+              `- Business Health Rating: ${healthScore}% (${healthRating.label})`,
+              ``,
+              `Respond to the user query by structuring the response explicitly under:`,
+              `- **Decision/Action**: What the AI did or recommends.`,
+              `- **Evidence/Reasoning**: Specific numbers, rules or invoice parameters backing this up.`,
+              `- **Business Impact**: Tax savings, compliance risk reduction, or workflow hours saved.`,
+              `- **Next Action**: Step-by-step recommendation for the user.`,
+              ``,
+              `User query: ${finalPrompt}`,
+            ].join('\n'),
+          },
+        ],
+        business: {
+          name: activeBusiness.name,
+          gstin: activeBusiness.gstin,
+          state: activeBusiness.state,
         },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: finalPrompt }
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.2,
-          max_tokens: 1200,
-        }),
+        invoiceSummary,
+        language: i18n.language === 'hi' ? 'hi' : i18n.language === 'ta' ? 'ta' : 'en',
       });
 
-      if (!response.ok) throw new Error(`API returned ${response.status}`);
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Received non-JSON response from API. This usually happens if the request is blocked by a corporate firewall, a captive network login page, or an active Service Worker from another app on localhost. Please try using an Incognito window or clearing your browser cache and site data.');
-      }
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content || 'No explanation generated.';
-      setAgentResponse(content);
+      setAgentResponse(result.reply || 'No explanation generated.');
       setAgentInput('');
     } catch (error) {
       console.error('Agent execution error:', error);
-      setAgentResponse('⚠️ The AI Accountant encountered a secure connection issue. Let me explain: We could not securely route your request to the compliance server. Action needed: Check your network settings and verify the GROQ API key in settings.');
+      setAgentResponse('⚠️ The AI Accountant encountered a secure connection issue. Let me explain: We could not securely route your request to the compliance server. Action needed: Check your network settings and sign-in session.');
     } finally {
       setAgentLoading(false);
     }
@@ -325,11 +305,11 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
               <span className="pulse-dot"></span>
               <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: 'var(--theme-secondary)' }}>
-                AI Finance Operating System
+                {t('AI Finance Operating System')}
               </span>
             </div>
             <h1 className="gradient-text" style={{ fontSize: '2.25rem', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              Welcome back, {user?.name || user?.displayName || 'Devendran'} 👋
+              Welcome back, {user?.name || user?.displayName || 'User'} 👋
               <span style={{
                 fontSize: '0.75rem',
                 padding: '0.25rem 0.75rem',
@@ -346,7 +326,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
               </span>
             </h1>
             <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.95rem' }}>
-              Manage accounts, verify compliance, and audit risks with your AI accountant.
+              {t('Manage accounts, verify compliance, and audit risks with your AI accountant')}
             </p>
           </div>
 
@@ -354,7 +334,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             <div style={{ color: 'var(--theme-primary-light)' }}><IconBriefcase /></div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Active Business Entity
+                {t('Active Business Entity')}
               </span>
               <select 
                 value={activeBusiness.id} 
@@ -400,7 +380,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Business Health</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('business_health_title', 'Business Health')}</span>
                 <span className={`badge-premium ${healthRating.class}`}>{healthRating.label}</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>
@@ -422,7 +402,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>GST Compliance</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('GST Compliance')}</span>
                 <span className={`badge-premium ${complianceRating.class}`}>{complianceRating.label}</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>
@@ -434,19 +414,19 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
           {/* Upcoming Filing Deadlines */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Filing Deadlines</h3>
+              <h3 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>{t('Filing Deadlines')}</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--error)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <span className="pulse-dot pulse-dot-red" style={{ width: '6px', height: '6px' }}></span>
-                GSTR-1 Due in 11 days
+                {t('gstr1_due_soon', 'GSTR-1 Due in 11 days')}
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
               <div style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>GSTR-1 (Sales Summary)</span>
+                 <span style={{ color: 'var(--text-secondary)' }}>{t('gstr1_sales_summary', 'GSTR-1 (Sales Summary)')}</span>
                 <strong style={{ marginLeft: 'auto' }}>August 11, 2026</strong>
               </div>
               <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>GSTR-3B (Summary Return)</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('gstr3b_summary_return', 'GSTR-3B (Summary Return)')}</span>
                 <strong style={{ marginLeft: 'auto' }}>August 20, 2026</strong>
               </div>
             </div>
@@ -458,8 +438,8 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
           
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Monthly Revenue</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{revenue.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Auto-deduced from invoice history</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{revenue === null ? '—' : '₹' + revenue.toLocaleString()}</div>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Requires sales invoices (not derived from purchases)</span>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
@@ -470,14 +450,14 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--warning)' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>GST Payable</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{gstPayable.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>GSTR-3B Liability Estimate</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{gstPayable === null ? '—' : '₹' + gstPayable.toLocaleString()}</div>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Requires sales data (not derivable from purchases)</span>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--success)' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Input Tax Credit</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{inputTaxCredit.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#4ade80' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> Maximize: ₹{costSavings.toLocaleString()} saved</span></span>
+            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#4ade80' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> ITC from invoices with valid supplier GSTIN</span></span>
           </div>
 
         </div>
@@ -524,7 +504,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             <div className="glass-panel" style={{ marginTop: '1.25rem', padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', borderLeft: '4px solid var(--theme-secondary)' }}>
               <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-secondary)' }}>Agent Execution Logs</span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Confidence: 98% (llama-3.3-70b-versatile)</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Live analysis</span>
               </div>
               <div style={{ fontSize: '0.875rem', lineHeight: '1.6', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
                 {agentResponse}
@@ -600,25 +580,25 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
                 <div className="timeline-item success">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">Today, 10:30 AM</div>
-                    <strong>Audit Engine Ran</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Audited {totalBillsUploaded} bills for suspicious vendor uploads. Duplicate detection: 100% clean.</div>
+                    <div className="timeline-time">Live</div>
+                    <strong>Invoice Ledger Synced</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{totalBillsUploaded} invoices in your ledger. {totalVerified} verified and ready for return preparation.</div>
                   </div>
                 </div>
                 <div className="timeline-item info">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">Yesterday, 4:15 PM</div>
-                    <strong>Tax Forecast Model Updated</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Estimated August GST payable liability at ₹{gstPayable.toLocaleString()} based on current run-rates.</div>
+                    <div className="timeline-time">Live</div>
+                    <strong>GST Position Calculated</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Recorded ₹{inputTaxCredit.toLocaleString()} input tax credit from purchase invoices. GST payable requires sales data.</div>
                   </div>
                 </div>
                 <div className="timeline-item warning">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">July 24, 2026</div>
-                    <strong>Compliance Review Complete</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Flagged {pendingFilings} outstanding invoices. Action required: file returns to lock in ₹{inputTaxCredit.toLocaleString()} ITC.</div>
+                    <div className="timeline-time">Live</div>
+                    <strong>Filing Status</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{pendingFilings} invoices pending filing. <Link to="/agent-activity" style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>View agent activity →</Link></div>
                   </div>
                 </div>
               </div>
@@ -655,7 +635,7 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             {/* Last Updated Badge */}
             <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', background: 'var(--bg-secondary)', padding: '0.25rem 0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span className="pulse-dot" style={{ width: '5px', height: '5px' }}></span>
-              <span>Updated 2 minutes ago</span>
+              <span>Auto-calculated from your {totalBillsUploaded} invoices</span>
             </div>
           </div>
 
@@ -665,15 +645,12 @@ Ensure your tone is premium, professional, and explainable. No vague answers.`;
             {/* Card 1: Total Savings */}
             <div className="glass-panel hover-glow" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--success)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Savings</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Input Tax Credit (ITC)</span>
                 <div style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0 0 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                  <span>₹{costSavings.toLocaleString()}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-                    ↑ +18% vs last month
-                  </span>
+                  <span>₹{inputTaxCredit.toLocaleString()}</span>
                 </div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0', lineHeight: '1.4' }}>
-                  Derived from automated invoice extraction and audit rules.
+                  GST recorded on your purchase invoices. Claimable where the supplier GSTIN is valid.
                 </p>
               </div>
               <div style={{

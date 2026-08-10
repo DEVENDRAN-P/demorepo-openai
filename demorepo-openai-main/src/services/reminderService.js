@@ -34,6 +34,7 @@ export const calculateGSTDueDates = (invoiceDate) => {
 
 /**
  * Create reminders for a bill when uploaded
+ * Stored under users/{userId}/reminders for proper data isolation
  */
 export const createBillReminders = async (userId, billData) => {
   try {
@@ -42,10 +43,10 @@ export const createBillReminders = async (userId, billData) => {
     );
 
     const reminders = [];
+    const remindersRef = collection(db, 'users', userId, 'reminders');
 
     // GSTR-1 reminder: Alert 1 day before
-    const gstr1Reminder = await addDoc(collection(db, 'reminders'), {
-      userId,
+    const gstr1Reminder = await addDoc(remindersRef, {
       billId: billData.id,
       type: 'gstr-1-due',
       title: 'GSTR-1 Filing Due Soon',
@@ -59,8 +60,7 @@ export const createBillReminders = async (userId, billData) => {
     reminders.push(gstr1Reminder.id);
 
     // GSTR-3B reminder: Alert 1 day before
-    const gstr3bReminder = await addDoc(collection(db, 'reminders'), {
-      userId,
+    const gstr3bReminder = await addDoc(remindersRef, {
       billId: billData.id,
       type: 'gstr-3b-due',
       title: 'GSTR-3B Tax Return Due Soon',
@@ -74,8 +74,7 @@ export const createBillReminders = async (userId, billData) => {
     reminders.push(gstr3bReminder.id);
 
     // GST Payment reminder: Alert 2 days before
-    const paymentReminder = await addDoc(collection(db, 'reminders'), {
-      userId,
+    const paymentReminder = await addDoc(remindersRef, {
       billId: billData.id,
       type: 'gst-payment-due',
       title: 'GST Payment Due',
@@ -103,9 +102,9 @@ export const createBillReminders = async (userId, billData) => {
  */
 export const getPendingReminders = async (userId) => {
   try {
+    const remindersRef = collection(db, 'users', userId, 'reminders');
     const q = query(
-      collection(db, 'reminders'),
-      where('userId', '==', userId),
+      remindersRef,
       where('status', '==', 'pending')
     );
 
@@ -138,9 +137,9 @@ export const getPendingReminders = async (userId) => {
 /**
  * Mark a reminder as sent/acknowledged
  */
-export const markReminderSent = async (reminderId) => {
+export const markReminderSent = async (userId, reminderId) => {
   try {
-    const reminderRef = doc(db, 'reminders', reminderId);
+    const reminderRef = doc(db, 'users', userId, 'reminders', reminderId);
     await updateDoc(reminderRef, {
       status: 'sent',
       sentAt: Timestamp.now(),
@@ -155,9 +154,9 @@ export const markReminderSent = async (reminderId) => {
 /**
  * Dismiss a reminder
  */
-export const dismissReminder = async (reminderId) => {
+export const dismissReminder = async (userId, reminderId) => {
   try {
-    const reminderRef = doc(db, 'reminders', reminderId);
+    const reminderRef = doc(db, 'users', userId, 'reminders', reminderId);
     await updateDoc(reminderRef, {
       status: 'dismissed',
       updatedAt: Timestamp.now(),
@@ -173,7 +172,8 @@ export const dismissReminder = async (reminderId) => {
  */
 export const getAllReminders = async (userId) => {
   try {
-    const q = query(collection(db, 'reminders'), where('userId', '==', userId));
+    const remindersRef = collection(db, 'users', userId, 'reminders');
+    const q = query(remindersRef);
 
     const querySnapshot = await getDocs(q);
     const reminders = [];

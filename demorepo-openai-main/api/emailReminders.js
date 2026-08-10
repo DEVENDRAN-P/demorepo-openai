@@ -99,6 +99,14 @@ exports.sendReminderEmailHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
+    // DEPRECATED ENDPOINT — reject unauthenticated calls
+    const authHeader = req.headers.authorization || "";
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      res.status(401).json({ error: "Unauthorized — this endpoint is deprecated" });
+      return;
+    }
+
     const { subject, body, email, htmlContent } = req.body;
 
     // Validate input

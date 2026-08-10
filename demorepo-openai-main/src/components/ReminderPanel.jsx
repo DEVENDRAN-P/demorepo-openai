@@ -197,9 +197,9 @@ function ReminderPanel() {
       if (reminderId.startsWith('local-')) {
         // Local reminder, just remove from state
         setReminders(reminders.filter(r => r.id !== reminderId));
-      } else {
+      } else if (user?.uid) {
         // Firebase reminder
-        await dismissReminder(reminderId);
+        await dismissReminder(user.uid, reminderId);
         setReminders(reminders.filter(r => r.id !== reminderId));
       }
     } catch (error) {

@@ -351,9 +351,9 @@ export const debugRealtimeListener = async (collectionName = "bills") => {
 };
 
 /**
- * Export debug commands to window for easy access
+ * Export debug commands to window for easy access (dev only)
  */
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   window.debugFirebase = {
     connection: debugFirebaseConnection,
     emailIsolation: debugEmailDataIsolation,

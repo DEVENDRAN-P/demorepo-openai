@@ -9,7 +9,7 @@ function Reports({ user }) {
   const [hasData, setHasData] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
-    return localStorage.getItem('activeBusinessId') || 'apex_retailers';
+    return localStorage.getItem('activeBusinessId') || null;
   });
 
   const [aiInsights, setAiInsights] = useState([]);
@@ -37,7 +37,8 @@ function Reports({ user }) {
       .then(bills => {
         // Filter by selected business
         const businessBills = bills.filter(bill => {
-          if (!bill.businessId) return activeBusinessId === 'apex_retailers';
+          if (!activeBusinessId) return true;
+          if (!bill.businessId) return true;
           return bill.businessId === activeBusinessId;
         });
 
@@ -81,33 +82,70 @@ function Reports({ user }) {
         }));
         setCategoryData(category);
 
-        // Calculate summary
+        // Calculate summary from real bill data
         const totalPaid = businessBills.reduce((sum, bill) => sum + (bill.taxAmount || 0), 0);
         const totalCollected = businessBills.reduce((sum, bill) => sum + (bill.totalAmount || 0), 0);
-        const inputCredit = totalPaid; // 100% actual input tax credit
-        const netPayable = Math.max(0, totalPaid * 1.5 - inputCredit); // Mock sales tax liability 1.5x purchases
+        const totalTaxable = businessBills.reduce((sum, bill) => sum + (bill.taxableAmount || bill.amount || 0), 0);
+        // Input Tax Credit = total tax paid on purchases
+        const inputCredit = totalPaid;
+        // Output tax liability = total tax collected on sales (collected - paid as ITC)
+        const outputTax = Math.max(0, totalCollected - totalTaxable);
+        const netPayable = Math.max(0, outputTax - inputCredit);
 
         setSummary({
           paid: totalPaid,
-          collected: totalCollected * 1.5,
+          collected: totalCollected,
           credit: inputCredit,
           netPayable: netPayable,
         });
 
-        // Generate AI Business Insights dynamically
-        const insightsList = [
-          `Your utilities and office expenses increased by 14% compared to last month.`,
-          `Broadband internet bill from BSNL Telecom accounts for the largest utilities expense item.`,
-          `Input Tax Credit utilization stands at ${totalPaid ? '100' : '0'}% for the current quarter.`
-        ];
+        // Generate AI Business Insights dynamically from actual data
+        const billCount = businessBills.length;
+        const avgBillAmount = billCount > 0 ? totalCollected / billCount : 0;
+        const topCategories = category.slice(0, 3).map(c => `${c.name} (₹${c.value.toLocaleString('en-IN')})`);
+        const insightsList = [];
+        if (billCount > 0) {
+          insightsList.push(`Processed ${billCount} invoices with an average value of ₹${avgBillAmount.toLocaleString('en-IN')}.`);
+          if (topCategories.length > 0) {
+            insightsList.push(`Top expense categories: ${topCategories.join(', ')}.`);
+          }
+          if (inputCredit > 0 && outputTax > 0) {
+            const itcUtilization = Math.min(100, Math.round((inputCredit / outputTax) * 100));
+            insightsList.push(`Input Tax Credit utilization stands at ${itcUtilization}% for the current period.`);
+          }
+        } else {
+          insightsList.push('No invoice data available yet. Upload invoices to see insights.');
+        }
         setAiInsights(insightsList);
 
-        // Generate AI Recommendations dynamically
-        const recommendationsList = [
-          { title: "Optimize broadband bills", desc: "Always claim ITC on BSNL/internet bills. Ensure your corporate GSTIN is updated with BSNL, potentially saving ₹1,200/mo." },
-          { title: "Review high-risk vendors", desc: "Unregistered vendors are causing ITC leakages. Recommended: Request vendors register or switch to compliant supplier entities." },
-          { title: "Cash Flow adjustments", desc: "GST liability will peak in August. Retain 10% of sales revenues to settle GSTR-3B liability smoothly." }
-        ];
+        // Generate data-driven recommendations
+        const recommendationsList = [];
+        if (inputCredit > 0 && outputTax > 0 && inputCredit < outputTax) {
+          const gap = outputTax - inputCredit;
+          recommendationsList.push({
+            title: "Maximize ITC claims",
+            desc: `Current ITC covers ${Math.round((inputCredit / outputTax) * 100)}% of output tax. Ensure all eligible purchase invoices are uploaded to claim remaining ₹${gap.toLocaleString('en-IN')} in credits.`
+          });
+        }
+        if (billCount === 0) {
+          recommendationsList.push({
+            title: "Start uploading invoices",
+            desc: "Upload your first invoice to begin tracking GST compliance, ITC, and tax liability automatically."
+          });
+        }
+        if (category.length > 0) {
+          const topCat = category[0];
+          recommendationsList.push({
+            title: `Review ${topCat.name} expenses`,
+            desc: `Your highest expense category is ${topCat.name} at ₹${topCat.value.toLocaleString('en-IN')}. Review for potential tax optimization opportunities.`
+          });
+        }
+        if (recommendationsList.length === 0) {
+          recommendationsList.push({
+            title: "Upload more invoices",
+            desc: "Add more invoices to generate personalized tax and compliance recommendations."
+          });
+        }
         setRecommendations(recommendationsList);
       })
       .catch(error => {
