@@ -4,11 +4,13 @@
  * Usage: node scratch/test-webhook-signature.js <secret>
  * The secret defaults to CASHFREE_WEBHOOK_SECRET (or CASHFREE_SECRET_KEY,
  * which Cashfree actually uses to sign webhooks).
- * Sends four webhook POSTs to http://localhost:5000/api/payment/webhook:
- *   1. valid signature (unknown order) → expect 200 "ignored" (HMAC passed)
- *   2. missing signature → expect 401 INVALID_SIGNATURE
- *   3. tampered signature → expect 401 INVALID_SIGNATURE
- *   4. no-dot signature (wrong algorithm) → expect 401 INVALID_SIGNATURE
+ * Sends four webhook POSTs to http://localhost:5000/api/payment/webhook.
+ * All are acknowledged with HTTP 200 (never processed without a verified
+ * signature):
+ *   1. valid signature (unknown order) → 200, ignored "unknown_order" (HMAC passed)
+ *   2. missing signature → 200, processed:false, reason "missing_signature"
+ *   3. tampered signature → 200, processed:false, reason "invalid_signature"
+ *   4. no-dot signature (wrong algorithm) → 200, processed:false, reason "invalid_signature"
  */
 const crypto = require("crypto");
 const http = require("http");
@@ -58,12 +60,12 @@ function post(sig, label) {
         },
       },
       (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => {
-          console.log(`[${label}] HTTP ${res.statusCode} → ${data}`);
-          resolve(res.statusCode);
-        });
+    let data = "";
+    res.on("data", (c) => (data += c));
+    res.on("end", () => {
+      console.log(`[${label}] HTTP ${res.statusCode} → ${data}`);
+      resolve({ status: res.statusCode, body: data });
+    });
       }
     );
     req.on("error", reject);
@@ -80,10 +82,11 @@ function post(sig, label) {
   results.push(await post(noDotSig, "no-dot signature (wrong algorithm)"));
 
   const ok =
-    results[0] === 200 &&
-    results[1] === 401 &&
-    results[2] === 401 &&
-    results[3] === 401;
+    results.every((r) => r.status === 200) &&
+    /unknown_order/.test(results[0].body) &&
+    /missing_signature/.test(results[1].body) &&
+    /invalid_signature/.test(results[2].body) &&
+    /invalid_signature/.test(results[3].body);
   console.log(ok ? "\n✅ ALL WEBHOOK SIGNATURE TESTS PASSED" : "\n❌ TEST FAILURES");
   process.exit(ok ? 0 : 1);
 })();

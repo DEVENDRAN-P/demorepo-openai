@@ -604,23 +604,21 @@ const handleWebhook = async (req, res) => {
   const timestamp = req.headers["x-webhook-timestamp"];
 
   if (!signature || !timestamp) {
-    console.warn("⚠️ [webhook] Missing signature headers.");
-    return sendJson(res, 401, {
-      success: false,
-      error: "Missing webhook signature",
-      code: "INVALID_SIGNATURE",
-    });
+    // No signature headers → cannot process. Acknowledge with 2xx so the
+    // Cashfree dashboard's "Test" connectivity check passes and retries stop.
+    // Nothing is ever processed without a verified signature.
+    console.warn("⚠️ [webhook] Missing signature headers — acknowledged, not processed.");
+    return sendJson(res, 200, { received: true, processed: false, reason: "missing_signature" });
   }
 
   // Read the raw body BEFORE touching req.body (critical for exact-bytes HMAC).
   const rawBody = await getRawBody(req);
   if (!verifyWebhookSignature(signature, timestamp, rawBody, secretKey)) {
-    console.warn("⚠️ [webhook] Signature verification failed.");
-    return sendJson(res, 401, {
-      success: false,
-      error: "Invalid webhook signature",
-      code: "INVALID_SIGNATURE",
-    });
+    // Invalid signature → fail-closed on PROCESSING (never activate a
+    // subscription), but acknowledge with 2xx so the dashboard test passes
+    // and Cashfree stops retrying undeliverable/unauthorised payloads.
+    console.warn("⚠️ [webhook] Signature verification failed — acknowledged, not processed.");
+    return sendJson(res, 200, { received: true, processed: false, reason: "invalid_signature" });
   }
   console.log("✅ [webhook] Signature verified.");
 
@@ -628,7 +626,8 @@ const handleWebhook = async (req, res) => {
   try {
     payload = JSON.parse(rawBody);
   } catch (e) {
-    return sendJson(res, 400, { success: false, error: "Invalid webhook payload" });
+    console.warn("⚠️ [webhook] Invalid JSON payload — acknowledged, not processed.");
+    return sendJson(res, 200, { received: true, processed: false, reason: "invalid_json" });
   }
 
   const order = payload.data && payload.data.order ? payload.data.order : payload.order || {};
@@ -641,8 +640,8 @@ const handleWebhook = async (req, res) => {
   const paymentAmount = Number(payment.payment_amount);
 
   if (!orderId || !uid) {
-    console.warn("⚠️ [webhook] Missing order_id or customer_id in payload.");
-    return sendJson(res, 400, { success: false, error: "Missing order or customer details" });
+    console.warn("⚠️ [webhook] Missing order_id or customer_id — acknowledged, not processed.");
+    return sendJson(res, 200, { received: true, processed: false, reason: "missing_order_info" });
   }
 
   const pendingOrder = await getPendingOrder(uid, orderId);
@@ -752,6 +751,9 @@ module.exports = async (req, res) => {
   // Cashfree webhook — signature-verified, NOT Firebase-authenticated.
   if (action === "webhook") {
     if (req.method === "POST") {
+      console.log(
+        `📡 [webhook] POST received. signature=${!!req.headers["x-webhook-signature"]}, timestamp=${!!req.headers["x-webhook-timestamp"]}, version=${req.headers["x-webhook-version"] || "n/a"}, bodyBytes=${req.headers["content-length"] || "stream"}, origin=${req.headers.origin || "none"}`
+      );
       try {
         return await handleWebhook(req, res);
       } catch (err) {
