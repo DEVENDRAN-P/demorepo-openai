@@ -4,10 +4,11 @@
  * Usage: node scratch/test-webhook-signature.js <secret>
  * The secret defaults to CASHFREE_WEBHOOK_SECRET (or CASHFREE_SECRET_KEY,
  * which Cashfree actually uses to sign webhooks).
- * Sends three webhook POSTs to http://localhost:5000/api/payment/webhook:
- *   1. valid signature   → expect 404 "Unknown order" (HMAC passed)
+ * Sends four webhook POSTs to http://localhost:5000/api/payment/webhook:
+ *   1. valid signature (unknown order) → expect 200 "ignored" (HMAC passed)
  *   2. missing signature → expect 401 INVALID_SIGNATURE
  *   3. tampered signature → expect 401 INVALID_SIGNATURE
+ *   4. no-dot signature (wrong algorithm) → expect 401 INVALID_SIGNATURE
  */
 const crypto = require("crypto");
 const http = require("http");
@@ -79,7 +80,7 @@ function post(sig, label) {
   results.push(await post(noDotSig, "no-dot signature (wrong algorithm)"));
 
   const ok =
-    results[0] === 404 &&
+    results[0] === 200 &&
     results[1] === 401 &&
     results[2] === 401 &&
     results[3] === 401;

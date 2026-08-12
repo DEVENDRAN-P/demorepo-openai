@@ -647,9 +647,13 @@ const handleWebhook = async (req, res) => {
 
   const pendingOrder = await getPendingOrder(uid, orderId);
   if (!pendingOrder) {
-    // Unknown order — never create a subscription from an arbitrary webhook.
-    console.warn(`⚠️ [webhook] Unknown order '${orderId}' for UID '${uid}' — rejected.`);
-    return sendJson(res, 404, { success: false, error: "Unknown order" });
+    // Signature already verified, but the order is unknown to this user. We
+    // still NEVER create a subscription from an arbitrary webhook — we just
+    // acknowledge receipt with 2xx so Cashfree stops retrying. This is also
+    // what makes the dashboard's "Test webhook" pass: it POSTs a sample
+    // payload whose order_id never exists in Firestore.
+    console.warn(`⚠️ [webhook] Unknown order '${orderId}' for UID '${uid}' — acknowledged and ignored.`);
+    return sendJson(res, 200, { received: true, ignored: "unknown_order" });
   }
 
   // Amount check against the server-side price stored on the order.
@@ -746,13 +750,24 @@ module.exports = async (req, res) => {
   const action = req.query.action || req.url.split("?")[0].split("/").pop();
 
   // Cashfree webhook — signature-verified, NOT Firebase-authenticated.
-  if (action === "webhook" && req.method === "POST") {
-    try {
-      return await handleWebhook(req, res);
-    } catch (err) {
-      console.error(JSON.stringify({ type: "billing_webhook_error", error: err.message }));
-      return sendJson(res, 500, { success: false, error: "Webhook processing failed" });
+  if (action === "webhook") {
+    if (req.method === "POST") {
+      try {
+        return await handleWebhook(req, res);
+      } catch (err) {
+        console.error(JSON.stringify({ type: "billing_webhook_error", error: err.message }));
+        return sendJson(res, 500, { success: false, error: "Webhook processing failed" });
+      }
     }
+    // GET/HEAD probes — Cashfree's dashboard sends a connectivity check when
+    // testing/saving a webhook URL, and browsers may open the URL directly.
+    // Answer with 200 so the endpoint passes validation; only POST events
+    // (signature-verified) are ever processed.
+    return sendJson(res, 200, {
+      status: "Payment API running (webhook)",
+      method: "POST",
+      usage: "POST from Cashfree with x-webhook-signature and x-webhook-timestamp headers (signature verified server-side).",
+    });
   }
 
   try {
