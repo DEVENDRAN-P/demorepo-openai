@@ -73,7 +73,16 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+// Capture the exact raw request body (used to verify the Cashfree webhook
+// HMAC signature — signature = base64(hmac_sha256(timestamp + "." + rawBody, secret))).
+app.use(
+  express.json({
+    limit: "10mb",
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  })
+);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -343,8 +352,37 @@ app.post("/api/email", async (req, res) => {
 // Payment & Subscription API Routes (Unified)
 app.post("/api/payment/create-order", billingHandler);
 app.post("/api/payment/verify", billingHandler);
+app.post("/api/payment/webhook", billingHandler); // Cashfree webhook (signature verified)
+app.post("/api/subscription/downgrade", billingHandler);
 app.get("/api/payment/history", billingHandler);
 app.get("/api/subscription/status", billingHandler);
+
+// GET diagnostics for the POST-only payment routes — prevents Express's
+// default "Cannot GET ..." HTML when someone opens these URLs in a browser
+// tab (parity with the GET diagnostics on /api/email and /api/ai).
+const paymentGetDiagnostic = (route, usage) => (req, res) => {
+  res.status(200).json({
+    status: `Payment API running (${route})`,
+    method: "POST",
+    usage,
+  });
+};
+app.get("/api/payment/create-order", paymentGetDiagnostic(
+  "create-order",
+  "Authenticated POST with { plan: 'pro' | 'business', phone } and Authorization: Bearer <firebase-id-token>."
+));
+app.get("/api/payment/verify", paymentGetDiagnostic(
+  "verify",
+  "Authenticated POST with { orderId } and Authorization: Bearer <firebase-id-token>."
+));
+app.get("/api/payment/webhook", paymentGetDiagnostic(
+  "webhook",
+  "POST from Cashfree with x-webhook-signature and x-webhook-timestamp headers (signature verified server-side)."
+));
+app.get("/api/subscription/downgrade", paymentGetDiagnostic(
+  "downgrade",
+  "Authenticated POST with Authorization: Bearer <firebase-id-token> to reset the plan to Free."
+));
 
 // AI Gateway Route (Gemini) — matches Vercel serverless api/ai.js
 app.post("/api/ai", aiHandler);
@@ -385,6 +423,10 @@ app.listen(PORT, () => {
 ║   📧 Email Endpoints:                                         ║
 ║      POST/GET http://localhost:${PORT}/api/email               ║
 ║      POST/GET http://localhost:${PORT}/api/sendEmail           ║
+║   💳 Payment Endpoints:                                        ║
+║      POST http://localhost:${PORT}/api/payment/create-order   ║
+║      POST http://localhost:${PORT}/api/payment/verify         ║
+║      POST http://localhost:${PORT}/api/payment/webhook        ║
 ║   🏥 Health Check: http://localhost:${PORT}/health             ║
 ║                                                               ║
 ║   Required Environment Variables (.env):                     ║

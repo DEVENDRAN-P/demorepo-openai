@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { getUserBills } from '../services/firebaseDataService';
 
-function PenaltyCenter() {
+function PenaltyCenter({ user }) {
   // Calculator States
   const [returnType, setReturnType] = useState('normal'); // 'nil' or 'normal'
   const [daysDelayed, setDaysDelayed] = useState(0);
   const [netTaxPayable, setNetTaxPayable] = useState(0);
+
+  // Real user data for the proactive warning (no hardcoded demo values)
+  const [pendingInvoices, setPendingInvoices] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    let mounted = true;
+    getUserBills()
+      .then((bills) => {
+        if (mounted) setPendingInvoices((Array.isArray(bills) ? bills : []).filter((b) => !b.filed).length);
+      })
+      .catch(() => { /* keep zero on error */ });
+    return () => { mounted = false; };
+  }, [user?.uid]);
+
+  const businessName = user?.shopName || user?.businessName || user?.displayName || 'your business';
   
   // Calculated outputs
   const [lateFees, setLateFees] = useState(0);
@@ -176,32 +193,28 @@ function PenaltyCenter() {
                 ⚡ Proactive Compliance Warning
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 1rem 0' }}>
-                <strong>Compliance Risk Detected</strong>: GSTR-3B deadline for Apex Retailers is 20 Aug. Your filing status is <strong>Not Ready</strong>.
+                <strong>Compliance Risk Detected</strong>: GSTR-3B filing for {businessName} has unpaid invoices in your records. File before the 20th of next month to avoid automated late fees.
               </p>
               <div style={{ background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.75rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span>Estimated late fee exposure:</span>
-                  <strong style={{ color: 'var(--error)' }}>₹2,850</strong>
-                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Missing invoice records:</span>
-                  <strong>4 invoices</strong>
+                  <span>Unfiled invoice records:</span>
+                  <strong style={{ color: 'var(--error)' }}>{pendingInvoices} {pendingInvoices === 1 ? 'invoice' : 'invoices'}</strong>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
-                  onClick={() => alert("Reconciliation task created for active accountant. Expected resolve: 18 Aug.")}
+                  onClick={() => alert("Use the AI Agent (Agent Activity page) to run a compliance review on your records.")}
                   className="btn btn-primary" 
                   style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', background: 'var(--primary-600)' }}
                 >
-                  Complete Reconciliation
+                  Review Compliance
                 </button>
                 <button 
-                  onClick={() => alert("Sent reminder email to Linked CA.")}
+                  onClick={() => alert("Open the GST Forms page to generate GSTR-1 / GSTR-3B drafts from your records.")}
                   className="btn btn-outline" 
                   style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
                 >
-                  Remind CA
+                  Prepare Return
                 </button>
               </div>
             </div>

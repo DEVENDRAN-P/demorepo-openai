@@ -159,6 +159,19 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // Single central logout path: sign out via AuthContext (which clears all
+  // user-specific caches) and land on the public Home page.
+  const handleLogout = async () => {
+    if (window.confirm(t('logout_confirm', 'Are you sure you want to log out?'))) {
+      try {
+        await logout();
+        navigate('/');
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+  };
   const [collapsed, setCollapsed] = useState(window.innerWidth < 1200 && window.innerWidth >= 991);
   const [userBusinesses, setUserBusinesses] = useState([]);
 
@@ -469,7 +482,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
         )}
         
         <button 
-          onClick={user ? logout : () => navigate('/login')}
+          onClick={user ? handleLogout : () => navigate('/')}
           style={{
             width: '100%',
             background: 'transparent',

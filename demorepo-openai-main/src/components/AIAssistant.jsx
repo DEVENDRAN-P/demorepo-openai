@@ -39,16 +39,18 @@ function AIAssistant({ user }) {
       .catch(e => console.error(e));
   }, [user?.uid]);
 
-  // Welcome message localized
+  // Welcome message localized — uses the REAL business context from the
+  // authenticated user's profile; never hardcoded demo business names.
   useEffect(() => {
     const getWelcomeMessage = () => {
       const lang = i18n.language;
+      const businessName = activeBusiness?.name || user?.shopName || user?.displayName || 'your business';
       if (lang === 'hi') {
-        return `नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं ${activeBusiness?.name || 'Apex Retailers'} के लिए लेखा परीक्षा करने और करों की गणना करने के लिए तैयार हूं। आज आप क्या जांचना चाहते हैं?`;
+        return `नमस्ते! मैं आपका AI GST अनुपालन सहायक हूं। मैं ${businessName} के लिए लेखा परीक्षा करने और करों की गणना करने के लिए तैयार हूं। आज आप क्या जांचना चाहते हैं?`;
       } else if (lang === 'ta') {
-        return `வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். ${activeBusiness?.name || 'Apex Retailers'} க்கான வரி கணக்கீடுகள் மற்றும் தணிக்கைகளை செய்ய நான் தயாராக உள்ளேன். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?`;
+        return `வணக்கம்! நான் உங்கள் AI GST இணக்க உதவியாளர். ${businessName} க்கான வரி கணக்கீடுகள் மற்றும் தணிக்கைகளை செய்ய நான் தயாராக உள்ளேன். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?`;
       }
-      return `Hello! I'm your AI GST Accountant powered by Google Gemini. I have loaded context for "${activeBusiness?.name || 'Apex Retailers'}" and audited your ${bills.length} invoices. How may I assist you with GSTR return prep, ITC matching, or tax forecasting today?`;
+      return `Hello! I'm your AI GST Accountant powered by Google Gemini. I have loaded context for "${businessName}" and audited your ${bills.length} invoices. How may I assist you with GSTR return prep, ITC matching, or tax forecasting today?`;
     };
 
     setMessages([
@@ -58,7 +60,7 @@ function AIAssistant({ user }) {
         text: getWelcomeMessage(),
       },
     ]);
-  }, [i18n.language, activeBusiness, bills.length]);
+  }, [i18n.language, activeBusiness, bills.length, user?.displayName, user?.shopName]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,9 +92,9 @@ function AIAssistant({ user }) {
       const stream = await aiChatStream({
         messages: conversation,
         business: {
-          name: activeBusiness?.name || 'Apex Retailers',
-          gstin: activeBusiness?.gstin || '29ABCDE1234F2Z5',
-          state: activeBusiness?.state || 'Karnataka',
+          name: activeBusiness?.name || user?.shopName || user?.displayName || 'My Business',
+          gstin: activeBusiness?.gstin || user?.gstin || '',
+          state: activeBusiness?.state || user?.state || '',
         },
         invoiceSummary,
         language,

@@ -134,7 +134,7 @@ function Dashboard({ user }) {
       return;
     }
     // Fetch bills directly — no automatic seeding
-    getUserBills(user.uid)
+    getUserBills()
       .then(fetchedBills => {
         setBills(fetchedBills);
         setLoadingBills(false);
@@ -147,7 +147,7 @@ function Dashboard({ user }) {
 
     // Listen for custom bill update event
     const handleBillUpdated = () => {
-      getUserBills(user.uid).then(setBills);
+      getUserBills().then(setBills);
     };
     window.addEventListener('billUpdated', handleBillUpdated);
     return () => window.removeEventListener('billUpdated', handleBillUpdated);

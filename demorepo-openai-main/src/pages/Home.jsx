@@ -876,7 +876,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-60 dark:opacity-40">
-            {['TATA', 'Zoho', 'Razorpay', 'Flipkart', 'Zomato', 'Swiggy', 'Deloitte', 'IDFC FIRST Bank', 'CRED', 'Paytm'].map((logo) => (
+            {['TATA', 'Zoho', 'Cashfree', 'Flipkart', 'Zomato', 'Swiggy', 'Deloitte', 'IDFC FIRST Bank', 'CRED', 'Paytm'].map((logo) => (
               <span 
                 key={logo} 
                 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-colors select-none"

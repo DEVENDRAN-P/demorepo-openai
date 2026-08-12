@@ -486,11 +486,11 @@
   "No invoice payments found. Upgrade your subscription to start transactions": "कोई इनवॉइस भुगतान नहीं मिला। लेनदेन शुरू करने के लिए अपनी सदस्यता अपग्रेड करें",
   "Can I cancel my subscription or change plans at any time?": "क्या मैं किसी भी समय अपनी सदस्यता रद्द कर सकता हूँ या प्लान बदल सकता हूँ?",
   "Yes, you can upgrade, downgrade, or cancel your active subscription plan at any point. Upgrades apply instantly, while downgrades take effect at the end of your current billing cycle so you do not lose any features you paid for.": "हाँ, आप किसी भी समय अपने सक्रिय सदस्यता प्लान को अपग्रेड, डाउनग्रेड या रद्द कर सकते हैं। अपग्रेड तुरंत लागू होते हैं, जबकि डाउनग्रेड आपके वर्तमान बिलिंग चक्र के अंत में प्रभावी होते हैं ताकि आप भुगतान की गई सुविधाओं को न खोएं।",
-  "How does the 20% discount on yearly plans work?": "वार्षिक प्लान पर 20% की छूट कैसे काम करती है?",
-  "Is Razorpay payment gateway secure?": "क्या Razorpay पेमेंट गेटवे सुरक्षित है?",
+  "How do I renew my subscription?": "आपकी सदस्यता मासिक रूप से नवीनीकृत होती है। वर्तमान अवधि समाप्त होने से पहले आप प्राइसिंग पेज से किसी भी समय मैन्युअल रूप से नवीनीकरण कर सकते हैं।",
+  "Is Cashfree payment gateway secure?": "क्या Cashfree पेमेंट गेटवे सुरक्षित है?",
   "How accurate is the AI Bill OCR extraction?": "AI बिल OCR एक्सट्रैक्शन कितना सटीक है?",
-  "When you select Yearly Billing, you are billed for 12 months upfront at a 20% discount. For example, the Professional tier is reduced from ₹199/mo to ₹159/mo, billed as ₹1,908 annually.": "जब आप वार्षिक बिलिंग चुनते हैं, तो आपसे 20% की छूट पर अग्रिम 12 महीनों का शुल्क लिया जाता है। उदाहरण के लिए, प्रोफेशनल टियर ₹199/माह से घटकर ₹159/माह हो जाता है, जिसका वार्षिक बिल ₹1,908 होता है।",
-  "Absolutely. All subscription payments are processed securely through Razorpay, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.": "बिल्कुल। सभी सदस्यता भुगतान Razorpay के माध्यम से सुरक्षित रूप से संसाधित किए जाते हैं, जो पूरी तरह से PCI-DSS अनुपालित है। GST Buddy AI कभी भी आपके क्रेडिट कार्ड नंबर या बैंकिंग विवरण को संग्रहीत नहीं करता है।",
+  "Which payment methods are supported?": "चेकआउट के समय UPI, क्रेडिट/डेबिट कार्ड, नेट बैंकिंग और आपके Cashfree खाते पर सक्षम अन्य भुगतान विधियाँ उपलब्ध हैं।",
+  "Absolutely. All subscription payments are processed securely through Cashfree, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.": "बिल्कुल। सभी सदस्यता भुगतान Cashfree के माध्यम से सुरक्षित रूप से संसाधित किए जाते हैं, जो पूरी तरह से PCI-DSS अनुपालित है। GST Buddy AI कभी भी आपके क्रेडिट कार्ड नंबर या बैंकिंग विवरण को संग्रहीत नहीं करता है।",
   "Manage your personal information, business details, and account preferences.": "अपनी व्यक्तिगत जानकारी, व्यावसायिक विवरण और खाता प्राथमिकताओं को प्रबंधित करें।",
   "CFO & Administrator": "CFO और प्रशासक",
   "Update photo": "फ़ोटो अपडेट करें",
@@ -810,5 +810,11 @@
   "File GSTR-1 by 11th and GSTR-3B by 20th of every month to avoid penalties": "जुर्माने से बचने के लिए हर महीने की 11 तारीख तक GSTR-1 और 20 तारीख तक GSTR-3B दाखिल करें",
   "Check monthly reports to understand your tax trends and plan better": "अपने कर रुझान समझने और बेहतर योजना बनाने के लिए मासिक रिपोर्ट देखें",
   "pricing_ai_assistant": "AI सहायक",
-  "toggle_navigation_menu": "नेविगेशन मेनू टॉगल करें"
+  "toggle_navigation_menu": "नेविगेशन मेनू टॉगल करें",
+  "recent_workspace_title": "हाल की कार्यक्षेत्र गतिविधि",
+  "recent_workspace_subtitle": "आपकी नवीनतम वास्तविक खाता और GST कार्यक्षेत्र गतिविधि",
+  "recent_workspace_loading": "आपका कार्यक्षेत्र लोड हो रहा है...",
+  "recent_workspace_error": "हाल की गतिविधि लोड नहीं हो सकी। कृपया पुनः प्रयास करें।",
+  "no_recent_activity": "अभी कोई हाल की गतिविधि नहीं",
+  "upload_first_invoice_workspace": "अपना कार्यक्षेत्र बनाने के लिए अपना पहला इनवॉइस अपलोड करें।"
 }

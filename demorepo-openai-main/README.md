@@ -48,7 +48,7 @@ A production-ready, AI-powered GST compliance SaaS for Indian small businesses, 
 6. **Subscriptions & Payments**
 
    - FREE / PRO / BUSINESS plans
-   - Real Razorpay checkout with server-side signature verification
+   - Real Cashfree checkout with server-side verification + webhooks
    - Server-side entitlement and monthly usage limits
 
 7. **Multi-language Support**
@@ -87,9 +87,11 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-# Razorpay (server-side secrets)
-RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
-RAZORPAY_KEY_SECRET=your_razorpay_secret
+# Cashfree Payments (server-side secrets — never expose to the browser)
+CASHFREE_APP_ID=your_cashfree_app_id
+CASHFREE_SECRET_KEY=your_cashfree_secret_key
+CASHFREE_ENV=sandbox
+CASHFREE_WEBHOOK_SECRET=your_cashfree_webhook_secret
 
 # Cron authentication for the scheduled agent
 CRON_SECRET=your_cron_secret
@@ -108,7 +110,7 @@ REACT_APP_FIREBASE_PROJECT_ID=your-project-id
 REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 REACT_APP_FIREBASE_APP_ID=your-app-id
-REACT_APP_RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
+# No Cashfree client key is needed — order creation is 100% server-side.
 ```
 
 Get your Gemini API key from: https://aistudio.google.com/apikey
@@ -176,7 +178,7 @@ Get your Gemini API key from: https://aistudio.google.com/apikey
 - **Database**: Cloud Firestore (strict user isolation)
 - **Storage**: Firebase Storage
 - **Auth**: Firebase Authentication (email/password + Google)
-- **Payments**: Razorpay (server-side verification)
+- **Payments**: Cashfree (server-side verification + webhooks)
 - **Email**: Brevo SMTP
 - **Hosting**: Vercel (serverless API routes + Cron)
 

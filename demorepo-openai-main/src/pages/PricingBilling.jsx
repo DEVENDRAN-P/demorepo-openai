@@ -41,8 +41,7 @@ function PricingBilling({ user }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Switcher & Slider States for Section 8
-  const [isYearly, setIsYearly] = useState(false);
+  // Slider States for Section 8
   const [invoicesCount, setInvoicesCount] = useState(150);
   const [caCost, setCaCost] = useState(5000);
   const [hoursSpent, setHoursSpent] = useState(20);
@@ -50,25 +49,8 @@ function PricingBilling({ user }) {
 
 
 
-  // 1. Dynamic Script Loader helper for Razorpay SDK
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.async = true;
-      script.onload = () => {
-        resolve(true);
-      };
-      script.onerror = () => {
-        resolve(false);
-      };
-      document.body.appendChild(script);
-    });
-  };
+  // Checkout now happens on the dedicated /checkout page using the official
+  // Cashfree Web SDK. The pricing page only routes users there.
 
   // Helper to parse JSON safely, falling back to clean text errors if the response is not JSON
   const safeParseJson = async (response) => {
@@ -114,12 +96,14 @@ function PricingBilling({ user }) {
       if (historyRes.ok) {
         const historyData = await safeParseJson(historyRes);
         const formattedHistory = historyData.map(txn => ({
-          id: txn.paymentId,
-          date: txn.createdAt.split('T')[0],
-          plan: txn.plan === 'pro' ? 'Pro Plan' : 'Business Plan',
+          id: txn.paymentId || txn.id,
+          date: (txn.createdAt || '').split('T')[0],
+          plan: txn.plan === 'pro' ? 'Pro Plan' : txn.plan === 'business' ? 'Business Plan' : txn.plan || '—',
           amount: `₹${txn.amount}`,
           status: txn.status,
-          utr: txn.razorpayPaymentId || 'N/A'
+          provider: txn.provider || 'Cashfree',
+          orderId: txn.orderId,
+          paymentId: txn.paymentId
         }));
         setBillingHistory(formattedHistory);
       } else {
@@ -136,178 +120,38 @@ function PricingBilling({ user }) {
 
   useEffect(() => {
     fetchSubscriptionAndBillingData();
-    // Preload Razorpay Checkout script in the background to ensure zero lag on button click
-    loadRazorpayScript().catch(err => console.warn("Failed to preload Razorpay SDK:", err));
 
-    // Check for pending checkout actions after login redirect
+    // After a login redirect, continue to checkout with the pending plan
     const currentUser = auth.currentUser;
     if (currentUser) {
       const pendingPlan = localStorage.getItem('pending_subscribe_plan');
       if (pendingPlan) {
-        const pendingYearly = localStorage.getItem('pending_subscribe_yearly') === 'true';
         localStorage.removeItem('pending_subscribe_plan');
-        localStorage.removeItem('pending_subscribe_yearly');
-        
-        setIsYearly(pendingYearly);
-        // Delay order generation slightly to allow firebase session details and scripts to settle
-        setTimeout(() => {
-          handleSubscribe(pendingPlan);
-        }, 800);
+        localStorage.setItem('selectedPlan', pendingPlan);
+        navigate('/checkout');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // 3. Initiate payment order and open Razorpay Checkout SDK
+  // 3. Route the user to the dedicated Cashfree checkout page
   const handleSubscribe = async (planId) => {
     if (planId === 'free') {
-      alert('You are already on the Free Plan. Downgrade takes effect at the end of billing cycle.');
+      alert('You are already on the Free Plan.');
       return;
     }
 
-    setIsProcessing(true);
-    setErrorMsg('');
-    setSuccessMsg('');
-
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        // Save the chosen plan and yearly commitment to localStorage so we don't lose it after login
-        localStorage.setItem('authRedirect', '/pricing');
-        localStorage.setItem('pending_subscribe_plan', planId);
-        localStorage.setItem('pending_subscribe_yearly', isYearly ? 'true' : 'false');
-        
-        setIsProcessing(false);
-        navigate('/login');
-        return;
-      }
-
-      // Load Razorpay checkout script
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        setErrorMsg('Unable to load Razorpay payment SDK. Please verify network connectivity.');
-        setIsProcessing(false);
-        return;
-      }
-
-      // Create Order API endpoint call
-      const token = await currentUser.getIdToken(true);
-      const response = await fetch(getApiUrl('/api/payment/create-order'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ planId, isYearly })
-      });
-
-      if (!response.ok) {
-        const errorData = await safeParseJson(response);
-        throw new Error(errorData.error || errorData.message || 'Failed to create payment transaction.');
-      }
-
-      const orderData = await safeParseJson(response);
-
-      // Configure Razorpay Checkout
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'GST Buddy AI',
-        description: `Upgrade to ${planId === 'pro' ? 'Pro Plan' : 'Business Plan'}`,
-        image: 'https://cdn-icons-png.flaticon.com/512/2933/2933116.png', // Modern corporate compliance logo placeholder
-        order_id: orderData.order_id,
-        prefill: {
-          name: user?.name || user?.displayName || '',
-          email: user?.email || '',
-          contact: user?.phone || ''
-        },
-        notes: {
-          uid: currentUser.uid,
-          planId: planId
-        },
-        theme: {
-          color: '#6366f1' // Professional Indigo Theme Accent
-        },
-        modal: {
-          ondismiss: function () {
-            setIsProcessing(false);
-            console.log('Payment checkout process cancelled by user.');
-          }
-        },
-        handler: async function (paymentResponse) {
-          try {
-            setIsProcessing(true);
-            setSuccessMsg('Verifying payment signature with secure servers...');
-
-            // Call verify API endpoint
-            const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: paymentResponse.razorpay_order_id,
-                razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                razorpay_signature: paymentResponse.razorpay_signature,
-                planId: planId,
-                isYearly: isYearly
-              })
-            });
-
-            if (!verifyRes.ok) {
-              const verifyError = await safeParseJson(verifyRes);
-              throw new Error(verifyError.error || verifyError.message || 'Payment signature verification failed.');
-            }
-
-            setSuccessMsg('Payment verified! Active subscription updated successfully.');
-            
-            // Reload billing statement and status details
-            await fetchSubscriptionAndBillingData();
-            // Real plan change: drop the shared cache and tell every component
-            // (Sidebar, Dashboard, etc.) to show the new tier.
-            invalidatePlanCache();
-            window.dispatchEvent(new Event('planChanged'));
-
-            // Redirect to success route
-            navigate('/payment-success', {
-              state: {
-                txn: {
-                  id: paymentResponse.razorpay_payment_id,
-                  date: new Date().toISOString().split('T')[0],
-                  plan: planId === 'pro' ? 'Pro Plan' : 'Business Plan',
-                  amount: planId === 'pro' ? '₹199' : '₹499',
-                  status: 'SUCCESS',
-                  utr: paymentResponse.razorpay_payment_id
-                }
-              }
-            });
-
-          } catch (verifyErr) {
-            console.error('Signature validation exception:', verifyErr);
-            setErrorMsg(`Verification failed: ${verifyErr.message}`);
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      };
-
-      const rzpObj = new window.Razorpay(options);
-      
-      rzpObj.on('payment.failed', function (failDetails) {
-        console.error('Razorpay Payment failed event:', failDetails.error);
-        setErrorMsg(`Payment failed: ${failDetails.error.description || 'Transaction declined'}`);
-        setIsProcessing(false);
-      });
-
-      rzpObj.open();
-
-    } catch (checkoutErr) {
-      console.error('Checkout error:', checkoutErr);
-      setErrorMsg(`Checkout error: ${checkoutErr.message}`);
-      setIsProcessing(false);
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      // Save the chosen plan so we can resume after login
+      localStorage.setItem('authRedirect', '/pricing');
+      localStorage.setItem('pending_subscribe_plan', planId);
+      navigate('/login');
+      return;
     }
+
+    localStorage.setItem('selectedPlan', planId);
+    navigate('/checkout');
   };
 
   const handleDowngradeToFree = async () => {
@@ -321,21 +165,18 @@ function PricingBilling({ user }) {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
       const token = await currentUser.getIdToken(true);
-      const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
+      // Server-authoritative downgrade — the frontend never decides entitlement.
+      const res = await fetch(getApiUrl('/api/subscription/downgrade'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          razorpay_order_id: "downgrade_order_" + Date.now(),
-          razorpay_payment_id: "downgrade_payment_" + Date.now(),
-          razorpay_signature: "reset_signature",
-          planId: "free"
-        })
+        body: JSON.stringify({})
       });
-      if (!verifyRes.ok) {
-        throw new Error('Failed to downgrade subscription.');
+      if (!res.ok) {
+        const errData = await safeParseJson(res);
+        throw new Error(errData.error || errData.message || 'Failed to downgrade subscription.');
       }
       setSuccessMsg('Successfully downgraded to the Free Tier!');
       await fetchSubscriptionAndBillingData();
@@ -624,33 +465,7 @@ function PricingBilling({ user }) {
         }
       `}} />
 
-      {/* 1. Animated Billing Switcher */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.35rem', borderRadius: '9999px', border: '1px solid var(--border-color)', gap: '0.25rem' }}>
-          <button 
-            onClick={() => setIsYearly(false)}
-            className={`switcher-btn ${!isYearly ? 'active' : 'inactive'}`}
-            style={{ background: !isYearly ? 'var(--primary-600)' : 'transparent', color: !isYearly ? 'white' : 'var(--text-secondary)' }}
-          >
-            Monthly Billing
-          </button>
-          <button 
-            onClick={() => setIsYearly(true)}
-            className={`switcher-btn ${isYearly ? 'active' : 'inactive'}`}
-            style={{ background: isYearly ? 'var(--primary-600)' : 'transparent', color: isYearly ? 'white' : 'var(--text-secondary)' }}
-          >
-            Yearly Billing
-          </button>
-        </div>
-        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700, background: 'var(--success-light)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
-            SAVE 20%
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>on annual commitments</span>
-        </div>
-      </div>
-
-      {/* 2. 3 Pricing Tiers Cards Grid */}
+      {/* 1. 3 Pricing Tiers Cards Grid */}
       <div className="grid grid-cols-3" style={{ gap: '2rem', marginBottom: '4rem', position: 'relative', zIndex: 10 }}>
         
         {/* Tier 1: Free Plan */}
@@ -674,7 +489,7 @@ function PricingBilling({ user }) {
             className="btn btn-secondary"
             style={{ width: '100%', padding: '0.6rem', cursor: activePlan === 'free' ? 'not-allowed' : 'pointer' }}
           >
-            {activePlan === 'free' ? 'Active Starter Plan' : 'Downgrade to Free'}
+            {activePlan === 'free' ? 'Current Plan' : 'Downgrade to Free'}
           </button>
         </div>
 
@@ -686,7 +501,7 @@ function PricingBilling({ user }) {
           {activePlan === 'pro' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>ACTIVE PLAN</span>}
           <span style={{ fontSize: '0.8rem', color: 'var(--primary-600)', fontWeight: 700, letterSpacing: '0.05em' }}>PROFESSIONAL</span>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>
-            ₹{isYearly ? '159' : '199'} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
+            ₹199 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
           </h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>Standard SaaS framework for growing small businesses requiring regular auditing and bulk processing.</p>
           
@@ -705,7 +520,7 @@ function PricingBilling({ user }) {
             style={{ width: '100%', padding: '0.6rem', background: activePlan === 'pro' ? 'transparent' : 'var(--primary-600)' }}
             disabled={activePlan === 'pro' || isProcessing}
           >
-            {activePlan === 'pro' ? 'Active Professional Plan' : isYearly ? 'Upgrade Yearly (₹1,908/yr)' : 'Upgrade to Pro'}
+            {activePlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
           </button>
         </div>
 
@@ -714,7 +529,7 @@ function PricingBilling({ user }) {
           {activePlan === 'business' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>ACTIVE PLAN</span>}
           <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 700, letterSpacing: '0.05em' }}>BUSINESS</span>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>
-            ₹{isYearly ? '399' : '499'} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
+            ₹499 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
           </h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>For merchants, CAs, and corporate entities with high billing volumes and complex GST structures.</p>
           
@@ -733,7 +548,7 @@ function PricingBilling({ user }) {
             style={{ width: '100%', padding: '0.6rem' }}
             disabled={activePlan === 'business' || isProcessing}
           >
-            {activePlan === 'business' ? 'Active Business Plan' : isYearly ? 'Get Business Yearly (₹4,788/yr)' : 'Get Business Plan'}
+            {activePlan === 'business' ? 'Current Plan' : 'Upgrade to Business'}
           </button>
         </div>
 
@@ -834,11 +649,11 @@ function PricingBilling({ user }) {
               let monthlyPlanCost = 0;
               if (invoicesCount > 150) {
                 recommendedPlanName = 'Business Plan';
-                monthlyPlanCost = isYearly ? 399 : 499;
+                monthlyPlanCost = 499;
               } else if (invoicesCount > 10) {
                 recommendedPlanName = 'Professional Plan';
                 recommendedPlanName = 'Professional Plan';
-                monthlyPlanCost = isYearly ? 159 : 199;
+                monthlyPlanCost = 199;
               }
 
               // Savings logic
@@ -1052,12 +867,12 @@ function PricingBilling({ user }) {
               a: "Yes, you can upgrade, downgrade, or cancel your active subscription plan at any point. Upgrades apply instantly, while downgrades take effect at the end of your current billing cycle so you do not lose any features you paid for."
             },
             {
-              q: "How does the 20% discount on yearly plans work?",
-              a: "When you select Yearly Billing, you are billed for 12 months upfront at a 20% discount. For example, the Professional tier is reduced from ₹199/mo to ₹159/mo, billed as ₹1,908 annually."
+              q: "Which payment methods are supported?",
+              a: "All subscription payments are processed securely through Cashfree Payments. UPI, credit/debit cards, net banking and any other methods enabled on your Cashfree merchant account are available at checkout."
             },
             {
-              q: "Is Razorpay payment gateway secure?",
-              a: "Absolutely. All subscription payments are processed securely through Razorpay, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets."
+              q: "Is Cashfree payment gateway secure?",
+              a: "Absolutely. All subscription payments are processed securely through Cashfree, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets."
             },
             {
               q: "How accurate is the AI Bill OCR extraction?",
@@ -1113,7 +928,8 @@ function PricingBilling({ user }) {
                     <th style={{ padding: '0.75rem' }}>Date Created</th>
                     <th style={{ padding: '0.75rem' }}>Filing Segment</th>
                     <th style={{ padding: '0.75rem', textAlign: 'right' }}>Amount Paid</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Razorpay Payment ID</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Order ID</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Provider</th>
                     <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
                   </tr>
                 </thead>
@@ -1124,17 +940,18 @@ function PricingBilling({ user }) {
                       <td style={{ padding: '0.75rem' }}>{txn.date}</td>
                       <td style={{ padding: '0.75rem' }}>{txn.plan}</td>
                       <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 700 }}>{txn.amount}</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center', fontFamily: 'monospace' }}>{txn.utr}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center', fontFamily: 'monospace' }}>{txn.orderId || '—'}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>{txn.provider || 'Cashfree'}</td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                         <span className="badge-premium badge-excellent" style={{ 
                           fontSize: '0.65rem', 
-                          background: txn.status === 'SUCCESS' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
-                          color: txn.status === 'SUCCESS' ? 'var(--success)' : 'var(--warning)',
+                          background: String(txn.status || '').toUpperCase() === 'SUCCESS' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                          color: String(txn.status || '').toUpperCase() === 'SUCCESS' ? 'var(--success)' : 'var(--warning)',
                           padding: '0.2rem 0.5rem',
                           borderRadius: '4px',
                           fontWeight: 700
                         }}>
-                          {txn.status}
+                          {String(txn.status || '').toUpperCase()}
                         </span>
                       </td>
                     </tr>

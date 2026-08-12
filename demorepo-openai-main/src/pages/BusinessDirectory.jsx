@@ -35,14 +35,14 @@ function BusinessDirectory({ user }) {
   const [sortField, setSortField] = useState('name');
   const sortOrder = 'asc';
 
-  // Add business Modal States
+  // Add business Modal States — owner defaults to the REAL authenticated user
   const [showAddModal, setShowAddModal] = useState(false);
   const [newBiz, setNewBiz] = useState({
     name: '',
     gstin: '',
     state: 'Karnataka',
     type: 'Retail & Distribution',
-    owner: 'Devendra Prabhakar'
+    owner: user?.name || user?.displayName || ''
   });
 
   useEffect(() => {
@@ -92,7 +92,7 @@ function BusinessDirectory({ user }) {
       gstin: '',
       state: 'Karnataka',
       type: 'Retail & Distribution',
-      owner: 'Devendra Prabhakar'
+      owner: user?.name || user?.displayName || ''
     });
   };
 

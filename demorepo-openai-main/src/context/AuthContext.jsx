@@ -6,6 +6,75 @@ import { doc, getDoc } from 'firebase/firestore';
 // Create the Auth Context
 export const AuthContext = createContext();
 
+/**
+ * Keys that hold user-specific data and must never leak across accounts.
+ * - Identity/session: user, userToken, authRedirect
+ * - Plan/entitlements: saas_active_plan, selectedPlan, pending_subscribe_plan
+ * - Active workspace: activeBusiness*
+ * - Per-user collections cached locally: saas_businesses_{uid}, gstbuddy_bills_{uid}
+ * UI preferences (theme, language, darkMode) are intentionally kept — they are
+ * not user data.
+ */
+const USER_SPECIFIC_KEYS = [
+  'user',
+  'userToken',
+  'authRedirect',
+  'saas_active_plan',
+  'selectedPlan',
+  'pending_subscribe_plan',
+  'saas_doc_count',
+  'activeBusinessId',
+  'activeBusinessName',
+  'activeBusinessGSTIN',
+  'activeBusinessState',
+  'activeBusinessProfile',
+  'workspace_recent',
+];
+
+/**
+ * Prefixes of per-user storage keys (e.g. saas_businesses_<uid>,
+ * gstbuddy_bills_<uid>). Removed for every user so account B never inherits
+ * account A's cached workspace data.
+ */
+const USER_SPECIFIC_PREFIXES = ['saas_businesses_', 'gstbuddy_bills_', 'workspace_recent_'];
+
+/**
+ * Remove every user-specific cache entry from localStorage. Safe to call
+ * repeatedly — unknown keys are simply ignored.
+ */
+export const clearUserCaches = () => {
+  // 1. Exact keys
+  USER_SPECIFIC_KEYS.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch { /* ignore */ }
+  });
+
+  // 2. Per-user prefixed keys (iterate to catch any uid-scoped key)
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && USER_SPECIFIC_PREFIXES.some((p) => key.startsWith(p))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+
+  console.log('🧹 Cleared all user-specific caches.');
+};
+
+/**
+ * Fire an event so any component listening for auth changes (plan badges,
+ * workspace state) resets to defaults immediately after logout.
+ */
+export const notifyAuthCleared = () => {
+  try {
+    window.dispatchEvent(new CustomEvent('authCleared'));
+  } catch { /* ignore */ }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,12 +186,12 @@ export const AuthProvider = ({ children }) => {
               // Fail silently - keep using minimal data
             });
         } else {
-          // User is logged out
+          // User is logged out — clear user state AND every user-specific cache
           console.log("🚪 User logged out");
           setUser(null);
           setIsAuthenticated(false);
-          localStorage.removeItem('user');
-          localStorage.removeItem('userToken');
+          clearUserCaches();
+          notifyAuthCleared();
           setLoading(false);
         }
       } catch (err) {
@@ -141,15 +210,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      // Clear user-specific caches FIRST so no stale data is readable even if
+      // signOut() or the network is slow.
+      clearUserCaches();
+      notifyAuthCleared();
       setUser(null);
       setIsAuthenticated(false);
-      localStorage.removeItem('user');
-      localStorage.removeItem('userToken');
-      localStorage.removeItem('activeBusinessId');
-      localStorage.removeItem('saas_active_plan');
+      await signOut(auth);
+      // signOut triggers onAuthStateChanged(null) which clears again idempotently.
       setError(null);
     } catch (err) {
+      // Even if signOut fails (network), never keep the user in the app.
+      clearUserCaches();
+      setUser(null);
+      setIsAuthenticated(false);
       setError(err.message);
     }
   };

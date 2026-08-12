@@ -23,48 +23,90 @@ const LoadingSpinner = () => (
   }}></div>
 );
 
+// Dynamic loader for the official Cashfree Web SDK (v3)
+const loadCashfreeScript = () => {
+  return new Promise((resolve) => {
+    if (window.Cashfree) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const safeParseJson = async (response) => {
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const responseText = await response.text();
+    throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 180)}`);
+  }
+  return await response.json();
+};
+
 function CheckoutPage() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const [planAmount, setPlanAmount] = useState(199);
+  const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [alreadySubscribed, setAlreadySubscribed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     const plan = localStorage.getItem('selectedPlan') || 'pro';
-    setSelectedPlan(plan);
-    setPlanAmount(plan === 'pro' ? 199 : 499);
+    const normalized = plan === 'business' ? 'business' : 'pro';
+    setSelectedPlan(normalized);
+    setPlanAmount(normalized === 'pro' ? 199 : 499);
+
+    // Prefill the mobile number from the authenticated profile when available.
+    const currentUser = auth.currentUser;
+    if (currentUser && currentUser.phoneNumber) {
+      setPhone(currentUser.phoneNumber);
+    }
+
+    // Never create duplicate subscriptions: if the user already holds this
+    // plan, block checkout (the server remains the source of truth).
+    if (currentUser) {
+      currentUser.getIdToken()
+        .then(token => fetch(getApiUrl('/api/subscription/status'), {
+          headers: { Authorization: `Bearer ${token}` }
+        }))
+        .then(res => (res.ok ? res.json() : Promise.resolve({})))
+        .then(data => {
+          const current = data?.subscription?.subscriptionPlan || 'free';
+          if (current === normalized && current !== 'free') {
+            setAlreadySubscribed(true);
+          }
+        })
+        .catch(() => { /* non-fatal: fall back to allowing checkout */ });
+    }
   }, []);
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.async = true;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const safeParseJson = async (response) => {
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const responseText = await response.text();
-      throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 180)}`);
-    }
-    return await response.json();
+  const validatePhone = (value) => {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
+    return digits.length === 10 && /^[6-9]/.test(digits);
   };
 
   const handlePayment = async () => {
     setIsProcessing(true);
     setErrorMsg('');
     setSuccessMsg('');
+
+    // Cashfree requires a customer phone number for order creation.
+    if (!validatePhone(phone)) {
+      setPhoneError('A valid 10-digit Indian mobile number is required to continue with payment.');
+      setIsProcessing(false);
+      return;
+    }
+    setPhoneError('');
 
     try {
       const currentUser = auth.currentUser;
@@ -74,111 +116,63 @@ function CheckoutPage() {
         return;
       }
 
-      const isScriptLoaded = await loadRazorpayScript();
+      const isScriptLoaded = await loadCashfreeScript();
       if (!isScriptLoaded) {
-        setErrorMsg('Unable to load Razorpay Payment SDK. Verify your internet connection.');
+        setErrorMsg('Unable to load the Cashfree payment SDK. Please check your internet connection and try again.');
         setIsProcessing(false);
         return;
       }
 
       const token = await currentUser.getIdToken(true);
-      
-      // 1. Create Order
-      setSuccessMsg('Creating secure order with payment gateway...');
+
+      // 1. Create the Cashfree order (server-side; price determined by backend)
+      setSuccessMsg('Creating a secure order with Cashfree...');
       const response = await fetch(getApiUrl('/api/payment/create-order'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ planId: selectedPlan })
+        body: JSON.stringify({ plan: selectedPlan, phone })
       });
 
       if (!response.ok) {
         const errorData = await safeParseJson(response);
-        throw new Error(errorData.error || errorData.message || 'Order creation failed.');
+        if (errorData.code === 'PHONE_REQUIRED') {
+          setPhoneError(errorData.error || 'A mobile number is required to continue.');
+          setIsProcessing(false);
+          return;
+        }
+        throw new Error(errorData.details || errorData.message || errorData.error || 'Order creation failed.');
       }
 
       const orderData = await safeParseJson(response);
-      const keyId = orderData.key_id;
 
-      setSuccessMsg('Opening checkout portal...');
-      
-      // 2. Open Razorpay Popup
-      const options = {
-        key: keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'GST Buddy AI',
-        description: `Upgrade to ${selectedPlan === 'pro' ? 'Pro Plan' : 'Business Plan'}`,
-        image: 'https://cdn-icons-png.flaticon.com/512/2933/2933116.png',
-        order_id: orderData.id,
-        prefill: {
-          email: currentUser.email || "",
-          contact: currentUser.phoneNumber || "",
-          method: 'upi' // Enforces UPI options display
-        },
-        notes: {
-          uid: currentUser.uid,
-          planId: selectedPlan
-        },
-        theme: {
-          color: '#6366f1'
-        },
-        modal: {
-          ondismiss: function () {
-            setIsProcessing(false);
-            setErrorMsg('Payment process cancelled by user.');
-          }
-        },
-        handler: async function (paymentResponse) {
-          try {
-            setIsProcessing(true);
-            setSuccessMsg('Verifying transaction details securely...');
-
-            const verifyRes = await fetch(getApiUrl('/api/payment/verify'), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: paymentResponse.razorpay_order_id,
-                razorpay_payment_id: paymentResponse.razorpay_payment_id,
-                razorpay_signature: paymentResponse.razorpay_signature,
-                planId: selectedPlan
-              })
-            });
-
-            if (!verifyRes.ok) {
-              const verifyError = await safeParseJson(verifyRes);
-              throw new Error(verifyError.error || verifyError.message || 'Signature verification failed.');
-            }
-
-            setSuccessMsg('Payment successfully verified!');
-            localStorage.removeItem('selectedPlan'); // Clean stored selection
-
-            setTimeout(() => {
-              navigate('/dashboard', { replace: true });
-            }, 1500);
-
-          } catch (verifyErr) {
-            console.error('Verification error:', verifyErr);
-            setErrorMsg(`Verification failed: ${verifyErr.message}`);
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (failDetails) {
-        console.error('Payment failure event:', failDetails.error);
-        setErrorMsg(`Payment failed: ${failDetails.error.description || 'Transaction declined'}`);
-        setIsProcessing(false);
+      // 2. Open the official Cashfree Checkout with the payment session ID.
+      // The mode is returned by the backend (sandbox vs production) — the
+      // secret key never touches the browser.
+      setSuccessMsg('Opening Cashfree Checkout...');
+      const cashfree = window.Cashfree({
+        mode: orderData.cashfreeEnv === 'production' ? 'production' : 'sandbox'
       });
 
-      rzp.open();
+      const checkoutResult = await cashfree.checkout({
+        paymentSessionId: orderData.paymentSessionId,
+        redirectTarget: '_self'
+      });
+
+      // With redirectTarget '_self' the browser navigates to the hosted
+      // checkout page (which offers UPI, cards, netbanking — whatever is
+      // enabled on the Cashfree account) and returns via the return_url.
+      if (checkoutResult && checkoutResult.error) {
+        console.error('Cashfree checkout error:', checkoutResult.error);
+        setErrorMsg(checkoutResult.error.message || 'Checkout could not be opened. Please try again.');
+        setIsProcessing(false);
+      } else if (checkoutResult && checkoutResult.redirect) {
+        setSuccessMsg('Redirecting to Cashfree Checkout...');
+      } else {
+        setIsProcessing(false);
+      }
 
     } catch (err) {
       console.error('Checkout error:', err);
@@ -212,7 +206,7 @@ function CheckoutPage() {
       }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Complete Subscription</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '2rem' }}>
-          Secure Checkout gateway integration via Razorpay
+          Secure Checkout powered by Cashfree Payments
         </p>
 
         {errorMsg && (
@@ -233,7 +227,7 @@ function CheckoutPage() {
           borderRadius: '16px',
           padding: '1.5rem',
           border: '1px solid var(--border-color)',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
           textAlign: 'left'
         }}>
           <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, letterSpacing: '0.05em' }}>Order Summary</span>
@@ -247,7 +241,7 @@ function CheckoutPage() {
           </div>
 
           <div style={{ marginTop: '1rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>Tiers benefits included:</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>Tier benefits included:</span>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               <li>✓ Unlimited Invoices OCR extraction</li>
               <li>✓ AI Compliance Score Advisor</li>
@@ -258,46 +252,101 @@ function CheckoutPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <button
-            onClick={handlePayment}
-            disabled={isProcessing}
+        {/* Phone number — required by Cashfree for order creation */}
+        <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>
+            Mobile Number (required for payment)
+          </label>
+          <input
+            type="tel"
+            inputMode="numeric"
+            maxLength={13}
+            placeholder="10-digit Indian mobile number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             style={{
-              padding: '1rem',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              color: 'white',
-              border: 'none',
-              fontSize: '1rem',
-              fontWeight: 700,
-              cursor: isProcessing ? 'default' : 'pointer',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.75rem'
+              width: '100%',
+              padding: '0.8rem 1rem',
+              borderRadius: '10px',
+              border: `1px solid ${phoneError ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-color)'}`,
+              background: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.95rem',
+              outline: 'none'
             }}
-          >
-            {isProcessing ? <LoadingSpinner /> : `Pay ₹${planAmount}`}
-          </button>
-          
-          <button
-            onClick={() => navigate('/pricing')}
-            disabled={isProcessing}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-secondary)',
-              padding: '0.75rem',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            Cancel & Go Back
-          </button>
+          />
+          {phoneError && (
+            <p style={{ color: '#f87171', fontSize: '0.75rem', margin: '0.4rem 0 0 0' }}>{phoneError}</p>
+          )}
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', margin: '0.4rem 0 0 0' }}>
+            Your number is used only for payment processing by Cashfree.
+          </p>
         </div>
+
+        {alreadySubscribed ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', padding: '0.9rem 1rem', borderRadius: '10px', border: '1px solid rgba(34, 197, 94, 0.2)', fontSize: '0.85rem', textAlign: 'left' }}>
+              You are already subscribed to the {selectedPlan === 'pro' ? 'Pro' : 'Business'} plan. No duplicate payment needed.
+            </div>
+            <button
+              onClick={() => navigate('/pricing')}
+              style={{
+                padding: '1rem',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                color: 'white',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+              }}
+            >
+              Go to Pricing
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <button
+              onClick={handlePayment}
+              disabled={isProcessing}
+              style={{
+                padding: '1rem',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                color: 'white',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: isProcessing ? 'default' : 'pointer',
+                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              {isProcessing ? <LoadingSpinner /> : `Pay ₹${planAmount} via Cashfree`}
+            </button>
+
+            <button
+              onClick={() => navigate('/pricing')}
+              disabled={isProcessing}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-secondary)',
+                padding: '0.75rem',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                cursor: 'pointer'
+              }}
+            >
+              Cancel & Go Back
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

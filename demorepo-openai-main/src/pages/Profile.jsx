@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
-import { getUserActivityLogs } from '../services/firebaseDataService';
+import { getRecentWorkspaceActivity } from '../services/firebaseDataService';
 import { validateGSTNumber, validatePhone } from '../utils/validators';
 
 /* ============================================================
@@ -148,6 +148,15 @@ const HistoryIcon = (p) => (
   </Icon>
 );
 
+const BotIcon = (p) => (
+  <Icon {...p}>
+    <rect x="4" y="8" width="16" height="12" rx="2" />
+    <path d="M12 8V4" />
+    <circle cx="12" cy="3" r="1" />
+    <path d="M8 14h.01M16 14h.01" />
+  </Icon>
+);
+
 const UploadIcon = (p) => (
   <Icon {...p}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -219,26 +228,24 @@ function Profile({ user }) {
   });
 
   const [errors, setErrors] = useState({});
-  const [activityLogs, setActivityLogs] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState(false);
 
-  /* ---- Recent Activity: real data from the existing service ----
-     The service returns logs in document-ID order (not chronological),
-     so sort by timestamp client-side and show the 8 most recent. */
+  /* ---- Recent Workspace: REAL data aggregated from the authenticated user's
+     Firestore collections (users/{uid}/bills, documents, agentRuns,
+     activityLogs). No demo/mock/seeded data — the service only reads the
+     currently authenticated user's own records. ---- */
   useEffect(() => {
     let mounted = true;
     setActivityLoading(true);
-    getUserActivityLogs(30)
-      .then((logs) => {
-        if (mounted) {
-          const recent = [...(Array.isArray(logs) ? logs : [])]
-            .sort((a, b) => tsToMs(b.timestamp) - tsToMs(a.timestamp))
-            .slice(0, 8);
-          setActivityLogs(recent);
-        }
+    setActivityError(false);
+    getRecentWorkspaceActivity(5)
+      .then((items) => {
+        if (mounted) setRecentActivity(Array.isArray(items) ? items : []);
       })
       .catch(() => {
-        if (mounted) setActivityLogs([]);
+        if (mounted) setActivityError(true);
       })
       .finally(() => {
         if (mounted) setActivityLoading(false);
@@ -277,48 +284,6 @@ function Profile({ user }) {
       ? 'Today'
       : d.toLocaleDateString();
     return `${dateLabel}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  };
-
-  const humanizeAction = (action = '') => {
-    if (!action) return 'Activity';
-    return action
-      .split('_')
-      .filter(Boolean)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-  };
-
-  /* Friendly, human-readable titles for known activity actions */
-  const activityTitles = {
-    upload_bill: 'Invoice uploaded',
-    update_bill: 'Bill updated',
-    delete_bill: 'Bill deleted',
-    file_gst: 'GST Return Draft Generated',
-    payment: 'Payment completed',
-    subscription: 'Subscription updated',
-  };
-
-  const getActivityTitle = (action = '') =>
-    activityTitles[action] || humanizeAction(action);
-
-  /* Secondary detail line built from the real log.details payload */
-  const getActivityDetail = (log = {}) => {
-    const details = log.details || {};
-    if (details.invoiceNumber) return details.invoiceNumber;
-    if (log.action === 'file_gst' && details.formType) {
-      return `${details.formType} Return${details.invoicesFiledCount ? ` · ${details.invoicesFiledCount} invoices` : ''}`;
-    }
-    if (log.action === 'payment' || log.action === 'subscription') {
-      return details.planId ? `Plan: ${details.planId}` : details.description || '';
-    }
-    return '';
-  };
-
-  const activityIconClass = (action = '') => {
-    const a = action.toLowerCase();
-    if (a.includes('upload')) return 'upload';
-    if (a.includes('payment') || a.includes('subscri') || a.includes('plan')) return 'payment';
-    return 'file';
   };
 
   /* ---- Profile photo ---- */
@@ -839,49 +804,78 @@ function Profile({ user }) {
               </div>
             </div>
 
-            {/* ---- Recent Activity ---- */}
+            {/* ---- Recent Workspace ---- */}
             <div className="profile-card profile-activity-card">
               <div className="profile-card-header">
                 <div className="profile-card-title-icon"><HistoryIcon size={18} /></div>
                 <div>
-                  <div className="profile-card-title">Recent Workspace Activity</div>
-                  <div className="profile-card-subtitle">Your latest account and GST workspace activity</div>
+                  <div className="profile-card-title">{t('recent_workspace_title')}</div>
+                  <div className="profile-card-subtitle">{t('recent_workspace_subtitle')}</div>
                 </div>
               </div>
 
               {activityLoading ? (
                 <div className="profile-tip-text" style={{ padding: '0.5rem 0' }}>
-                  Loading activity...
+                  {t('recent_workspace_loading')}
                 </div>
-              ) : activityLogs.length === 0 ? (
+              ) : activityError ? (
                 <div className="profile-tip-text" style={{ padding: '0.5rem 0' }}>
-                  No activity yet — upload a bill or file a GST return to see it here.
+                  {t('recent_workspace_error')}
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="profile-tip-text" style={{ padding: '0.5rem 0' }}>
+                  {t('no_recent_activity')}<br />
+                  {t('upload_first_invoice_workspace')}
                 </div>
               ) : (
                 <div>
-                  {activityLogs.map((log, idx) => {
-                    const iconClass = activityIconClass(log.action);
-                    const detail = getActivityDetail(log);
+                  {recentActivity.map((item, idx) => {
+                    const isInvoice = item.kind === 'invoice';
+                    const isAgent = item.kind === 'agent';
+                    const isDocument = item.kind === 'document';
+                    const isClickable = !!item.link;
+                    const iconClass = isInvoice ? 'upload' : isAgent ? 'agent' : isDocument ? 'doc' : 'file';
+                    const amountText = item.amount > 0
+                      ? `₹${Number(item.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+                      : '';
                     return (
-                      <div key={log.id || `${log.action}-${idx}`} className="profile-activity-item">
+                      <div
+                        key={item.id || `${item.kind}-${idx}`}
+                        className="profile-activity-item"
+                        onClick={isClickable ? () => navigate(item.link) : undefined}
+                        style={isClickable ? { cursor: 'pointer' } : undefined}
+                        role={isClickable ? 'button' : undefined}
+                        tabIndex={isClickable ? 0 : undefined}
+                        onKeyDown={isClickable ? (e) => {
+                          if (e.key === 'Enter') navigate(item.link);
+                        } : undefined}
+                      >
                         <div className={`profile-activity-icon ${iconClass}`}>
-                          {iconClass === 'upload' ? (
+                          {isInvoice ? (
                             <UploadIcon size={16} />
-                          ) : iconClass === 'payment' ? (
-                            <CreditCardIcon size={16} />
-                          ) : (
+                          ) : isAgent ? (
+                            <BotIcon size={16} />
+                          ) : isDocument ? (
                             <FileTextIcon size={16} />
+                          ) : (
+                            <ClockIcon size={16} />
                           )}
                         </div>
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div className="profile-activity-desc">
-                            {getActivityTitle(log.action)}
+                            {item.title}
                           </div>
-                          {detail ? (
-                            <div className="profile-activity-detail">{detail}</div>
-                          ) : null}
-                          <div className="profile-activity-time">{formatTimestamp(log.timestamp)}</div>
+                          <div className="profile-activity-detail">
+                            {[item.subtitle, amountText].filter(Boolean).join(' · ')}
+                          </div>
+                          <div className="profile-activity-time">
+                            {formatTimestamp(item.timestamp)}
+                            {item.status ? ` · ${item.status}` : ''}
+                          </div>
                         </div>
+                        {isClickable ? (
+                          <span style={{ color: 'var(--primary-600)', fontSize: '0.75rem' }}>→</span>
+                        ) : null}
                       </div>
                     );
                   })}

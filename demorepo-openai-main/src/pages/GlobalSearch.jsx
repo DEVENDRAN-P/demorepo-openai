@@ -39,14 +39,14 @@ function GlobalSearch({ user }) {
   useEffect(() => {
     if (!user?.uid) return;
     setLoading(true);
-    getUserBills(user.uid)
+    getUserBills()
       .then(fetched => {
         setBills(fetched);
         
         // Businesses come from the user's own data (businessHelper)
         setBusinesses(getUserBusinesses(user));
         // Activities come from the user's real Firestore activity log
-        getUserActivityLogs(user.uid)
+        getUserActivityLogs()
           .then((logs) => {
             setActivities((logs || []).map((l) => ({
               title: buildActivityTitle(l),

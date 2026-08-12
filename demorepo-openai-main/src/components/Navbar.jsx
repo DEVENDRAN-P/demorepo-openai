@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { logout } from '../services/authService';
+import { useAuth } from '../hooks/useAuth';
 import { useDarkMode } from '../context/DarkModeContext';
 import Logo from './Logo';
 
@@ -164,6 +164,7 @@ const THEMES = {
 function Navbar({ user }) {
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleDarkMode, resetTheme } = useDarkMode();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -215,9 +216,8 @@ function Navbar({ user }) {
     if (window.confirm(t('logout_confirm'))) {
       try {
         await logout();
-        localStorage.removeItem('user');
         resetTheme();
-        navigate('/login');
+        navigate('/');
       } catch (error) {
         console.error('Logout error:', error);
       }

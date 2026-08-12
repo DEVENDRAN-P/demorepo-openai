@@ -36,8 +36,9 @@ function ProtectedRoute({ user }) {
     return <Outlet />;
   }
 
-  // Otherwise redirect to login
-  return <Navigate to="/login" replace />;
+  // Otherwise redirect to the public Home page — never leave the user on a
+  // protected screen after logout (browser Back must not reach Dashboard).
+  return <Navigate to="/" replace />;
 }
 
 export default ProtectedRoute;

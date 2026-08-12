@@ -718,9 +718,147 @@ export const getUserActivityLogs = async (limit = 100) => {
       });
     });
 
-    return logs.slice(0, limit);
+    // Sort newest-first before slicing (document-ID order is not chronological)
+    return logs
+      .sort((a, b) => toTimestampMs(b.timestamp) - toTimestampMs(a.timestamp))
+      .slice(0, limit);
   } catch (error) {
     console.error("❌ Error fetching activity logs:", error);
+    return [];
+  }
+};
+
+/**
+ * Normalize a Firestore Timestamp / ISO string / Date into epoch milliseconds.
+ * Returns 0 for missing or invalid values.
+ * @param {*} ts - Timestamp-like value
+ * @returns {number} Epoch milliseconds
+ */
+const toTimestampMs = (ts) => {
+  if (!ts) return 0;
+  try {
+    const d = ts?.toDate ? ts.toDate() : new Date(ts);
+    const ms = d.getTime();
+    return Number.isNaN(ms) ? 0 : ms;
+  } catch {
+    return 0;
+  }
+};
+
+/**
+ * Humanize an action key like "upload_bill" into "Upload Bill".
+ * @param {string} action - Raw action key
+ * @returns {string} Human readable label
+ */
+const humanizeActivityAction = (action = "") => {
+  if (!action) return "Activity";
+  return action
+    .split("_")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
+
+/**
+ * Get the authenticated user's REAL recent workspace activity, aggregated from
+ * their own Firestore collections — bills, documents, agentRuns and activity
+ * logs. No demo, mock, seeded or placeholder data: every record is owned by
+ * the current authenticated user (scoped under users/{uid}/...).
+ *
+ * @param {number} limit - Maximum number of activities to return (default 5)
+ * @returns {Promise<Array>} Normalized activities, newest first
+ */
+export const getRecentWorkspaceActivity = async (limit = 5) => {
+  try {
+    const userId = getCurrentUserId();
+
+    // Fetch all four real collections in parallel. Plain collection reads are
+    // used deliberately (no composite where/orderBy) so no manual Firestore
+    // composite index is required; per-user volumes are small, sorting is done
+    // in memory.
+    const [billsSnap, docsSnap, agentSnap, logsSnap] = await Promise.all([
+      getDocs(collection(db, "users", userId, "bills")),
+      getDocs(collection(db, "users", userId, "documents")),
+      getDocs(collection(db, "users", userId, "agentRuns")),
+      getDocs(collection(db, "users", userId, "activityLogs")),
+    ]);
+
+    const activities = [];
+
+    // Bills → invoice activity
+    billsSnap.forEach((doc) => {
+      const b = doc.data();
+      activities.push({
+        id: `bill_${doc.id}`,
+        kind: "invoice",
+        title: b.supplierName || b.invoiceNumber || "Invoice",
+        subtitle: b.invoiceNumber ? `Invoice #${b.invoiceNumber}` : "",
+        amount: b.totalAmount || b.amount || 0,
+        status: b.filed ? "filed" : b.status || "pending",
+        timestamp: b.uploadedAt || b.createdAt || b.invoiceDate || null,
+        link: `/bill/${doc.id}`,
+      });
+    });
+
+    // Documents → document activity
+    docsSnap.forEach((doc) => {
+      const d = doc.data();
+      activities.push({
+        id: `doc_${doc.id}`,
+        kind: "document",
+        title: d.fileName || "Document",
+        subtitle: d.documentType || "document",
+        amount: 0,
+        status: "stored",
+        timestamp: d.uploadedAt || d.createdAt || null,
+        link: "/documents",
+      });
+    });
+
+    // Agent runs → agent activity
+    agentSnap.forEach((doc) => {
+      const a = doc.data();
+      activities.push({
+        id: `agent_${doc.id}`,
+        kind: "agent",
+        title: a.agentType || a.agentName || "AI Agent run",
+        subtitle: a.trigger || a.status || "agent run",
+        amount: 0,
+        status:
+          a.status === "completed"
+            ? "completed"
+            : a.status === "failed"
+              ? "failed"
+              : a.status || "running",
+        timestamp: a.createdAt || a.completedAt || a.startedAt || null,
+        link: "/agent-activity",
+      });
+    });
+
+    // Activity logs → generic account activity
+    logsSnap.forEach((doc) => {
+      const l = doc.data();
+      const details = l.details || {};
+      activities.push({
+        id: `log_${doc.id}`,
+        kind: "activity",
+        title: humanizeActivityAction(l.action),
+        subtitle:
+          details.invoiceNumber ||
+          (l.action === "file_gst" ? `${details.formType || "GST"} Return` : ""),
+        amount: 0,
+        status: "done",
+        timestamp: l.timestamp || null,
+        link: null,
+      });
+    });
+
+    // Newest first, capped at limit
+    return activities
+      .sort((a, b) => toTimestampMs(b.timestamp) - toTimestampMs(a.timestamp))
+      .slice(0, limit);
+  } catch (error) {
+    console.error("❌ Error fetching recent workspace activity:", error);
     return [];
   }
 };
@@ -1198,6 +1336,7 @@ const firebaseDataService = {
   // Activity
   logUserActivity,
   getUserActivityLogs,
+  getRecentWorkspaceActivity,
 
   // Export
   exportAllUserData,

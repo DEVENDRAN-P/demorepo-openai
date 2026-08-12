@@ -486,11 +486,11 @@
   "No invoice payments found. Upgrade your subscription to start transactions": "No invoice payments found. Upgrade your subscription to start transactions",
   "Can I cancel my subscription or change plans at any time?": "Can I cancel my subscription or change plans at any time?",
   "Yes, you can upgrade, downgrade, or cancel your active subscription plan at any point. Upgrades apply instantly, while downgrades take effect at the end of your current billing cycle so you do not lose any features you paid for.": "Yes, you can upgrade, downgrade, or cancel your active subscription plan at any point. Upgrades apply instantly, while downgrades take effect at the end of your current billing cycle so you do not lose any features you paid for.",
-  "How does the 20% discount on yearly plans work?": "How does the 20% discount on yearly plans work?",
-  "Is Razorpay payment gateway secure?": "Is Razorpay payment gateway secure?",
+  "How do I renew my subscription?": "Your subscription renews monthly. You can renew manually anytime from the Pricing page before the current period ends.",
+  "Is Cashfree payment gateway secure?": "Is Cashfree payment gateway secure?",
   "How accurate is the AI Bill OCR extraction?": "How accurate is the AI Bill OCR extraction?",
-  "When you select Yearly Billing, you are billed for 12 months upfront at a 20% discount. For example, the Professional tier is reduced from ₹199/mo to ₹159/mo, billed as ₹1,908 annually.": "When you select Yearly Billing, you are billed for 12 months upfront at a 20% discount. For example, the Professional tier is reduced from ₹199/mo to ₹159/mo, billed as ₹1,908 annually.",
-  "Absolutely. All subscription payments are processed securely through Razorpay, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.": "Absolutely. All subscription payments are processed securely through Razorpay, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.",
+  "Which payment methods are supported?": "UPI, credit/debit cards, net banking and other methods enabled on your Cashfree account are available at checkout.",
+  "Absolutely. All subscription payments are processed securely through Cashfree, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.": "Absolutely. All subscription payments are processed securely through Cashfree, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets.",
   "Manage your personal information, business details, and account preferences.": "Manage your personal information, business details, and account preferences.",
   "CFO & Administrator": "CFO & Administrator",
   "Update photo": "Update photo",
@@ -810,5 +810,11 @@
   "Pricing": "Pricing",
   "About Us": "About Us",
   "pricing_ai_assistant": "AI Assistant",
-  "toggle_navigation_menu": "Toggle Navigation Menu"
+  "toggle_navigation_menu": "Toggle Navigation Menu",
+  "recent_workspace_title": "Recent Workspace Activity",
+  "recent_workspace_subtitle": "Your latest real account and GST workspace activity",
+  "recent_workspace_loading": "Loading your workspace...",
+  "recent_workspace_error": "Could not load recent activity. Please try again.",
+  "no_recent_activity": "No recent activity yet",
+  "upload_first_invoice_workspace": "Upload your first invoice to start building your workspace."
 }
