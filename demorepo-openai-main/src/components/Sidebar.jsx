@@ -172,16 +172,19 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
       }
     }
   };
-  const [collapsed, setCollapsed] = useState(window.innerWidth < 1200 && window.innerWidth >= 991);
+  // Collapsed (icon-only) applies to tablet widths only (769–1199px).
+  // Mobile (<=768px) is a full-width drawer so the menu must stay expanded,
+  // and desktop (>=1200px) keeps the expanded sidebar.
+  const [collapsed, setCollapsed] = useState(() => {
+    const w = window.innerWidth;
+    return w > 768 && w < 1200;
+  });
   const [userBusinesses, setUserBusinesses] = useState([]);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1200 && window.innerWidth >= 991) {
-        setCollapsed(true);
-      } else {
-        setCollapsed(false);
-      }
+      const w = window.innerWidth;
+      setCollapsed(w > 768 && w < 1200);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -224,18 +227,6 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
     window.addEventListener('businessChanged', handleBusinessChanged);
     return () => window.removeEventListener('businessChanged', handleBusinessChanged);
   }, [userBusinesses]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1200) {
-        setCollapsed(true);
-      } else {
-        setCollapsed(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (setMobileOpen) {
@@ -311,6 +302,8 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
   return (
     <aside 
       className={`sidebar-aside ${mobileOpen ? 'mobile-open' : ''}`}
+      role="navigation"
+      aria-label={t('main_navigation', 'Main navigation')}
       style={{
         width: collapsed ? '70px' : '260px',
         background: 'var(--bg-secondary)',
@@ -350,13 +343,24 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
         ) : (
           <>
             <Logo variant="sidebar" size="145px" />
-            <button 
-              onClick={() => setCollapsed(true)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title={t('collapse_sidebar', 'Collapse Sidebar')}
-            >
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button 
+                onClick={() => setCollapsed(true)}
+                className="sidebar-collapse-btn"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title={t('collapse_sidebar', 'Collapse Sidebar')}
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button 
+                onClick={() => { if (setMobileOpen) setMobileOpen(false); }}
+                className="sidebar-mobile-close"
+                aria-label={t('close_menu', 'Close menu')}
+                title={t('close_menu', 'Close menu')}
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
           </>
         )}
       </div>

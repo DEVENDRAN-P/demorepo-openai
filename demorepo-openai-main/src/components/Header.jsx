@@ -7,7 +7,7 @@ import { getUserBusinesses } from '../utils/businessHelper';
 
 // Removed static BUSINESSES definition to enforce data isolation
 
-function Header({ onMenuClick }) {
+function Header({ onMenuClick, mobileOpen }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -81,6 +81,8 @@ function Header({ onMenuClick }) {
         <button 
           onClick={onMenuClick}
           className="header-menu-btn"
+          aria-label={t('toggle_navigation_menu', 'Toggle navigation menu')}
+          aria-expanded={!!mobileOpen}
           title={t('toggle_navigation_menu')}
           style={{ alignItems: 'center', justifyContent: 'center' }}
         >

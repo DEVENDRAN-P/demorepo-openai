@@ -14,6 +14,24 @@ function DashboardLayout() {
     }
   }, [location.pathname]);
 
+  // Close the mobile drawer with Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Auto-close the drawer when the viewport grows back to tablet/desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMobileOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div style={{
       display: 'flex',
@@ -27,6 +45,8 @@ function DashboardLayout() {
       {mobileOpen && (
         <div 
           onClick={() => setMobileOpen(false)}
+          role="presentation"
+          aria-hidden="true"
           style={{
             position: 'fixed',
             top: 0,
@@ -57,7 +77,7 @@ function DashboardLayout() {
         }}
       >
         {/* Sticky Header */}
-        <Header onMenuClick={() => setMobileOpen(!mobileOpen)} />
+        <Header onMenuClick={() => setMobileOpen(!mobileOpen)} mobileOpen={mobileOpen} />
 
         {/* Scrollable Main Area */}
         <main style={{
