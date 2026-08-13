@@ -7,13 +7,27 @@
   <meta name="theme-color" content="#667eea" />
   <meta name="description" content="AI GST & Compliance Buddy - Automated GST filing for small businesses" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+  <!-- Apple touch icon stays PNG: iOS Safari does not support SVG for apple-touch-icon -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.json" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <title>AI GST & Compliance Buddy</title>
+
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('theme') || localStorage.getItem('darkMode');
+        var isDark = theme === 'dark' || theme === 'true';
+        if (isDark) {
+          document.documentElement.classList.add('dark', 'dark-mode');
+          document.documentElement.classList.remove('light-mode');
+        } else {
+          document.documentElement.classList.add('light-mode');
+          document.documentElement.classList.remove('dark', 'dark-mode');
+        }
+      } catch(e) {}
+    })();
+  </script>
 
   <script>
     // Suppress Cross-Origin-Opener-Policy and popup-closed-by-user warnings

@@ -281,7 +281,7 @@ function Profile({ user }) {
     const d = new Date(ms);
     const today = new Date();
     const dateLabel = d.toDateString() === today.toDateString()
-      ? 'Today'
+      ? t('today')
       : d.toLocaleDateString();
     return `${dateLabel}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
@@ -293,11 +293,11 @@ function Profile({ user }) {
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
     if (!allowedTypes.includes(file.type)) {
-      setMessage({ type: 'error', text: 'Only JPG, JPEG, and PNG files are allowed' });
+      setMessage({ type: 'error', text: t('profile_error_file_type') });
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'File size must be less than 2MB' });
+      setMessage({ type: 'error', text: t('profile_error_file_size') });
       return;
     }
 
@@ -346,15 +346,15 @@ function Profile({ user }) {
 
   const validate = () => {
     const nextErrors = {};
-    if (!formData.name?.trim()) nextErrors.name = 'Full name is required';
-    if (!formData.shopName?.trim()) nextErrors.shopName = 'Shop name is required';
+    if (!formData.name?.trim()) nextErrors.name = t('profile_error_name_required');
+    if (!formData.shopName?.trim()) nextErrors.shopName = t('profile_error_shop_required');
     if (!formData.gstin?.trim()) {
-      nextErrors.gstin = 'GSTIN is required';
+      nextErrors.gstin = t('profile_error_gstin_required');
     } else if (!validateGSTNumber(formData.gstin)) {
-      nextErrors.gstin = 'Enter a valid GSTIN (e.g. 27AAHCT5055K1Z0)';
+      nextErrors.gstin = t('profile_error_gstin_invalid');
     }
     if (formData.mobileNumber && !validatePhone(formData.mobileNumber)) {
-      nextErrors.mobileNumber = 'Enter a valid 10-digit mobile number';
+      nextErrors.mobileNumber = t('profile_error_mobile_invalid');
     }
     return nextErrors;
   };
@@ -364,7 +364,18 @@ function Profile({ user }) {
     const nextErrors = validate();
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      setMessage({ type: 'error', text: 'Please fix the highlighted fields' });
+      setMessage({ type: 'error', text: t('profile_fix_highlighted_fields', 'Please fix the highlighted errors before saving.') });
+      // Form-level error mapping: scroll smoothly to the first invalid field and focus it
+      setTimeout(() => {
+        const firstError = formRef.current?.querySelector('[aria-invalid="true"]') || document.querySelector('.profile-input-invalid');
+        if (firstError) {
+          firstError.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          firstError.focus({ preventScroll: true });
+        }
+      }, 50);
       return;
     }
 
@@ -398,7 +409,7 @@ function Profile({ user }) {
       localStorage.setItem('language', formData.language);
 
       setSaveState('success');
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: t('profile_updated') });
       if (isOnboarding) {
         setTimeout(() => {
           navigate('/dashboard');
@@ -407,16 +418,16 @@ function Profile({ user }) {
     } catch (error) {
       console.error('Error updating profile:', error);
       setSaveState('error');
-      setMessage({ type: 'error', text: 'Error updating profile. Please try again.' });
+      setMessage({ type: 'error', text: t('profile_update_error') });
     }
   };
 
   // Human-friendly save button label derived from real save state
   const saveLabel =
-    saveState === 'saving' ? 'Saving...' :
-    saveState === 'success' ? 'Changes Saved ✓' :
-    saveState === 'error' ? 'Unable to save changes' :
-    'Save Changes';
+    saveState === 'saving' ? t('saving') :
+    saveState === 'success' ? t('changes_saved') :
+    saveState === 'error' ? t('unable_save') :
+    t('save_changes');
 
   const planTier = (localStorage.getItem('saas_active_plan') || 'Free').toUpperCase();
   const lastAuthenticated = formatTimestamp(user?.lastLogin);
@@ -431,7 +442,7 @@ function Profile({ user }) {
         <div className="profile-page-header">
           <div>
             <h1>{t('profile')}</h1>
-            <p>Manage your personal information, business details, and account preferences.</p>
+            <p>{t('profile_manage_subtitle')}</p>
           </div>
           <button
             type="button"
@@ -439,7 +450,7 @@ function Profile({ user }) {
             onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           >
             <PenLineIcon size={15} />
-            Edit Profile
+            {t('edit_profile')}
           </button>
         </div>
 
@@ -459,9 +470,9 @@ function Profile({ user }) {
           }}>
             <span style={{ fontSize: '1.5rem' }}>✨</span>
             <div>
-              <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem', color: 'var(--theme-primary-light)' }}>Welcome to GST Buddy AI!</strong>
+              <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem', color: 'var(--theme-primary-light)' }}>{t('profile_welcome_title')}</strong>
               <span style={{ fontSize: '0.825rem', opacity: 0.9, lineHeight: '1.4' }}>
-                Please fill in your name, business shop name, and 15-character GSTIN to complete your registration and activate your dashboard workspace.
+                {t('profile_welcome_desc')}
               </span>
             </div>
           </div>
@@ -485,7 +496,7 @@ function Profile({ user }) {
                   onClick={() => fileInputRef.current?.click()}
                   role="button"
                   tabIndex={0}
-                  aria-label={previewPic ? 'Update profile photo' : 'Add profile photo'}
+                  aria-label={previewPic ? t('update_profile_photo_aria') : t('add_profile_photo_aria')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
                   }}
@@ -495,19 +506,19 @@ function Profile({ user }) {
                   ) : (
                     <div className="profile-avatar-empty">
                       <CameraIcon size={20} />
-                      <span>Add photo</span>
+                      <span>{t('add_photo')}</span>
                     </div>
                   )}
                   <div className="profile-avatar-overlay">
                     <CameraIcon size={16} />
-                    <span>Update photo</span>
+                    <span>{t('update_photo')}</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   className="profile-avatar-badge"
                   onClick={() => fileInputRef.current?.click()}
-                  aria-label="Upload profile photo"
+                  aria-label={t('upload_profile_photo_aria')}
                 >
                   <CameraIcon size={13} />
                 </button>
@@ -519,27 +530,27 @@ function Profile({ user }) {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <CameraIcon size={14} />
-                  Change photo
+                  {t('change_photo')}
                 </button>
                 {previewPic && (
                   <button type="button" className="profile-avatar-link profile-avatar-remove" onClick={handleRemoveProfilePic}>
                     <TrashIcon size={14} />
-                    Remove
+                    {t('remove')}
                   </button>
                 )}
               </div>
             </div>
 
             <div className="profile-identity">
-              <h2>{formData.name || 'User Profile'}</h2>
-              <div className="profile-identity-role">CFO &amp; Administrator</div>
+              <h2>{formData.name || t('user_profile')}</h2>
+              <div className="profile-identity-role">{t('cfo_administrator')}</div>
               <div className="profile-business">
                 <BuildingIcon size={14} />
-                <span className="profile-business-name">{formData.shopName || 'Your Shop'}</span>
+                <span className="profile-business-name">{formData.shopName || t('your_shop')}</span>
               </div>
               <span className="profile-account-type">
                 <ShieldCheckIcon size={13} />
-                GST Business Account
+                {t('gst_business_account')}
               </span>
             </div>
           </div>
@@ -557,27 +568,27 @@ function Profile({ user }) {
               <div className="profile-chip-icon"><PhoneIcon size={16} /></div>
               <div style={{ minWidth: 0 }}>
                 <div className="profile-chip-label">{t('mobile_number')}</div>
-                <div className="profile-chip-value">{formData.mobileNumber || 'Not configured'}</div>
+                <div className="profile-chip-value">{formData.mobileNumber || t('not_configured')}</div>
               </div>
             </div>
             <div className="profile-chip">
               <div className="profile-chip-icon"><HashIcon size={16} /></div>
               <div style={{ minWidth: 0 }}>
                 <div className="profile-chip-label">{t('gstin')}</div>
-                <div className="profile-chip-value">{formData.gstin || 'Not registered'}</div>
+                <div className="profile-chip-value">{formData.gstin || t('not_registered')}</div>
               </div>
             </div>
             <div className="profile-chip">
               <div className="profile-chip-icon"><CreditCardIcon size={16} /></div>
               <div style={{ minWidth: 0 }}>
-                <div className="profile-chip-label">SaaS Plan</div>
-                <div className="profile-chip-value">{planTier} Tier</div>
+                <div className="profile-chip-label">{t('saas_plan')}</div>
+                <div className="profile-chip-value">{planTier} {t('tier')}</div>
               </div>
             </div>
             <div className="profile-chip">
               <div className="profile-chip-icon"><ClockIcon size={16} /></div>
               <div style={{ minWidth: 0 }}>
-                <div className="profile-chip-label">Last authenticated</div>
+                <div className="profile-chip-label">{t('last_authenticated')}</div>
                 <div className="profile-chip-value">{lastAuthenticated || '—'}</div>
               </div>
             </div>
@@ -600,14 +611,14 @@ function Profile({ user }) {
             <div className="profile-card-header">
               <div className="profile-card-title-icon"><UserIcon size={18} /></div>
                 <div>
-                  <div className="profile-card-title">Personal Information</div>
-                  <div className="profile-card-subtitle">Manage your account and contact information</div>
+                  <div className="profile-card-title">{t('personal_information')}</div>
+                  <div className="profile-card-subtitle">{t('manage_account_contact')}</div>
                 </div>
               </div>
 
               <div className="profile-field">
                 <label className="profile-field-label" htmlFor="profile-name">
-                  Full Name <span className="profile-field-required">*</span>
+                  {t('full_name')} <span className="profile-field-required">*</span>
                 </label>
                 <div className="profile-input-wrap">
                   <span className="profile-input-icon"><UserIcon size={16} /></span>
@@ -619,11 +630,13 @@ function Profile({ user }) {
                     onChange={handleChange}
                     placeholder={t('placeholder_full_name')}
                     className={errors.name ? 'profile-input-invalid' : ''}
+                    aria-invalid={errors.name ? true : undefined}
+                    aria-describedby={errors.name ? 'profile-name-error' : undefined}
                     required
                   />
                 </div>
                 {errors.name && (
-                  <div className="profile-input-error">
+                  <div className="profile-input-error" id="profile-name-error">
                     <AlertCircleIcon size={13} />
                     {errors.name}
                   </div>
@@ -632,8 +645,8 @@ function Profile({ user }) {
 
               <div className="profile-field">
                 <label className="profile-field-label" htmlFor="profile-email">
-                  Email Address <span className="profile-field-required">*</span>
-                  <span className="profile-readonly-pill"><LockIcon size={11} /> Read only</span>
+                  {t('email_address')} <span className="profile-field-required">*</span>
+                  <span className="profile-readonly-pill"><LockIcon size={11} /> {t('read_only')}</span>
                 </label>
                 <div className="profile-input-wrap has-lock">
                   <span className="profile-input-icon"><MailIcon size={16} /></span>
@@ -646,20 +659,20 @@ function Profile({ user }) {
                     readOnly
                     tabIndex={-1}
                     aria-readonly="true"
-                    title="Email address cannot be changed"
+                    title={t('email_readonly')}
                     className="profile-input-disabled"
                   />
                   <span className="profile-input-lock"><LockIcon size={15} /></span>
                 </div>
                 <div className="profile-input-hint">
                   <LockIcon size={12} />
-                  Email address cannot be changed
+                  {t('email_readonly')}
                 </div>
               </div>
 
               <div className="profile-field">
                 <label className="profile-field-label" htmlFor="profile-mobile">
-                  Mobile Number
+                  {t('mobile_number')}
                 </label>
                 <div className="profile-input-wrap">
                   <span className="profile-input-icon"><PhoneIcon size={16} /></span>
@@ -671,10 +684,12 @@ function Profile({ user }) {
                     onChange={handleChange}
                     placeholder={t('enter_mobile_number')}
                     className={errors.mobileNumber ? 'profile-input-invalid' : ''}
+                    aria-invalid={errors.mobileNumber ? true : undefined}
+                    aria-describedby={errors.mobileNumber ? 'profile-mobile-error' : undefined}
                   />
                 </div>
                 {errors.mobileNumber && (
-                  <div className="profile-input-error">
+                  <div className="profile-input-error" id="profile-mobile-error">
                     <AlertCircleIcon size={13} />
                     {errors.mobileNumber}
                   </div>
@@ -687,14 +702,14 @@ function Profile({ user }) {
               <div className="profile-card-header">
                 <div className="profile-card-title-icon"><BuildingIcon size={18} /></div>
                 <div>
-                  <div className="profile-card-title">Business Information</div>
-                  <div className="profile-card-subtitle">Your registered business information used for GST operations</div>
+                  <div className="profile-card-title">{t('business_information')}</div>
+                  <div className="profile-card-subtitle">{t('business_registered_info')}</div>
                 </div>
               </div>
 
               <div className="profile-field">
                 <label className="profile-field-label" htmlFor="profile-shop">
-                  Business / Shop Name <span className="profile-field-required">*</span>
+                  {t('business_shop_name')} <span className="profile-field-required">*</span>
                 </label>
                 <div className="profile-input-wrap">
                   <span className="profile-input-icon"><BuildingIcon size={16} /></span>
@@ -704,13 +719,15 @@ function Profile({ user }) {
                     name="shopName"
                     value={formData.shopName}
                     onChange={handleChange}
-                    placeholder="Your business name"
+                    placeholder={t('your_business_name_placeholder')}
                     className={errors.shopName ? 'profile-input-invalid' : ''}
+                    aria-invalid={errors.shopName ? true : undefined}
+                    aria-describedby={errors.shopName ? 'profile-shop-error' : undefined}
                     required
                   />
                 </div>
                 {errors.shopName && (
-                  <div className="profile-input-error">
+                  <div className="profile-input-error" id="profile-shop-error">
                     <AlertCircleIcon size={13} />
                     {errors.shopName}
                   </div>
@@ -731,26 +748,28 @@ function Profile({ user }) {
                     onChange={handleChange}
                     placeholder={t('placeholder_gstin')}
                     className={errors.gstin ? 'profile-input-invalid' : ''}
+                    aria-invalid={errors.gstin ? true : undefined}
+                    aria-describedby={errors.gstin ? 'profile-gstin-error' : undefined}
                     maxLength={15}
                     required
                   />
                 </div>
                 {errors.gstin ? (
-                  <div className="profile-input-error">
+                  <div className="profile-input-error" id="profile-gstin-error">
                     <AlertCircleIcon size={13} />
                     {errors.gstin}
                   </div>
                 ) : (
                   <div className="profile-input-hint">
                     <ShieldCheckIcon size={12} />
-                    This identifier is linked to your GST account
+                    {t('gstin_linked_hint')}
                   </div>
                 )}
               </div>
 
               <div className="profile-field">
                 <label className="profile-field-label" htmlFor="profile-address">
-                  Business Address
+                  {t('business_address')}
                 </label>
                 <div className="profile-input-wrap">
                   <textarea
@@ -773,8 +792,8 @@ function Profile({ user }) {
               <div className="profile-card-header">
                 <div className="profile-card-title-icon"><GlobeIcon size={18} /></div>
                 <div>
-                  <div className="profile-card-title">Preferences</div>
-                  <div className="profile-card-subtitle">Customize your account preferences</div>
+                  <div className="profile-card-title">{t('preferences')}</div>
+                  <div className="profile-card-subtitle">{t('customize_preferences')}</div>
                 </div>
               </div>
 
@@ -799,7 +818,7 @@ function Profile({ user }) {
                 </div>
                 <div className="profile-input-hint">
                   <GlobeIcon size={12} />
-                  Choose the language used for notifications and account communication
+                  {t('choose_language_hint')}
                 </div>
               </div>
             </div>
@@ -888,8 +907,8 @@ function Profile({ user }) {
               <div className="profile-card-header">
                 <div className="profile-card-title-icon"><LightbulbIcon size={18} /></div>
                 <div>
-                  <div className="profile-card-title">Profile &amp; GST Tips</div>
-                  <div className="profile-card-subtitle">Keep your account and GST workflows accurate</div>
+                  <div className="profile-card-title">{t('profile_gst_tips')}</div>
+                  <div className="profile-card-subtitle">{t('keep_accurate')}</div>
                 </div>
               </div>
 
@@ -920,10 +939,10 @@ function Profile({ user }) {
               >
                 {saveState === 'success' ? <CheckCircleIcon size={14} /> : null}
                 {saveState === 'error' ? <AlertCircleIcon size={14} /> : null}
-                {saveState === 'saving' ? 'Saving your changes...' : ''}
-                {saveState === 'success' ? 'Changes Saved ✓' : ''}
-                {saveState === 'error' ? 'Unable to save changes' : ''}
-                {saveState === 'idle' ? 'Changes are saved when you click save' : ''}
+                {saveState === 'saving' ? t('saving_changes') : ''}
+                {saveState === 'success' ? t('changes_saved') : ''}
+                {saveState === 'error' ? t('unable_save') : ''}
+                {saveState === 'idle' ? t('changes_saved_idle') : ''}
               </span>
               <button
                 type="button"
@@ -931,7 +950,7 @@ function Profile({ user }) {
                 onClick={handleCancel}
                 disabled={saveState === 'saving'}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="submit"

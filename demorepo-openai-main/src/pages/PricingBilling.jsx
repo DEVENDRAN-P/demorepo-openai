@@ -208,7 +208,7 @@ function PricingBilling({ user }) {
             100% { transform: rotate(360deg); }
           }
         `}</style>
-        <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Retrieving active subscription details...</p>
+        <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{t('pricing_retrieving')}</p>
       </div>
     );
   }
@@ -241,30 +241,30 @@ function PricingBilling({ user }) {
             animation: 'spin 1s linear infinite',
             marginBottom: '1.5rem'
           }}></div>
-          <h3 style={{ color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Gateway Processing...</h3>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Do not refresh the page or click back.</p>
+          <h3 style={{ color: 'white', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>{t('pricing_gateway_processing')}</h3>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginTop: '0.5rem' }}>{t('pricing_gateway_processing_desc')}</p>
         </div>
       )}
 
       {/* Header section */}
       <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Pricing & Subscriptions</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('pricing_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Select plan frameworks, upgrade limits, and audit past subscription billing statements.
+          {t('pricing_subtitle')}
         </p>
       </div>
 
       {/* Status Notifications */}
       {errorMsg && (
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span><strong>Error:</strong> {errorMsg}</span>
+          <span><strong>{t('pricing_error')}:</strong> {errorMsg}</span>
           <button onClick={() => setErrorMsg('')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem' }}>&times;</button>
         </div>
       )}
 
       {successMsg && (
         <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid rgba(34, 197, 94, 0.2)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span><strong>Success:</strong> {successMsg}</span>
+          <span><strong>{t('pricing_success')}:</strong> {successMsg}</span>
           <button onClick={() => setSuccessMsg('')} style={{ background: 'transparent', border: 'none', color: '#22c55e', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem' }}>&times;</button>
         </div>
       )}
@@ -272,9 +272,9 @@ function PricingBilling({ user }) {
       {/* Subscription Active Badge & Usage Limits Panel */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '2.5rem', border: '1px solid var(--border-color)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>Current Subscription Status</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>{t('pricing_current_status')}</h3>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Status:</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('pricing_status')}:</span>
             <span style={{ 
               background: subscriptionStatus === 'active' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
               color: subscriptionStatus === 'active' ? '#22c55e' : '#ef4444', 
@@ -284,27 +284,27 @@ function PricingBilling({ user }) {
               fontWeight: 700,
               textTransform: 'uppercase'
             }}>
-              {subscriptionStatus === 'active' ? 'Active' : 'Expired'}
+              {subscriptionStatus === 'active' ? t('pricing_active') : t('pricing_expired')}
             </span>
           </div>
         </div>
         
         <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', border: '1px solid var(--border-color)', alignItems: 'center' }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Active Tier</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>{t('pricing_active_tier')}</span>
             <strong style={{ fontSize: '1.15rem', color: 'var(--theme-primary-light)' }}>
-              {activePlan === 'free' ? 'Free Plan' : activePlan === 'pro' ? 'Pro Plan' : 'Business Plan'}
+              {activePlan === 'free' ? t('pricing_free_plan') : activePlan === 'pro' ? t('pricing_pro_plan') : t('pricing_business_plan')}
             </strong>
           </div>
           {subscriptionStart && (
             <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Billing Start</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>{t('pricing_billing_start')}</span>
               <strong style={{ fontSize: '0.95rem' }}>{new Date(subscriptionStart).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong>
             </div>
           )}
           {subscriptionExpiry && (
             <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>Next Renewal Date</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase' }}>{t('pricing_next_renewal')}</span>
               <strong style={{ fontSize: '0.95rem' }}>{new Date(subscriptionExpiry).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong>
             </div>
           )}
@@ -316,7 +316,7 @@ function PricingBilling({ user }) {
                 style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 700 }}
                 disabled={isProcessing}
               >
-                Renew Subscription
+                {t('pricing_renew_subscription')}
               </button>
             </div>
           )}
@@ -325,8 +325,8 @@ function PricingBilling({ user }) {
         <div className="grid grid-cols-3" style={{ gap: '2rem', marginTop: '1.5rem' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              <span>Monthly Invoices OCR</span>
-              <strong>{activePlan === 'free' ? 'Up to 10 scans' : 'Unlimited'}</strong>
+              <span>{t('pricing_monthly_ocr')}</span>
+              <strong>{activePlan === 'free' ? t('pricing_up_to_10') : t('pricing_unlimited')}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
               <div style={{ width: activePlan === 'free' ? '20%' : '100%', background: 'var(--theme-primary)', height: '100%' }}></div>
@@ -334,8 +334,8 @@ function PricingBilling({ user }) {
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              <span>AI accountant suggestions</span>
-              <strong>{activePlan === 'free' ? 'Basic AI Suggestions' : activePlan === 'pro' ? 'Advanced AI Insights' : 'Advanced Insights & Analytics'}</strong>
+              <span>{t('pricing_ai_suggestions')}</span>
+              <strong>{activePlan === 'free' ? t('pricing_basic_ai') : activePlan === 'pro' ? t('pricing_advanced_ai') : t('pricing_advanced_analytics')}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
               <div style={{ width: activePlan === 'free' ? '30%' : activePlan === 'pro' ? '70%' : '100%', background: 'var(--theme-secondary)', height: '100%' }}></div>
@@ -343,8 +343,8 @@ function PricingBilling({ user }) {
           </div>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              <span>OCR capabilities</span>
-              <strong>{activePlan === 'free' ? 'Limited OCR' : 'Unlimited OCR'}</strong>
+              <span>{t('pricing_ocr_capabilities')}</span>
+              <strong>{activePlan === 'free' ? t('pricing_limited_ocr') : t('pricing_unlimited_ocr')}</strong>
             </div>
             <div style={{ width: '100%', background: 'var(--bg-tertiary)', borderRadius: '10px', height: '6px', overflow: 'hidden' }}>
               <div style={{ width: activePlan === 'free' ? '40%' : '100%', background: 'var(--warning)', height: '100%' }}></div>
@@ -470,17 +470,17 @@ function PricingBilling({ user }) {
         
         {/* Tier 1: Free Plan */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', border: activePlan === 'free' ? '2px solid var(--theme-primary)' : '1px solid var(--border-color)', position: 'relative', background: 'var(--bg-secondary)' }}>
-          {activePlan === 'free' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>ACTIVE PLAN</span>}
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em' }}>STARTER</span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>₹0 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span></h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>Ideal for solo-entrepreneurs and micro-shops filing nil or few monthly returns.</p>
+          {activePlan === 'free' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>{t('pricing_active_plan')}</span>}
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em' }}>{t('pricing_starter')}</span>
+          <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>₹0 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{t('pricing_per_month')}</span></h2>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>{t('pricing_free_desc')}</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
-            <li>10 invoice scans / month</li>
-            <li>Basic AI accountant suggestions</li>
-            <li>Limited OCR capabilities</li>
-            <li>Single business entity profile</li>
-            <li>Standard CSV billing exports</li>
+            <li>{t('pricing_free_10_scans')}</li>
+            <li>{t('pricing_basic_ai_suggestions')}</li>
+            <li>{t('pricing_limited_ocr')}</li>
+            <li>{t('pricing_single_entity')}</li>
+            <li>{t('pricing_csv_exports')}</li>
           </ul>
           
           <button 
@@ -489,29 +489,29 @@ function PricingBilling({ user }) {
             className="btn btn-secondary"
             style={{ width: '100%', padding: '0.6rem', cursor: activePlan === 'free' ? 'not-allowed' : 'pointer' }}
           >
-            {activePlan === 'free' ? 'Current Plan' : 'Downgrade to Free'}
+            {activePlan === 'free' ? t('pricing_current_plan') : t('pricing_downgrade_free')}
           </button>
         </div>
 
         {/* Tier 2: Pro Plan (Featured) */}
         <div className={`glass-panel ${activePlan === 'pro' ? '' : 'purple-glow-border'}`} style={{ borderRadius: 'var(--radius-xl)', padding: '2.25rem 2rem', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--bg-secondary)', transform: 'scale(1.02)', zIndex: 5, border: activePlan === 'pro' ? '2px solid var(--theme-primary)' : '1px solid var(--border-color)' }}>
           <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)' }}>
-            <span className="most-popular-badge">MOST POPULAR</span>
+            <span className="most-popular-badge">{t('pricing_most_popular')}</span>
           </div>
-          {activePlan === 'pro' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>ACTIVE PLAN</span>}
-          <span style={{ fontSize: '0.8rem', color: 'var(--primary-600)', fontWeight: 700, letterSpacing: '0.05em' }}>PROFESSIONAL</span>
+          {activePlan === 'pro' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>{t('pricing_active_plan')}</span>}
+          <span style={{ fontSize: '0.8rem', color: 'var(--primary-600)', fontWeight: 700, letterSpacing: '0.05em' }}>{t('pricing_professional')}</span>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>
-            ₹199 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
+            ₹199 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{t('pricing_per_month')}</span>
           </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>Standard SaaS framework for growing small businesses requiring regular auditing and bulk processing.</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>{t('pricing_pro_desc')}</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
-            <li><strong>Unlimited</strong> invoice scans</li>
-            <li><strong>Unlimited</strong> OCR extraction</li>
-            <li>Advanced AI tax audit & insights</li>
-            <li>Direct GSTR-1 & GSTR-3B draft pre-fills</li>
-            <li>Email & WhatsApp reminder sync</li>
-            <li>Up to 3 business entity profiles</li>
+            <li><strong>{t('pricing_unlimited')}</strong> {t('pricing_invoice_scans')}</li>
+            <li><strong>{t('pricing_unlimited')}</strong> {t('pricing_ocr_extraction')}</li>
+            <li>{t('pricing_advanced_audit')}</li>
+            <li>{t('pricing_gstr_prefills')}</li>
+            <li>{t('pricing_reminder_sync')}</li>
+            <li>{t('pricing_3_profiles')}</li>
           </ul>
 
           <button 
@@ -520,26 +520,26 @@ function PricingBilling({ user }) {
             style={{ width: '100%', padding: '0.6rem', background: activePlan === 'pro' ? 'transparent' : 'var(--primary-600)' }}
             disabled={activePlan === 'pro' || isProcessing}
           >
-            {activePlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
+            {activePlan === 'pro' ? t('pricing_current_plan') : t('pricing_upgrade_pro')}
           </button>
         </div>
 
         {/* Tier 3: Business Plan */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', border: activePlan === 'business' ? '2px solid var(--theme-primary)' : '1px solid var(--border-color)', position: 'relative', background: 'var(--bg-secondary)' }}>
-          {activePlan === 'business' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>ACTIVE PLAN</span>}
-          <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 700, letterSpacing: '0.05em' }}>BUSINESS</span>
+          {activePlan === 'business' && <span style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--theme-primary)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>{t('pricing_active_plan')}</span>}
+          <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 700, letterSpacing: '0.05em' }}>{t('pricing_business')}</span>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.5rem 0' }}>
-            ₹499 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/ month</span>
+            ₹499 <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{t('pricing_per_month')}</span>
           </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>For merchants, CAs, and corporate entities with high billing volumes and complex GST structures.</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>{t('pricing_business_desc')}</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
-            <li><strong>Everything</strong> in Professional</li>
-            <li>Multi-user CA & team permissions access</li>
-            <li>Interactive Business Health & Profit analytics</li>
-            <li>Automatic non-filing vendor blocker</li>
-            <li>Dedicated priority API access key</li>
-            <li>Custom PDF exports & audit logs</li>
+            <li><strong>{t('pricing_everything')}</strong> {t('pricing_in_professional')}</li>
+            <li>{t('pricing_multi_user')}</li>
+            <li>{t('pricing_business_analytics')}</li>
+            <li>{t('pricing_vendor_blocker')}</li>
+            <li>{t('pricing_api_key')}</li>
+            <li>{t('pricing_pdf_exports')}</li>
           </ul>
 
           <button 
@@ -548,7 +548,7 @@ function PricingBilling({ user }) {
             style={{ width: '100%', padding: '0.6rem' }}
             disabled={activePlan === 'business' || isProcessing}
           >
-            {activePlan === 'business' ? 'Current Plan' : 'Upgrade to Business'}
+            {activePlan === 'business' ? t('pricing_current_plan') : t('pricing_upgrade_business')}
           </button>
         </div>
 
@@ -565,7 +565,7 @@ function PricingBilling({ user }) {
           <span>{t('pricing_roi_calculator', 'Interactive ROI & Savings Calculator')}</span>
         </h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '2rem', textAlign: 'left' }}>
-          Estimate the direct fiscal return on investment and hours saved by shifting your tax compliance workflows to GST Buddy AI.
+          {t('pricing_roi_desc')}
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem' }} className="grid">
@@ -576,8 +576,8 @@ function PricingBilling({ user }) {
             {/* Slider 1: Invoices count */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                <span style={{ fontWeight: 600 }}>Estimated Invoices per Month:</span>
-                <strong style={{ color: 'var(--primary-600)' }}>{invoicesCount} Invoices</strong>
+                <span style={{ fontWeight: 600 }}>{t('pricing_estimated_invoices')}:</span>
+                <strong style={{ color: 'var(--primary-600)' }}>{invoicesCount} {t('pricing_invoices')}</strong>
               </div>
               <input 
                 type="range" 
@@ -597,7 +597,7 @@ function PricingBilling({ user }) {
             {/* Slider 2: Current CA Cost */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                <span style={{ fontWeight: 600 }}>Current Professional Accountant / CA Cost (Monthly):</span>
+                <span style={{ fontWeight: 600 }}>{t('pricing_ca_cost')}:</span>
                 <strong style={{ color: 'var(--primary-600)' }}>₹{caCost.toLocaleString('en-IN')}</strong>
               </div>
               <input 
@@ -619,8 +619,8 @@ function PricingBilling({ user }) {
             {/* Slider 3: Hours Spent */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                <span style={{ fontWeight: 600 }}>Manual Hours Spent on Invoices & Filing (Monthly):</span>
-                <strong style={{ color: 'var(--primary-600)' }}>{hoursSpent} Hours</strong>
+                <span style={{ fontWeight: 600 }}>{t('pricing_manual_hours')}:</span>
+                <strong style={{ color: 'var(--primary-600)' }}>{hoursSpent} {t('pricing_hours')}</strong>
               </div>
               <input 
                 type="range" 
@@ -672,7 +672,7 @@ function PricingBilling({ user }) {
               return (
                 <>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Estimated Annual Savings</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{t('pricing_annual_savings')}</span>
                     <strong style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--success)' }}>
                       ₹{annualSavings.toLocaleString('en-IN')}
                     </strong>
@@ -680,15 +680,15 @@ function PricingBilling({ user }) {
 
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: 0 }} />
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', textAlign: 'center' }}>
+                  <div className="grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', textAlign: 'center' }}>
                     <div>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>Time Saved (Monthly)</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>{t('pricing_time_saved')}</span>
                       <strong style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-600)' }}>
-                        {monthlyHoursSaved.toFixed(1)} Hrs
+                        {monthlyHoursSaved.toFixed(1)} {t('pricing_hrs')}
                       </strong>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>Estimated ROI</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>{t('pricing_estimated_roi')}</span>
                       <strong style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-600)' }}>
                         {roiPercent === 'Infinite' ? 'Infinite ROI' : `${roiPercent}%`}
                       </strong>
@@ -696,7 +696,7 @@ function PricingBilling({ user }) {
                   </div>
 
                   <div style={{ background: 'var(--bg-secondary)', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.75rem', textAlign: 'center' }}>
-                    Recommended plan: <strong style={{ color: 'var(--primary-600)' }}>{recommendedPlanName}</strong> (₹{monthlyPlanCost}/mo)
+                    {t('pricing_recommended_plan')}: <strong style={{ color: 'var(--primary-600)' }}>{recommendedPlanName}</strong> (₹{monthlyPlanCost}/mo)
                   </div>
                 </>
               );
@@ -710,17 +710,17 @@ function PricingBilling({ user }) {
       {/* 4. Full Enterprise Comparison Table */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', marginBottom: '4rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', zIndex: 10 }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem', textAlign: 'center' }}>
-          Platform Feature Matrix Comparison
+          {t('pricing_comparison_title')}
         </h3>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }} className="comparison-table">
             <thead>
               <tr style={{ color: 'var(--text-primary)' }}>
-                <th className="comparison-th" style={{ width: '40%' }}>Core Capabilities</th>
-                <th className="comparison-th" style={{ textAlign: 'center' }}>Free</th>
-                <th className="comparison-th" style={{ textAlign: 'center', color: 'var(--primary-600)' }}>Professional</th>
-                <th className="comparison-th" style={{ textAlign: 'center' }}>Business</th>
+                <th className="comparison-th" style={{ width: '40%' }}>{t('pricing_core_capabilities')}</th>
+                <th className="comparison-th" style={{ textAlign: 'center' }}>{t('pricing_free')}</th>
+                <th className="comparison-th" style={{ textAlign: 'center', color: 'var(--primary-600)' }}>{t('pricing_professional')}</th>
+                <th className="comparison-th" style={{ textAlign: 'center' }}>{t('pricing_business')}</th>
               </tr>
             </thead>
             <tbody>
@@ -857,26 +857,26 @@ function PricingBilling({ user }) {
       {/* 5. FAQ Accordion Section */}
       <div style={{ maxWidth: '800px', margin: '0 auto 5rem auto', position: 'relative', zIndex: 10 }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, textTransform: 'none', textAlign: 'center', marginBottom: '2rem' }}>
-          Frequently Asked Questions
+          {t('pricing_faq_title')}
         </h3>
 
         <div>
           {[
             {
-              q: "Can I cancel my subscription or change plans at any time?",
-              a: "Yes, you can upgrade, downgrade, or cancel your active subscription plan at any point. Upgrades apply instantly, while downgrades take effect at the end of your current billing cycle so you do not lose any features you paid for."
+              q: t('pricing_faq1_q'),
+              a: t('pricing_faq1_a')
             },
             {
-              q: "Which payment methods are supported?",
-              a: "All subscription payments are processed securely through Cashfree Payments. UPI, credit/debit cards, net banking and any other methods enabled on your Cashfree merchant account are available at checkout."
+              q: t('pricing_faq2_q'),
+              a: t('pricing_faq2_a')
             },
             {
-              q: "Is Cashfree payment gateway secure?",
-              a: "Absolutely. All subscription payments are processed securely through Cashfree, which is fully PCI-DSS compliant. GST Buddy AI never holds or processes your credit card numbers or banking secrets."
+              q: t('pricing_faq3_q'),
+              a: t('pricing_faq3_a')
             },
             {
-              q: "How accurate is the AI Bill OCR extraction?",
-              a: "Our AI invoice extraction uses Google Gemini to parse invoices with high accuracy, identifying supplier names, GSTINs, tax lines, categories, and totals automatically. Extraction quality depends on image clarity."
+              q: t('pricing_faq4_q'),
+              a: t('pricing_faq4_a')
             }
           ].map((faq, idx) => {
             const isFaqOpen = !!faqExpanded[idx];
@@ -915,22 +915,22 @@ function PricingBilling({ user }) {
       {/* 6. Billing history table (Only visible to logged-in users) */}
       {auth.currentUser && (
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', marginBottom: '5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', zIndex: 10 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', textAlign: 'left' }}>Billing Statement Ledger</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', textAlign: 'left' }}>{t('pricing_billing_ledger')}</h3>
           
           {billingHistory.length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '1rem 0', textAlign: 'left' }}>No invoice payments found. Upgrade your subscription to start transactions.</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, padding: '1rem 0', textAlign: 'left' }}>{t('pricing_no_payments')}</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-                    <th style={{ padding: '0.75rem' }}>Receipt reference</th>
-                    <th style={{ padding: '0.75rem' }}>Date Created</th>
-                    <th style={{ padding: '0.75rem' }}>Filing Segment</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Amount Paid</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Order ID</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Provider</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
+                    <th style={{ padding: '0.75rem' }}>{t('pricing_receipt_ref')}</th>
+                    <th style={{ padding: '0.75rem' }}>{t('pricing_date_created')}</th>
+                    <th style={{ padding: '0.75rem' }}>{t('pricing_filing_segment')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>{t('pricing_amount_paid')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('pricing_order_id')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('pricing_provider')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('pricing_filing_status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -979,64 +979,64 @@ function PricingBilling({ user }) {
                 <strong style={{ fontSize: '1.05rem', fontWeight: 800 }}>GST Buddy AI</strong>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-                Automating finance compliance, invoice extraction, and returns drafting using Google Gemini AI.
+                {t('pricing_footer_desc')}
               </p>
               
               {/* Badges */}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>256-Bit SSL Secured</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-600)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>ISO 27001 Certified</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>{t('pricing_ssl_badge')}</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-600)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>{t('pricing_iso_badge')}</span>
               </div>
             </div>
 
             {/* Product Column */}
             <div>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Product</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>{t('pricing_footer_product')}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span onClick={() => handleMockNav('/agent')} className="footer-link-item">AI Accountant</span>
-                <span onClick={() => handleMockNav('/bill-upload')} className="footer-link-item">Invoice Intelligence</span>
-                <span onClick={() => handleMockNav('/compliance')} className="footer-link-item">Compliance Center</span>
-                <span onClick={() => handleMockNav('/audit')} className="footer-link-item">ITC Reconciliation</span>
-                <span onClick={() => navigate('/pricing')} className="footer-link-item">Pricing Plans</span>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">Tally & Zoho Sync</span>
+                <span onClick={() => handleMockNav('/agent')} className="footer-link-item">{t('pricing.footer_ai_accountant')}</span>
+                <span onClick={() => handleMockNav('/bill-upload')} className="footer-link-item">{t('pricing.footer_invoice_intelligence')}</span>
+                <span onClick={() => handleMockNav('/compliance')} className="footer-link-item">{t('pricing.footer_compliance_center')}</span>
+                <span onClick={() => handleMockNav('/audit')} className="footer-link-item">{t('pricing.footer_itc_reconciliation')}</span>
+                <span onClick={() => navigate('/pricing')} className="footer-link-item">{t('pricing.footer_pricing_plans')}</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_tally_sync')}</span>
               </div>
             </div>
 
             {/* Solutions Column */}
             <div>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Solutions</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>{t('pricing_footer_solutions')}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">For MSMEs</span>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">For CAs & Tax Pros</span>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">Enterprise & Corporates</span>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">E-commerce Sellers</span>
-                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">Retail & Wholesale</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_for_msmes')}</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_for_cas')}</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_enterprise')}</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_ecommerce')}</span>
+                <span onClick={() => handleMockNav('/dashboard')} className="footer-link-item">{t('pricing.footer_retail')}</span>
               </div>
             </div>
 
             {/* Resources Column */}
             <div>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Resources</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>{t('pricing_footer_resources')}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">GST Rate Calculator</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">HSN Code Finder</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">E-Invoicing Guide</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Blog & Tax News</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">API Documentation</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Live System Status</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_gst_calculator')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_hsn_finder')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_einvoicing_guide')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_blog')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_api_docs')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_system_status')}</span>
               </div>
             </div>
 
             {/* Company Column */}
             <div>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>Company</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>{t('pricing_footer_company')}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">About Us</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Careers <span style={{ fontSize: '0.55rem', background: 'var(--success-light)', color: 'var(--success)', padding: '0.1rem 0.3rem', borderRadius: '4px', fontWeight: 700 }}>HIRING</span></span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Contact Sales</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Privacy Policy</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Terms of Service</span>
-                <span onClick={() => handleMockNav('/support')} className="footer-link-item">Security & Trust</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_about_us')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_careers')} <span style={{ fontSize: '0.55rem', background: 'var(--success-light)', color: 'var(--success)', padding: '0.1rem 0.3rem', borderRadius: '4px', fontWeight: 700 }}>{t('pricing.footer_hiring')}</span></span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_contact_sales')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_privacy')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_terms')}</span>
+                <span onClick={() => handleMockNav('/support')} className="footer-link-item">{t('pricing.footer_security')}</span>
               </div>
             </div>
 
@@ -1046,7 +1046,7 @@ function PricingBilling({ user }) {
 
           {/* Bottom Legal Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            <span>© 2026 GST Buddy AI. All rights reserved.</span>
+            <span>© 2026 GST Buddy AI. {t('pricing_all_rights')}</span>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <span style={{ fontWeight: 600 }}>{t('made_for_india', 'Made with precision for Indian Businesses')}</span>
             </div>

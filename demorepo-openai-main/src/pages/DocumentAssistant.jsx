@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Tesseract from 'tesseract.js';
 import { analyzeDocument } from '../services/aiService';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 function DocumentAssistant() {
+  const { t } = useTranslation();
   // Entitlement is resolved from the server — localStorage is display cache only.
   const [activePlan, setActivePlan] = useState('free');
 
@@ -125,9 +127,9 @@ function DocumentAssistant() {
       {/* Title Header */}
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>AI Document Assistant</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('docassist_title')}</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Upload official tax notices, demand letters, vendor agreements, and business contracts. AI will extract key terms and draft formal responses.
+            {t('docassist_subtitle')}
           </p>
         </div>
 
@@ -140,7 +142,7 @@ function DocumentAssistant() {
           fontSize: '0.75rem',
           textAlign: 'right'
         }}>
-          <div>Documents analyzed: <strong>{documentCount} / {limit === Infinity ? 'Unlimited' : limit}</strong></div>
+          <div>{t('docassist_docs_analyzed')}: <strong>{documentCount} / {limit === Infinity ? t('docassist_unlimited') : limit}</strong></div>
           <div style={{ width: '120px', background: 'var(--bg-tertiary)', height: '4px', borderRadius: '2px', display: 'inline-block', overflow: 'hidden', marginTop: '0.25rem' }}>
             <div style={{ width: `${limit === Infinity ? 100 : Math.min(100, (documentCount / limit) * 100)}%`, background: documentCount >= limit ? 'var(--error)' : 'var(--theme-primary)', height: '100%' }}></div>
           </div>
@@ -167,7 +169,7 @@ function DocumentAssistant() {
         
         {/* Upload Column */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Scan Notice / Agreement</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>{t('docassist_scan_notice')}</h3>
           
           <div style={{ border: '2px dashed var(--border-color)', padding: '2.5rem', textAlign: 'center', borderRadius: 'var(--radius-lg)', background: 'var(--bg-primary)' }}>
             <span style={{ display: 'block', marginBottom: '1rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
@@ -176,7 +178,7 @@ function DocumentAssistant() {
               </svg>
             </span>
             <input type="file" onChange={handleDocUpload} accept="image/*,application/pdf" style={{ display: 'block', margin: '0 auto 1.5rem', fontSize: '0.85rem' }} />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supported formats: JPG, PNG, PDF documents (max 5MB)</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('docassist_formats')}</span>
           </div>
 
           {docPreview && (
@@ -190,7 +192,7 @@ function DocumentAssistant() {
               )}
 
               <button onClick={handleAnalyze} disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-                {loading ? `Analyzing document context (${progress}%)...` : '⚡ AI Extract & Audit Document'}
+                {loading ? `${t('docassist_analyzing')} (${progress}%)...` : `⚡ ${t('docassist_extract')}`}
               </button>
             </div>
           )}
@@ -200,8 +202,8 @@ function DocumentAssistant() {
         {loading && !docExtracted && (
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', justifyContent: 'center', alignItems: 'center' }}>
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mb-4"></div>
-            <strong style={{ fontSize: '0.95rem' }}>Processing legal contextual models...</strong>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '280px' }}>Extracting clauses, comparing statutory GST liabilities, and drafting response frameworks.</p>
+            <strong style={{ fontSize: '0.95rem' }}>{t('docassist_processing')}</strong>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '280px' }}>{t('docassist_processing_desc')}</p>
           </div>
         )}
 
@@ -209,34 +211,34 @@ function DocumentAssistant() {
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Classification</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_classification')}</span>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>{docExtracted.documentType}</h3>
               </div>
               <span className={`badge-premium ${docExtracted.riskLevel === 'critical' || docExtracted.riskLevel === 'high' ? 'badge-critical' : 'badge-excellent'}`} style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>
-                Risk: {docExtracted.riskLevel}
+                {t('docassist_risk')}: {docExtracted.riskLevel}
               </span>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>AI Executive Summary</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_exec_summary')}</span>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--text-secondary)' }}>{docExtracted.summary}</p>
             </div>
 
             <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Important Clauses / Refs</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_clauses')}</span>
                 <ul style={{ paddingLeft: '1.1rem', margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                   {docExtracted.clauses?.map((sec, i) => <li key={i}>{sec}</li>)}
                 </ul>
               </div>
               <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Compliance Deadline</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_deadline')}</span>
                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', fontWeight: 800, color: docExtracted.deadlines !== 'N/A' ? 'var(--error)' : 'var(--text-secondary)' }}>{docExtracted.deadlines}</p>
               </div>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Required Compliance Actions</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_actions')}</span>
               <ul style={{ paddingLeft: '1.1rem', margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                 {docExtracted.actionItems?.map((act, i) => <li key={i}>{act}</li>)}
               </ul>
@@ -244,7 +246,7 @@ function DocumentAssistant() {
 
             {docExtracted.suggestedResponse && (
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Suggested Response Letter Draft</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('docassist_response_draft')}</span>
                 <textarea 
                   readOnly 
                   value={docExtracted.suggestedResponse}
@@ -258,7 +260,7 @@ function DocumentAssistant() {
                   className="btn btn-outline" 
                   style={{ width: '100%', marginTop: '0.75rem', padding: '0.5rem' }}
                 >
-                  📋 Copy Draft Response to Clipboard
+                  📋 {t('docassist_copy_response')}
                 </button>
               </div>
             )}

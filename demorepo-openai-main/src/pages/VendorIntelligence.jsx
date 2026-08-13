@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getUserBills } from '../services/firebaseDataService';
+import { useTranslation } from 'react-i18next';
 
 function VendorIntelligence({ user }) {
+  const { t } = useTranslation();
   const [bills, setBills] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
     return localStorage.getItem('activeBusinessId') || null;
@@ -67,19 +69,19 @@ function VendorIntelligence({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Vendor Intelligence Dashboard</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('vendorintel_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Evaluate vendor risk ratings, Input Tax Credit (ITC) reconciliation history, and invoice statistics.
+          {t('vendorintel_subtitle')}
         </p>
       </div>
 
       {/* Grid ledger */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Active Vendor Profiles</h3>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('vendorintel_profiles')}</h3>
 
         {list.length === 0 ? (
           <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
-            No vendor data available. Upload purchase invoices to compile profiles automatically.
+            {t('vendorintel_no_data')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -92,19 +94,19 @@ function VendorIntelligence({ user }) {
 
                 <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>Invoices</span>
+                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>{t('vendorintel_invoices')}</span>
                     <strong style={{ fontSize: '1.1rem' }}>{ven.totalInvoices}</strong>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>Total Volume</span>
+                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>{t('vendorintel_total_volume')}</span>
                     <strong style={{ fontSize: '1.1rem' }}>₹{Math.round(ven.totalValue).toLocaleString()}</strong>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>Filing Compliance</span>
+                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>{t('vendorintel_filing_compliance')}</span>
                     <strong style={{ fontSize: '1.1rem', color: ven.complianceRate >= 90 ? 'var(--success)' : 'var(--warning)' }}>{ven.complianceRate}%</strong>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>Risk Index</span>
+                    <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)', display: 'block' }}>{t('vendorintel_risk_index')}</span>
                     <span className={`badge-premium ${ven.risk === 'High' ? 'badge-critical' : ven.risk === 'Medium' ? 'badge-average' : 'badge-excellent'}`} style={{ fontSize: '0.65rem', marginTop: '0.125rem' }}>
                       {ven.risk}
                     </span>

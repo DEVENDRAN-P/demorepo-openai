@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserBills } from '../services/firebaseDataService';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 function AuditCenter({ user }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [bills, setBills] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
@@ -107,9 +109,9 @@ function AuditCenter({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>AI Audit Center</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('audit_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Real-time auditing checks matching duplication, mathematical integrity, fonts manipulation, and compliance leakages.
+          {t('audit_subtitle')}
         </p>
       </div>
 
@@ -117,23 +119,23 @@ function AuditCenter({ user }) {
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Detections Found</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('audit_detections')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: (activePlan !== 'free' && auditDetections.length > 0) ? 'var(--error)' : 'var(--success)' }}>
-            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Locked</span> : `${auditDetections.length} Alerts`}
+            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> {t('audit_locked')}</span> : `${auditDetections.length} ${t('audit_alerts')}`}
           </div>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--success)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Duplication Scans</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('audit_duplication')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--text-primary)' }}>
-            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Locked</span> : `${bills.length} Verified`}
+            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> {t('audit_locked')}</span> : `${bills.length} ${t('audit_verified')}`}
           </div>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Fonts & Layouts Integrity</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('audit_fonts_integrity')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--success)' }}>
-            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Locked</span> : '100% Secure'}
+            {activePlan === 'free' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> {t('audit_locked')}</span> : `100% ${t('audit_secure')}`}
           </div>
         </div>
 
@@ -141,7 +143,7 @@ function AuditCenter({ user }) {
 
       {/* Detections ledger */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Audit Warnings & Anomalies</h3>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('audit_warnings')}</h3>
 
         {activePlan === 'free' ? (
           <div style={{ 
@@ -160,9 +162,9 @@ function AuditCenter({ user }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <strong style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>AI Audit Center is Locked</strong>
+            <strong style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('audit_center_locked')}</strong>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '500px', lineHeight: '1.6', marginBottom: '1.75rem' }}>
-              Automatically audit your invoice data mathematical accuracy, identify double-upload duplicates, scan layout integrity inconsistencies, and detect potential auditor flags.
+              {t('audit_center_locked_desc')}
             </p>
             <button 
               onClick={() => {
@@ -172,14 +174,14 @@ function AuditCenter({ user }) {
               className="btn btn-primary" 
               style={{ background: 'var(--primary-600)', padding: '0.75rem 2rem', fontSize: '0.85rem' }}
             >
-              Upgrade to Pro (₹199/mo)
+              {t('audit_upgrade_pro')}
             </button>
           </div>
         ) : (
           <>
             {auditDetections.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                ✓ Clean ledger. Duplications checks fully verified.
+                ✓ {t('audit_clean_ledger')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -191,7 +193,7 @@ function AuditCenter({ user }) {
                         <strong style={{ fontSize: '0.9rem' }}>Invoice #{det.bill.invoiceNumber || 'INV-AUTO'}</strong>
                       </div>
                       <span className={`badge-premium ${det.severity === 'Critical' ? 'badge-critical' : 'badge-average'}`} style={{ fontSize: '0.65rem' }}>
-                        {det.severity} Risk
+                        {det.severity} {t('audit_risk')}
                       </span>
                     </div>
 
@@ -200,7 +202,7 @@ function AuditCenter({ user }) {
                     </p>
 
                     <div style={{ padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: 'var(--theme-secondary-light)' }}>
-                      <strong>Recommended Business Action:</strong> {det.action}
+                      <strong>{t('audit_recommended_action')}:</strong> {det.action}
                     </div>
 
                     <button 
@@ -208,7 +210,7 @@ function AuditCenter({ user }) {
                       className="btn btn-outline" 
                       style={{ marginTop: '1rem', padding: '0.4rem 1rem', fontSize: '0.75rem' }}
                     >
-                      View Invoice Details
+                      {t('audit_view_details')}
                     </button>
                   </div>
                 ))}
@@ -219,7 +221,7 @@ function AuditCenter({ user }) {
               <div style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--theme-primary)', textAlign: 'center', marginTop: '1.5rem' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '0.5rem', color: 'var(--text-tertiary)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  Math Calculations and OCR Quality checks are locked. Upgrade to the <strong>Business Plan</strong> to enable automatic mathematical verification, risk scoring, and vendor reconciliation triggers.
+                  {t('audit_math_locked')} <strong>Business {t('audit_plan')}</strong> {t('audit_math_locked_desc')}.
                 </span>
                 <button 
                   onClick={() => {
@@ -229,7 +231,7 @@ function AuditCenter({ user }) {
                   className="btn btn-primary" 
                   style={{ marginLeft: '1rem', padding: '0.35rem 0.75rem', fontSize: '0.7rem', background: 'var(--primary-600)' }}
                 >
-                  Upgrade to Business
+                  {t('audit_upgrade_business')}
                 </button>
               </div>
             )}

@@ -73,7 +73,7 @@ function Settings({ user }) {
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    setSaveIndicator('Saving settings profile changes...');
+    setSaveIndicator(t('settings_saving'));
     try {
       await saveUserProfile({
         name: profile.name,
@@ -86,11 +86,11 @@ function Settings({ user }) {
         gstin: profile.gstin
       });
       setIsDirty(false);
-      setSaveIndicator('✅ Profile settings updated successfully!');
+      setSaveIndicator('✅ ' + t('settings_saved'));
       setTimeout(() => setSaveIndicator(''), 4000);
     } catch (err) {
       console.error(err);
-      setSaveIndicator('❌ Error updating settings profile.');
+      setSaveIndicator('❌ ' + t('settings_save_error'));
       setTimeout(() => setSaveIndicator(''), 4000);
     } finally {
       setLoading(false);
@@ -123,10 +123,10 @@ function Settings({ user }) {
         reminderSchedule: aiConfig.reminderSchedule,
       });
       setIsDirty(false);
-      setSaveIndicator('✅ AI and automation configurations saved!');
+      setSaveIndicator('✅ ' + t('settings_ai_saved'));
     } catch (err) {
       console.error(err);
-      setSaveIndicator('❌ Error saving AI automation rules.');
+      setSaveIndicator('❌ ' + t('settings_ai_save_error'));
     } finally {
       setTimeout(() => setSaveIndicator(''), 3000);
     }
@@ -198,7 +198,7 @@ function Settings({ user }) {
       </div>
 
       {/* Layout Split: Tab menu vs Workspace */}
-      <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '2.5rem', alignItems: 'start' }}>
+      <div className="settings-grid">
         
         {/* Left Side Tab Navigation */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -268,11 +268,11 @@ function Settings({ user }) {
           {/* Tab 1: Business Profile & GST */}
           {activeTab === 'business' && (
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Business Registry Information</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_business_registry')}</h3>
               
               <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Owner Full Name</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_owner_name')}</label>
                   <input 
                     type="text" 
                     value={profile.name}
@@ -281,7 +281,7 @@ function Settings({ user }) {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Business Shop Name</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_shop_name')}</label>
                   <input 
                     type="text" 
                     value={profile.shopName}
@@ -293,7 +293,7 @@ function Settings({ user }) {
 
               <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>GSTIN Identifier ID</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_gstin')}</label>
                   <input 
                     type="text" 
                     value={profile.gstin}
@@ -303,21 +303,21 @@ function Settings({ user }) {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Filing Interval Frequency</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_filing_frequency')}</label>
                   <select 
                     value={profile.filingFrequency} 
                     onChange={(e) => handleInputChange('filingFrequency', e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                   >
-                    <option value="monthly">Monthly returns (GSTR-1, GSTR-3B)</option>
-                    <option value="quarterly">Quarterly filing returns (QRMP scheme)</option>
+                    <option value="monthly">{t('settings_monthly_returns')}</option>
+                    <option value="quarterly">{t('settings_quarterly_returns')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2" style={{ gap: '1.25rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Company Corporate Reg Number (CIN)</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_cin')}</label>
                   <input 
                     type="text" 
                     value={profile.companyRegistrationNo}
@@ -326,7 +326,7 @@ function Settings({ user }) {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Director DIN identifiers</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_din')}</label>
                   <input 
                     type="text" 
                     value={profile.directorDIN}
@@ -338,7 +338,7 @@ function Settings({ user }) {
 
               <div className="grid grid-cols-3" style={{ gap: '1.25rem' }}>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Registered Office Address</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_registered_address')}</label>
                   <input 
                     type="text" 
                     value={profile.address}
@@ -347,7 +347,7 @@ function Settings({ user }) {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Primary Phone</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_primary_phone')}</label>
                   <input 
                     type="text" 
                     value={profile.phone}
@@ -358,7 +358,7 @@ function Settings({ user }) {
               </div>
 
               <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: 'fit-content', padding: '0.6rem 1.5rem', marginTop: '1rem', marginLeft: 'auto' }}>
-                Save Registry Profile
+                {t('settings_save_registry')}
               </button>
             </form>
           )}
@@ -367,11 +367,11 @@ function Settings({ user }) {
           {activeTab === 'appearance' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Appearance Settings</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_appearance_title')}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
                   <div>
-                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Application Dark Theme</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Toggle theme rendering elements across the workspace.</span>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>{t('settings_dark_theme')}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('settings_dark_theme_desc')}</span>
                   </div>
                   <button onClick={toggleDarkMode} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     {isDarkMode ? (
@@ -395,8 +395,8 @@ function Settings({ user }) {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                   <div>
-                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Workspace Language Preference</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Choose your preferred language for reports, alerts, and dashboard navigation.</span>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>{t('settings_language_pref')}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('settings_language_pref_desc')}</span>
                   </div>
                   <select 
                     value={i18n.language} 
@@ -416,14 +416,14 @@ function Settings({ user }) {
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Branding Options</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_branding')}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem' }}>Upload Brand Custom Logo</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Replace the default sidebar and navbar logos.</span>
+                      <strong style={{ display: 'block', fontSize: '0.9rem' }}>{t('settings_upload_logo')}</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('settings_upload_logo_desc')}</span>
                     </div>
-                    <button className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }} onClick={() => alert('Branding uploads require an Enterprise SaaS subscription tier.')}>Upload SVG</button>
+                    <button className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }} onClick={() => alert(t('settings_branding_alert'))}>{t('settings_upload_svg')}</button>
                   </div>
                 </div>
               </div>
@@ -434,11 +434,11 @@ function Settings({ user }) {
           {activeTab === 'security' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Two-Factor Authentication (2FA)</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_2fa')}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
                   <div>
-                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>Enable OTP Authentication</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Require a verification code sent to your phone at login.</span>
+                    <strong style={{ display: 'block', fontSize: '0.9rem' }}>{t('settings_enable_otp')}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('settings_enable_otp_desc')}</span>
                   </div>
                   <input 
                     type="checkbox" 
@@ -446,14 +446,14 @@ function Settings({ user }) {
                     disabled
                     style={{ width: '42px', height: '20px', cursor: 'not-allowed', opacity: 0.5 }}
                   />
-                  <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)', display: 'block', marginTop: '0.25rem' }}>Coming soon — requires server-side OTP verification.</span>
+                  <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)', display: 'block', marginTop: '0.25rem' }}>{t('settings_coming_soon_otp')}</span>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Connected Devices & Sessions</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_sessions')}</h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '1rem', lineHeight: '1.5' }}>
-                  Session management is not yet available. Signing out ends the current session; Firebase handles token expiry automatically.
+                  {t('settings_sessions_desc')}
                 </p>
               </div>
             </div>
@@ -462,10 +462,10 @@ function Settings({ user }) {
           {/* Tab 4: AI & Automation Rules */}
           {activeTab === 'automation' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>AI Parsing Configuration</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_ai_parsing')}</h3>
               
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>OCR Confidence Threshold: {aiConfig.confidenceThreshold}%</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>{t('settings_confidence_threshold')}: {aiConfig.confidenceThreshold}%</label>
                 <input 
                   type="range" 
                   min={50} 
@@ -477,13 +477,13 @@ function Settings({ user }) {
                   }}
                   style={{ width: '100%', cursor: 'pointer' }}
                 />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>Invoices with extraction confidence scores below this limit will be flagged for manual vetting.</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>{t('settings_confidence_desc')}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
                 <div>
-                  <strong style={{ display: 'block', fontSize: '0.9rem' }}>Auto-Approve Vetted Invoices</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Automatically sync high-confidence items directly to the ledger database.</span>
+                  <strong style={{ display: 'block', fontSize: '0.9rem' }}>{t('settings_auto_approve')}</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('settings_auto_approve_desc')}</span>
                 </div>
                 <input 
                   type="checkbox" 
@@ -497,7 +497,7 @@ function Settings({ user }) {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Email Reminder Dispatch Schedule</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('settings_reminder_schedule')}</label>
                 <select 
                   value={aiConfig.reminderSchedule} 
                   onChange={(e) => {
@@ -506,14 +506,14 @@ function Settings({ user }) {
                   }}
                   style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="5days_before">5 Days prior to filing due date</option>
-                  <option value="3days_before">3 Days prior to filing due date</option>
-                  <option value="1day_before">1 Day prior to filing due date (Urgent)</option>
+                  <option value="5days_before">{t('settings_reminder_5d')}</option>
+                  <option value="3days_before">{t('settings_reminder_3d')}</option>
+                  <option value="1day_before">{t('settings_reminder_1d')}</option>
                 </select>
               </div>
 
               <button onClick={handleSaveAiRules} className="btn btn-primary" style={{ width: 'fit-content', marginLeft: 'auto', padding: '0.5rem 1rem' }}>
-                Save AI Rules
+                {t('settings_save_ai_rules')}
               </button>
             </div>
           )}
@@ -523,32 +523,32 @@ function Settings({ user }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>API Access Tokens</h3>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{t('settings_api_tokens')}</h3>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem' }}>
                   <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '1.5rem 1rem', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    API access is included with the <strong>Business plan</strong>. Keys are issued and managed server-side — they cannot be generated from the browser for security reasons. Upgrade to Business to enable API integrations.
+                    {t('settings_api_access')}
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>Corporate Integrations</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>{t('settings_integrations')}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '1.25rem', fontSize: '0.8rem' }}>
                   <div style={{ display: 'flex', justifyBetween: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                     <div>
-                      <strong>Tally Prime ERP Integration</strong>
-                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Auto-sync vetted invoices directly into accounting ledgers.</span>
+                      <strong>{t('settings_tally')}</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{t('settings_tally_desc')}</span>
                     </div>
-                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>Coming soon</button>
+                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>{t('coming_soon')}</button>
                   </div>
                   <div style={{ display: 'flex', justifyBetween: 'space-between' }}>
                     <div>
-                      <strong>Zoho Books Workspace Sync</strong>
-                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Sync real-time tax credits between platforms.</span>
+                      <strong>{t('settings_zoho')}</strong>
+                      <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{t('settings_zoho_desc')}</span>
                     </div>
-                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>Coming soon</button>
+                    <button disabled className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.725rem', alignSelf: 'center', opacity: 0.5, cursor: 'not-allowed' }}>{t('coming_soon')}</button>
                   </div>
                 </div>
               </div>

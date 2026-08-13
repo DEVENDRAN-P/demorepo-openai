@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserBills } from '../services/firebaseDataService';
+import { useTranslation } from 'react-i18next';
 
 function Reports({ user }) {
+  const { t } = useTranslation();
   const [monthlyData, setMonthlyData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [summary, setSummary] = useState({ paid: 0, collected: 0, credit: 0, netPayable: 0 });
@@ -222,13 +224,13 @@ Vetted and certified by GST Buddy Compliance Engine.`;
             </svg>
           </span>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>
-              No Analytics Data Found
+              {t('reports_no_data')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
-              Upload invoices in the dashboard to review category breakdowns, monthly tax trends, and cost efficiency recommendations.
+              {t('reports_no_data_desc')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
-              Upload First Invoice
+              {t('reports_upload_first')}
             </a>
           </div>
         </div>
@@ -244,27 +246,27 @@ Vetted and certified by GST Buddy Compliance Engine.`;
         {/* Header summary cards */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-            <h1 className="gradient-text" style={{ fontSize: '1.75rem', margin: 0 }}>Analytics & Reports</h1>
+            <h1 className="gradient-text" style={{ fontSize: '1.75rem', margin: 0 }}>{t('reports_title')}</h1>
             <button onClick={handleDownloadExecutiveReport} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Download Executive Summary Report
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> {t('reports_download_executive')}
             </button>
           </div>
 
           <div className="grid grid-cols-4" style={{ gap: '1rem' }}>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>GST COLLECTED (OUTWARD)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('reports_gst_collected')}</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{summary.collected.toLocaleString()}</div>
             </div>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem', borderLeft: '4px solid var(--error)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>GST PAID (INWARD)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('reports_gst_paid')}</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{summary.paid.toLocaleString()}</div>
             </div>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem', borderLeft: '4px solid var(--success)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>INPUT CREDIT RECOVERED</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('reports_input_credit')}</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--success)' }}>₹{summary.credit.toLocaleString()}</div>
             </div>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>NET PAYABLE TAX</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('reports_net_payable')}</span>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{summary.netPayable.toLocaleString()}</div>
             </div>
           </div>
@@ -275,7 +277,7 @@ Vetted and certified by GST Buddy Compliance Engine.`;
           
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-secondary-light)' }}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/></svg> Daily AI Financial Insights
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-secondary-light)' }}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/></svg> {t('reports_daily_insights')}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
               {aiInsights.map((ins, i) => (
@@ -289,7 +291,7 @@ Vetted and certified by GST Buddy Compliance Engine.`;
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-primary-light)' }}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> AI Tax Saving Recommendations
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-primary-light)' }}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> {t('reports_tax_recommendations')}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.85rem' }}>
               {recommendations.map((rec, i) => (
@@ -308,7 +310,7 @@ Vetted and certified by GST Buddy Compliance Engine.`;
           
           {/* Category Breakdown (Pie) */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--primary-600)' }}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Expense Category Breakdown</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--primary-600)' }}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> {t('reports_expense_breakdown')}</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -333,7 +335,7 @@ Vetted and certified by GST Buddy Compliance Engine.`;
 
           {/* Monthly Comparison (Bar) */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-primary-light)' }}><path d="M3 3v18h18"/><path d="m18.7 9.3-5.1 5.2-2.8-2.7-4.3 4.3"/></svg> Monthly GST Tax Paid vs. Collected</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--theme-primary-light)' }}><path d="M3 3v18h18"/><path d="m18.7 9.3-5.1 5.2-2.8-2.7-4.3 4.3"/></svg> {t('reports_monthly_gst')}</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />

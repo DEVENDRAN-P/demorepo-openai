@@ -1,61 +1,53 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function Logo({ variant = 'main', size, className, style }) {
-  const logoSrc = "/gstlog.svg";
+export function Logo({ variant = 'main', size, className, style, onClick }) {
   const { t } = useTranslation();
+
+  let logoSrc = "/logo-main.svg";
+  if (variant === 'icon') logoSrc = "/logo-icon.svg";
+  else if (variant === 'sidebar') logoSrc = "/logo-sidebar.svg";
+  else if (variant === 'white') logoSrc = "/logo-white.svg";
+  else if (variant === 'dark') logoSrc = "/logo-dark.svg";
 
   if (variant === 'icon') {
     return (
       <img
         src={logoSrc}
-        alt={t('app_name')}
-        width={size || '40px'}
-        height={size || '40px'}
+        alt={t('app_name', 'GST Buddy AI')}
+        width={size || '36px'}
+        height={size || '36px'}
         className={className}
-        style={{ borderRadius: '8px', objectFit: 'contain', ...style }}
+        onClick={onClick}
+        style={{ borderRadius: '8px', objectFit: 'contain', cursor: onClick ? 'pointer' : 'default', ...style }}
       />
     );
   }
 
   if (variant === 'sidebar') {
     return (
-      <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...style }}>
-        <img
-          src={logoSrc}
-          alt={t('app_name')}
-          width="32px"
-          height="32px"
-          style={{ borderRadius: '6px', objectFit: 'contain' }}
-        />
-        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-          GST Buddy <span style={{ color: 'var(--theme-primary, #6366f1)' }}>AI</span>
-        </span>
-      </div>
+      <img
+        src={logoSrc}
+        alt={t('app_name', 'GST Buddy AI')}
+        width={size || '145px'}
+        height="auto"
+        className={className}
+        onClick={onClick}
+        style={{ objectFit: 'contain', cursor: onClick ? 'pointer' : 'default', ...style }}
+      />
     );
   }
 
-  const textColor = variant === 'white' ? '#ffffff' : 'var(--text-primary)';
-  const secondaryColor = variant === 'white' ? '#9ca3af' : 'var(--text-secondary)';
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', ...style }} className={className}>
-      <img
-        src={logoSrc}
-        alt={t('app_name')}
-        width="45px"
-        height="45px"
-        style={{ borderRadius: '8px', objectFit: 'contain' }}
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-        <span style={{ fontSize: '1.25rem', fontWeight: 800, color: textColor, letterSpacing: '-0.5px' }}>
-          GST Buddy <span style={{ color: 'var(--theme-primary, #6366f1)' }}>AI</span>
-        </span>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: secondaryColor, letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '2px' }}>
-          COMPLIANCE OS
-        </span>
-      </div>
-    </div>
+    <img
+      src={logoSrc}
+      alt={t('app_name', 'GST Buddy AI')}
+      width={size || '160px'}
+      height="auto"
+      className={className}
+      onClick={onClick}
+      style={{ objectFit: 'contain', cursor: onClick ? 'pointer' : 'default', ...style }}
+    />
   );
 }
 

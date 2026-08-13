@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { signup, login, loginWithGoogle } from '../services/authService';
 import { perf } from '../services/perfService';
@@ -52,6 +53,7 @@ const IconLock = ({ size = 18, color = "#4f46e5" }) => (
 
 function SignupPage({ isLoginInitial = false }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   
   const [selectedPlan, setSelectedPlan] = useState('free');
@@ -128,41 +130,41 @@ function SignupPage({ isLoginInitial = false }) {
     const errors = {};
 
     if (!formData.name.trim()) {
-      errors.name = 'Full Name is required';
+      errors.name = t('auth.err_name_required');
     }
     
     if (!formData.businessName.trim()) {
-      errors.businessName = 'Business Name is required';
+      errors.businessName = t('auth.err_business_name_required');
     }
 
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = t('auth.err_email_required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = 'Invalid email format';
+      errors.email = t('auth.err_invalid_email');
     }
 
     if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required';
+      errors.phone = t('auth.err_phone_required');
     } else if (!/^[0-9]{10}$/.test(formData.phone.trim())) {
-      errors.phone = 'Phone number must be exactly 10 digits';
+      errors.phone = t('auth.err_phone_10_digits');
     }
 
     if (formData.gstin.trim()) {
       if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstin.trim().toUpperCase())) {
-        errors.gstin = 'Invalid GSTIN format';
+        errors.gstin = t('auth.err_invalid_gstin');
       }
     }
 
     if (!formData.password) {
-      errors.password = 'Password is required';
+      errors.password = t('auth.err_password_required');
     } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
+      errors.password = t('auth.err_password_min');
     }
 
     if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
+      errors.confirmPassword = t('auth.err_confirm_password');
     } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = t('auth.err_password_mismatch');
     }
 
     setFieldErrors(errors);
@@ -190,7 +192,7 @@ function SignupPage({ isLoginInitial = false }) {
       });
       perf.end('FIREBASE_SIGNUP');
 
-      setSuccessMessage('Account created successfully! Preparing onboarding...');
+      setSuccessMessage(t('auth.success_account_created'));
       perf.end('SIGNUP_TOTAL');
 
       setTimeout(() => {
@@ -198,11 +200,11 @@ function SignupPage({ isLoginInitial = false }) {
       }, 1500);
 
     } catch (err) {
-      let errorMessage = 'Failed to create account. Please try again.';
+      let errorMessage = t('auth.err_create_failed');
       if (err.code === 'auth/email-already-in-use') {
-        errorMessage = 'Email already registered. Please login instead.';
+        errorMessage = t('auth.err_email_registered');
       } else if (err.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak. Please use at least 6 characters.';
+        errorMessage = t('auth.err_password_weak');
       }
       setError(errorMessage);
     } finally {
@@ -222,15 +224,15 @@ function SignupPage({ isLoginInitial = false }) {
     setSuccessMessage('');
 
     if (!formData.email.trim()) {
-      setError('Email is required');
+      setError(t('auth.err_email_required'));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      setError('Invalid email format');
+      setError(t('auth.err_invalid_email'));
       return;
     }
     if (!formData.password) {
-      setError('Password is required');
+      setError(t('auth.err_password_required'));
       return;
     }
 
@@ -243,7 +245,7 @@ function SignupPage({ isLoginInitial = false }) {
       await login(formData.email.trim(), formData.password);
       perf.end('FIREBASE_AUTH');
 
-      setSuccessMessage('Logged in successfully! Redirecting...');
+      setSuccessMessage(t('auth.success_logged_in'));
       perf.end('LOGIN_TOTAL');
 
       setTimeout(() => {
@@ -251,7 +253,7 @@ function SignupPage({ isLoginInitial = false }) {
       }, 1500);
 
     } catch (err) {
-      let errorMessage = 'Login failed. Please try again.';
+      let errorMessage = t('auth.err_login_failed');
 
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
         errorMessage = '❌ Invalid email or password. Please check your credentials.';
@@ -280,7 +282,7 @@ function SignupPage({ isLoginInitial = false }) {
 
     try {
       await loginWithGoogle();
-      setSuccessMessage(isLogin ? 'Logged in with Google successfully!' : 'Signed up with Google successfully!');
+      setSuccessMessage(isLogin ? t('auth.success_google_login') : t('auth.success_google_signup'));
 
       setTimeout(() => {
         redirectAfterAuth();
@@ -289,7 +291,7 @@ function SignupPage({ isLoginInitial = false }) {
     } catch (err) {
       setLoading(false);
       if (err.code === 'auth/popup-closed-by-user') return;
-      setError('Google Sign In failed. Please try again.');
+      setError(t('auth.err_google_failed'));
     }
   };
 
@@ -325,10 +327,10 @@ function SignupPage({ isLoginInitial = false }) {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem 0' }}>
-            {isLogin ? 'Welcome Back' : 'Create Your Account'}
+            {isLogin ? t('auth.welcome_back') : t('auth.create_your_account')}
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>
-            {isLogin ? 'Sign in to AI GST & Compliance Buddy' : 'Setup compliance tracking in less than 2 minutes.'}
+            {isLogin ? t('auth.sign_in_subtitle') : t('auth.signup_subtitle')}
           </p>
         </div>
 
@@ -346,9 +348,9 @@ function SignupPage({ isLoginInitial = false }) {
           fontSize: '0.85rem'
         }}>
           <div>
-            <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700, display: 'block', opacity: 0.8, letterSpacing: '0.05em' }}>Selected Plan</span>
+            <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700, display: 'block', opacity: 0.8, letterSpacing: '0.05em' }}>{t('auth.selected_plan')}</span>
             <strong style={{ fontSize: '0.95rem' }}>
-              {selectedPlan === 'free' ? 'Free Tier (₹0/mo)' : selectedPlan === 'pro' ? 'Pro Plan (₹199/mo)' : 'Business Plan (₹499/mo)'}
+              {selectedPlan === 'free' ? t('auth.plan_free') : selectedPlan === 'pro' ? t('auth.plan_pro') : t('auth.plan_business')}
             </strong>
           </div>
           <button 
@@ -535,14 +537,14 @@ function SignupPage({ isLoginInitial = false }) {
               boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
             }}
           >
-            {loading ? (isLogin ? 'Signing In...' : 'Creating Account...') : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? (isLogin ? t('auth.signing_in') : t('auth.creating_account')) : (isLogin ? t('auth.sign_in') : t('auth.create_account'))}
           </button>
         </form>
 
         {/* Google Register */}
         <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
-          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{isLogin ? 'OR SIGN IN WITH' : 'OR REGISTER WITH'}</span>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{isLogin ? t('auth.or_sign_in_with') : t('auth.or_register_with')}</span>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
         </div>
 
@@ -572,17 +574,17 @@ function SignupPage({ isLoginInitial = false }) {
             <path fill="#FBBC05" d="M5.35 14.4c-.25-.75-.39-1.56-.39-2.4s.14-1.65.39-2.4l-3.87-3C.68 8.24 0 10.04 0 12s.68 3.76 1.48 5.4l3.87-3z"/>
             <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.35 1.1-4.26 1.1-3.09 0-5.73-2.51-6.65-5.56l-3.87 3C3.37 20.32 7.35 23 12 23z"/>
           </svg>
-          {isLogin ? 'Sign In with Google' : 'Google Sign In'}
+          {isLogin ? t('auth.sign_in_with_google') : t('auth.google_sign_in')}
         </button>
 
         <p style={{ textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8', marginTop: '1.75rem', marginBottom: 0 }}>
           {isLogin ? (
             <>
-              Don't have an account? <Link to="/signup" onClick={handleToggleMode} style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>Create Account →</Link>
+              Don't have an account? <Link to="/signup" onClick={handleToggleMode} style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>{t('auth.create_account_link')} →</Link>
             </>
           ) : (
             <>
-              Already have an account? <Link to="/login" onClick={handleToggleMode} style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>Log In</Link>
+              Already have an account? <Link to="/login" onClick={handleToggleMode} style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>{t('auth.login_link')}</Link>
             </>
           )}
         </p>

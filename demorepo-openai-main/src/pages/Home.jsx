@@ -29,9 +29,6 @@ import {
   TrendingUp,
   AlertTriangle,
   FolderLock,
-  ChevronLeft,
-  ChevronRight,
-  Star,
   Cpu,
   Scan
 } from 'lucide-react';
@@ -96,8 +93,6 @@ export default function Home() {
   const [isTyping, setIsTyping] = useState(false);
   const [chatState, setChatState] = useState('idle'); // idle, typing-user, user-sent, typing-ai, ai-sent
 
-  // SECTION 7: Testimonials Carousel state
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   const handleStartFree = () => {
     if (isAuthenticated) {
@@ -120,82 +115,74 @@ export default function Home() {
   // Timeline Steps
   const timelineSteps = [
     { 
-      title: "Upload Invoice", 
-      subtitle: "PDF, Image, or Bulk XML", 
-      metric: "< 100ms Ingestion", 
-      desc: "Drag & drop PDF, JPG, PNG invoices into the secure portal.", 
+      title: t('upload_invoice'), 
+      subtitle: t('pdf_image_xml'), 
+      metric: t('timeline_metric_ingestion'), 
+      desc: t('timeline_desc_upload'), 
       icon: Upload 
     },
     { 
-      title: "AI OCR", 
-      subtitle: "Neural Text Extraction", 
-      metric: "99.8% Accuracy", 
-      desc: "AI vision parses and extracts invoice text instantly.", 
+      title: t('ai_ocr'), 
+      subtitle: t('neural_extraction'), 
+      metric: t('timeline_metric_accuracy'), 
+      desc: t('timeline_desc_ocr'), 
       icon: Scan 
     },
     { 
-      title: "Invoice Intelligence", 
-      subtitle: "HSN & Tax Rate Audit", 
-      metric: "Auto HSN Match", 
-      desc: "Verify item lines, taxes, HSN codes, and vendor GSTINs.", 
+      title: t('invoice_intelligence'), 
+      subtitle: t('hsn_tax_audit'), 
+      metric: t('timeline_metric_hsn'), 
+      desc: t('timeline_desc_hsn'), 
       icon: Cpu 
     },
     { 
-      title: "GST Validation", 
-      subtitle: "GSTR-2B Cross-Check", 
-      metric: "Portal Live Query", 
-      desc: "Cross-check invoices with the government database automatically.", 
+      title: t('gst_validation'), 
+      subtitle: t('gstr2b_cross_check'), 
+      metric: t('timeline_metric_portal'), 
+      desc: t('timeline_desc_portal'), 
       icon: ShieldCheck 
     },
     { 
-      title: "Compliance Check", 
-      subtitle: "Penalty & Risk Filter", 
-      metric: "Zero Penalty Risk", 
-      desc: "Review ITC eligibility and mismatch flags instantly.", 
+      title: t('compliance_check'), 
+      subtitle: t('penalty_risk_filter'), 
+      metric: t('timeline_metric_zero'), 
+      desc: t('timeline_desc_compliance'), 
       icon: FileCheck 
     },
     { 
-      title: "AI Accountant", 
-      subtitle: "Automated Ledger Entry", 
-      metric: "100% Automated", 
-      desc: "Auto-draft returns, GSTR-1 and GSTR-3B filings.", 
+      title: t('ai_accountant'), 
+      subtitle: t('automated_ledger'), 
+      metric: t('timeline_metric_100'), 
+      desc: t('timeline_desc_ledger'), 
       icon: Bot 
     },
     { 
-      title: "Dashboard Sync", 
-      subtitle: "Real-time Tax Forecasts", 
-      metric: "Live Analytics", 
-      desc: "Update Business Health analytics and tax forecasts live.", 
+      title: t('dashboard_sync'), 
+      subtitle: t('real_time_forecasts'), 
+      metric: t('timeline_metric_live'), 
+      desc: t('timeline_desc_sync'), 
       icon: LayoutDashboard 
     }
-  ];
-
-  // Testimonials
-  const testimonials = [
-    { name: "Haripandi N", role: "Co-Founder & CTO, NexGen Solutions", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop", quote: "GST Buddy AI completely automated our monthly returns. The AI Invoice reader correctly parsed ₹80 Lakhs of legacy physical invoices with zero manual corrections. Highly recommended!", rating: 5 },
-    { name: "Dharshini M", role: "Head of Finance, LogiTech India", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop", quote: "Our tax compliance audit score improved to 99% within two weeks of deployment. We tracked down non-filing suppliers and saved ₹2.4 Lakhs in blocked Input Tax Credits (ITC) using the dashboard.", rating: 5 },
-    { name: "Dhulasi Raman", role: "Managing Director, Raman Enterprises", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop", quote: "The ROI was instant. We used to spend hours cross-referencing ledger reports with GSTR sheets. GST Buddy AI's natural language chatbot answers all legal inquiries perfectly.", rating: 5 },
-    { name: "Devendran P", role: "Founder, GST Buddy AI", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop", quote: "Our mission is to help Indian merchants automate tax compliance, reduce overheads, and escape late notices. We are proud to support over 10,000 active Indian businesses.", rating: 5 }
   ];
 
   // Navigation Dropdown Content
   const navDropdowns = {
     Platform: [
-      { name: 'AI Invoice Intelligence', desc: '99% extraction accuracy for bills', icon: BrainCircuit, path: '/bill-upload' },
-      { name: 'GST Forms & Filing', desc: 'Auto-draft GSTR-1 & GSTR-3B', icon: FileSpreadsheet, path: '/gst-forms' },
-      { name: 'Filing & Returns Tracker', desc: 'Track compliance history live', icon: FileCheck, path: '/compliance' },
-      { name: 'Audit & Penalty Prevention', desc: 'Identify tax risks instantly', icon: ShieldCheck, path: '/audit' }
+      { name: t('ai_invoice_intelligence'), desc: t('nav_ai_invoice_desc'), icon: BrainCircuit, path: '/bill-upload' },
+      { name: t('gst_forms'), desc: t('nav_gst_forms_desc'), icon: FileSpreadsheet, path: '/gst-forms' },
+      { name: t('nav_returns_tracker'), desc: t('nav_returns_tracker_desc'), icon: FileCheck, path: '/compliance' },
+      { name: t('nav_audit_penalty'), desc: t('nav_audit_penalty_desc'), icon: ShieldCheck, path: '/audit' }
     ],
     Solutions: [
-      { name: 'For MSMEs', desc: 'Tailored for small & medium businesses', icon: Users, path: '/dashboard' },
-      { name: 'For Tax Practitioners', desc: 'Manage multi-client records easily', icon: Layers, path: '/business' },
-      { name: 'For Online Sellers', desc: 'Sync e-commerce invoices effortlessly', icon: TrendingUp, path: '/dashboard' }
+      { name: t('nav_for_msmes'), desc: t('nav_for_msmes_desc'), icon: Users, path: '/dashboard' },
+      { name: t('nav_tax_practitioners'), desc: t('nav_tax_practitioners_desc'), icon: Layers, path: '/business' },
+      { name: t('nav_online_sellers'), desc: t('nav_online_sellers_desc'), icon: TrendingUp, path: '/dashboard' }
     ],
     Resources: [
-      { name: 'AI Compliance Chat', desc: 'Ask compliance questions 24/7', icon: Bot, path: '/agent' },
-      { name: 'Document Vault', desc: 'Manage secure financial documents', icon: FolderLock, path: '/documents' },
-      { name: 'System Integrations', desc: 'Secure Rest APIs and telemetry tracking', icon: Terminal, path: '/settings' },
-      { name: 'Penalty Calculator', desc: 'Verify potential interest & late fees', icon: AlertTriangle, path: '/penalty' }
+      { name: t('nav_compliance_chat'), desc: t('nav_compliance_chat_desc'), icon: Bot, path: '/agent' },
+      { name: t('nav_document_vault'), desc: t('nav_document_vault_desc'), icon: FolderLock, path: '/documents' },
+      { name: t('nav_integrations'), desc: t('nav_integrations_desc'), icon: Terminal, path: '/settings' },
+      { name: t('nav_penalty_calculator'), desc: t('nav_penalty_calculator_desc'), icon: AlertTriangle, path: '/penalty' }
     ]
   };
 
@@ -207,13 +194,6 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [timelineSteps.length]);
 
-  // Run Testimonial Carousel Auto Cycle
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [testimonials.length]);
 
   // Run Live AI Chat Simulation loop
   useEffect(() => {
@@ -226,7 +206,7 @@ export default function Home() {
     
     if (chatState === 'typing-user') {
       let currentText = "";
-      const fullText = "How much GST should I pay this month?";
+      const fullText = t('chat_sim_user_question');
       let index = 0;
       const interval = setInterval(() => {
         if (index < fullText.length) {
@@ -256,9 +236,9 @@ export default function Home() {
           ...prev,
           {
             sender: 'ai',
-            text: "Based on your uploaded invoices, your estimated GST liability for this month is **₹24,560**.",
-            itc: "Potential Input Tax Credit (ITC): **₹12,340**.",
-            badge: "AI Recommendation: File before August 20, 2026 to avoid penalty charges."
+            text: t('chat_sim_ai_answer'),
+            itc: t('chat_sim_itc'),
+            badge: t('chat_sim_badge')
           }
         ]);
         setChatState('ai-sent');
@@ -371,13 +351,13 @@ export default function Home() {
           NEW
         </span>
         <span className="truncate">
-          AI Compliance Assistant is live! Automate GST filing, invoice analysis, and notice handling with AI.
+          {t('announcement_text')}
         </span>
         <button 
           onClick={handleStartFree}
           className="text-[#38BDF8] hover:text-[#7DD3FC] font-semibold underline flex-shrink-0 transition-opacity hover:opacity-85"
         >
-          Explore Now →
+          {t('explore_now')} →
         </button>
       </div>
 
@@ -400,7 +380,7 @@ export default function Home() {
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <button className="flex items-center gap-1 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-4 transition-colors bg-transparent border-0 cursor-pointer">
-                  <span>{menuName}</span>
+                  <span>{t(menuName === 'Platform' ? 'platform' : menuName === 'Solutions' ? 'solutions' : 'resources')}</span>
                   <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === menuName ? 'rotate-180 text-indigo-500' : 'text-slate-400'}`} />
                 </button>
 
@@ -440,13 +420,13 @@ export default function Home() {
               onClick={() => navigate('/pricing')}
               className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
             >
-              Pricing
+              {t('pricing')}
             </span>
             <span 
               onClick={() => handleMockNav('/support')}
               className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
             >
-              About Us
+              {t('about_us')}
             </span>
           </nav>
 
@@ -456,7 +436,7 @@ export default function Home() {
               onClick={() => handleMockNav('/support')}
               className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-transparent border-0 cursor-pointer"
             >
-              Contact Sales
+              {t('contact_sales')}
             </button>
             
             {isAuthenticated ? (
@@ -464,14 +444,14 @@ export default function Home() {
                 onClick={() => navigate('/dashboard')}
                 className="btn-hover-effect px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-600/25 border-0 cursor-pointer"
               >
-                Go to Dashboard
+                {t('go_to_dashboard')}
               </button>
             ) : (
               <button 
                 onClick={handleStartFree}
                 className="btn-hover-effect px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-600/25 border-0 cursor-pointer"
               >
-                Start Free
+                {t('start_free')}
               </button>
             )}
 
@@ -532,21 +512,21 @@ export default function Home() {
             {/* Sparkle Badge Top */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/50 dark:bg-indigo-950/40 dark:border-indigo-900/30 text-indigo-950 dark:text-indigo-200 text-xs font-bold mb-6 tracking-wide shadow-sm shadow-indigo-500/5">
               <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
-              <span>AI-Powered GST Compliance Platform for MSMEs</span>
+              <span>{t('hero_badge')}</span>
             </div>
 
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-slate-900 dark:text-white mb-6">
-              Automate GST. <br />
-              Stay Compliant. <br />
+              {t('hero_title_automate')} <br />
+              {t('hero_title_compliant')} <br />
               <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent inline-block">
-                Grow Your Business.
+                {t('hero_title_grow')}
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-8 max-w-xl">
-              Upload invoices, get AI insights, file returns, and manage compliance — all in one intelligent platform.
+              {t('hero_subtitle')}
             </p>
 
             {/* Feature Cards Grid (4 Horizontal Feature Cards in 2x2 grid) */}
@@ -558,8 +538,8 @@ export default function Home() {
                   <BrainCircuit size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">AI Invoice Intelligence</h4>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 font-bold mt-0.5">99% Accuracy</p>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">{t('ai_invoice_intelligence')}</h4>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-bold mt-0.5">{t('accuracy_99')}</p>
                 </div>
               </div>
 
@@ -569,8 +549,8 @@ export default function Home() {
                   <FileCheck size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">GST Compliance</h4>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-bold mt-0.5">Always On Track</p>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">{t('gst_compliance')}</h4>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-bold mt-0.5">{t('always_on_track')}</p>
                 </div>
               </div>
 
@@ -580,8 +560,8 @@ export default function Home() {
                   <ShieldCheck size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">Penalty Prevention</h4>
-                  <p className="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5">AI Risk Detection</p>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">{t('penalty_prevention')}</h4>
+                  <p className="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5">{t('ai_risk_detection')}</p>
                 </div>
               </div>
 
@@ -591,8 +571,8 @@ export default function Home() {
                   <MessageSquare size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">AI Accountant</h4>
-                  <p className="text-xs text-amber-600 dark:text-amber-500 font-bold mt-0.5">Ask Anything</p>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">{t('ai_accountant')}</h4>
+                  <p className="text-xs text-amber-600 dark:text-amber-500 font-bold mt-0.5">{t('ask_anything')}</p>
                 </div>
               </div>
 
@@ -604,7 +584,7 @@ export default function Home() {
                 onClick={handleStartFree}
                 className="btn-hover-effect inline-flex items-center gap-2 px-7 py-4 text-base font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 rounded-lg shadow-xl shadow-indigo-600/25 border-0 cursor-pointer animate-pulse"
               >
-                <span>Start Free Now</span>
+                <span>{t('start_free_now')}</span>
                 <ArrowRight size={18} />
               </button>
 
@@ -613,7 +593,7 @@ export default function Home() {
                 className="btn-hover-effect inline-flex items-center gap-2 px-6 py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer transition-colors shadow-sm"
               >
                 <Play size={16} fill="currentColor" className="text-slate-600 dark:text-slate-300" />
-                <span>Book a Demo</span>
+                <span>{t('book_a_demo')}</span>
               </button>
             </div>
 
@@ -628,8 +608,8 @@ export default function Home() {
                 <FileSpreadsheet size={16} />
               </div>
               <div className="text-left">
-                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">GST Status</span>
-                <strong className="text-xs text-purple-600 dark:text-purple-400 font-extrabold">GSTR-1 Ready</strong>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('gst_status')}</span>
+                <strong className="text-xs text-purple-600 dark:text-purple-400 font-extrabold">{t('feature_gstr1_ready')}</strong>
               </div>
             </div>
 
@@ -638,8 +618,8 @@ export default function Home() {
                 <Upload size={16} />
               </div>
               <div className="text-left">
-                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">AI extraction</span>
-                <strong className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold">₹1.2L ITC Drafted</strong>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('feature_ai_extraction')}</span>
+                <strong className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold">{t('feature_itc_drafted')}</strong>
               </div>
             </div>
 
@@ -648,8 +628,8 @@ export default function Home() {
                 <ShieldCheck size={16} />
               </div>
               <div className="text-left">
-                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Notice Audit</span>
-                <strong className="text-xs text-blue-600 dark:text-blue-400 font-extrabold">0 Risks Found</strong>
+                <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{t('feature_notice_audit')}</span>
+                <strong className="text-xs text-blue-600 dark:text-blue-400 font-extrabold">{t('feature_zero_risks')}</strong>
               </div>
             </div>
 
@@ -663,16 +643,16 @@ export default function Home() {
                   </div>
 
                   {[
-                    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', active: true },
-                    { label: 'Invoices', icon: FileText, path: '/invoices' },
-                    { label: 'AI Accountant', icon: Bot, path: '/agent' },
-                    { label: 'Compliance Center', icon: ShieldCheck, path: '/compliance' },
-                    { label: 'Returns & Filing', icon: FileCheck, path: '/gst-forms' },
-                    { label: 'Document Assistant', icon: FolderLock, path: '/documents' },
-                    { label: 'Reports', icon: FileSpreadsheet, path: '/reports' },
-                    { label: 'Business Health', icon: CheckCircle2, path: '/health' },
-                    { label: 'Notifications', icon: Bell, path: '/notifications' },
-                    { label: 'Settings', icon: Settings, path: '/settings' }
+                    { label: t('dashboard'), icon: LayoutDashboard, path: '/dashboard', active: true },
+                    { label: t('invoices_ledger'), icon: FileText, path: '/invoices' },
+                    { label: t('ai_accountant'), icon: Bot, path: '/agent' },
+                    { label: t('compliance_center'), icon: ShieldCheck, path: '/compliance' },
+                    { label: t('mock_returns_filing'), icon: FileCheck, path: '/gst-forms' },
+                    { label: t('document_assistant'), icon: FolderLock, path: '/documents' },
+                    { label: t('analytics_reports'), icon: FileSpreadsheet, path: '/reports' },
+                    { label: t('business_health_index'), icon: CheckCircle2, path: '/health' },
+                    { label: t('notifications'), icon: Bell, path: '/notifications' },
+                    { label: t('settings'), icon: Settings, path: '/settings' }
                   ].map((item) => (
                     <button
                       key={item.label}
@@ -693,8 +673,8 @@ export default function Home() {
               <div className="flex-1 flex flex-col overflow-hidden text-left bg-white dark:bg-slate-900">
                 <header className="h-14 border-b border-slate-200/80 dark:border-slate-800/80 px-4 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-none">Business Health</h3>
-                    <span className="text-[10px] text-slate-400 font-medium mt-0.5 inline-block">Real-time audit track</span>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-none">{t('business_health_index')}</h3>
+                    <span className="text-[10px] text-slate-400 font-medium mt-0.5 inline-block">{t('mock_realtime_audit')}</span>
                   </div>
                   
                   <div className="flex items-center gap-2.5">
@@ -708,7 +688,7 @@ export default function Home() {
                       className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[9.5px] inline-flex items-center gap-1 border-0 cursor-pointer"
                     >
                       <Upload size={10} />
-                      <span>+ Upload Invoice</span>
+                      <span>{t('mock_upload_invoice')}</span>
                     </button>
 
                     <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors">
@@ -730,29 +710,29 @@ export default function Home() {
                         96
                       </div>
                       <div className="min-w-0">
-                        <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">Health</span>
-                        <strong className="text-[10px] text-slate-900 dark:text-white block font-extrabold truncate mt-0.5">96 Excellent</strong>
-                        <span className="text-[7.5px] text-emerald-500 font-bold leading-none">+12% vs last mth</span>
+                        <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">{t('mock_health')}</span>
+                        <strong className="text-[10px] text-slate-900 dark:text-white block font-extrabold truncate mt-0.5">96 {t('mock_excellent')}</strong>
+                        <span className="text-[7.5px] text-emerald-500 font-bold leading-none">+12% {t('mock_vs_last_month')}</span>
                       </div>
                     </div>
 
                     <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-2.5">
-                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">GST Liability</span>
+                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">{t('mock_gst_liability')}</span>
                       <strong className="text-[11.5px] text-red-500 font-extrabold block mt-0.5">₹24,560</strong>
-                      <span className="text-[8px] text-slate-400 font-semibold leading-none">This Month</span>
+                      <span className="text-[8px] text-slate-400 font-semibold leading-none">{t('mock_this_month')}</span>
                     </div>
 
                     <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-2.5">
-                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">ITC Available</span>
+                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">{t('mock_itc_available')}</span>
                       <strong className="text-[11.5px] text-emerald-500 font-extrabold block mt-0.5">₹12,340</strong>
-                      <span className="text-[8px] text-slate-400 font-semibold leading-none">This Month</span>
+                      <span className="text-[8px] text-slate-400 font-semibold leading-none">{t('mock_this_month')}</span>
                     </div>
 
                     <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-2.5">
-                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">Compliance Score</span>
+                      <span className="block text-[8px] text-slate-400 font-bold uppercase leading-none">{t('mock_compliance_score')}</span>
                       <strong className="text-[11.5px] text-slate-900 dark:text-white font-extrabold block mt-0.5">98%</strong>
                       <span className="text-[8.5px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5 leading-none">
-                        <CheckCircle2 size={8} /> Up to date
+                        <CheckCircle2 size={8} /> {t('mock_up_to_date')}
                       </span>
                     </div>
                   </div>
@@ -762,23 +742,23 @@ export default function Home() {
                       <div>
                         <h4 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 flex items-center gap-1 leading-none">
                           <Sparkles size={10} className="text-indigo-500" />
-                          <span>AI Insights</span>
+                          <span>{t('mock_ai_insights')}</span>
                         </h4>
                         
                         <div className="flex flex-col gap-2">
                           <div className="border-l-2 border-indigo-500 pl-1.5">
-                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">3 invoices need review</p>
-                            <span className="text-[7.5px] text-slate-400 leading-none">Potential ITC of ₹6,450</span>
+                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('mock_3_invoices_review')}</p>
+                            <span className="text-[7.5px] text-slate-400 leading-none">{t('mock_potential_itc')}</span>
                           </div>
                           
                           <div className="border-l-2 border-amber-500 pl-1.5">
-                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">GSTR-3B due in 5 days</p>
-                            <span className="text-[7.5px] text-slate-400 leading-none">For April 2024</span>
+                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('mock_gstr3b_due')}</p>
+                            <span className="text-[7.5px] text-slate-400 leading-none">{t('mock_for_april')}</span>
                           </div>
 
                           <div className="border-l-2 border-emerald-500 pl-1.5">
-                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">Cash flow looks healthy</p>
-                            <span className="text-[7.5px] text-slate-400 leading-none">Keep up the good work!</span>
+                            <p className="text-[9px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('mock_cashflow_healthy')}</p>
+                            <span className="text-[7.5px] text-slate-400 leading-none">{t('mock_keep_good_work')}</span>
                           </div>
                         </div>
                       </div>
@@ -787,14 +767,14 @@ export default function Home() {
                         onClick={() => handleMockNav('/insights')}
                         className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline text-left mt-3 bg-transparent border-0 cursor-pointer p-0"
                       >
-                        View All Insights →
+                        {t('mock_view_all_insights')} →
                       </button>
                     </div>
 
                     <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider leading-none">Monthly Overview</h4>
+                          <h4 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider leading-none">{t('mock_monthly_overview')}</h4>
                           <div className="flex gap-1.5 text-[7px] font-bold text-slate-400 select-none">
                             <span className="text-indigo-600">● Rev</span>
                             <span className="text-blue-500">● Exp</span>
@@ -816,12 +796,12 @@ export default function Home() {
 
                     <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 leading-none">Top Expenses</h4>
+                        <h4 className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 leading-none">{t('mock_top_expenses')}</h4>
                         
                         <div className="flex flex-col gap-2">
                           <div>
                             <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-0.5">
-                              <span className="truncate">Purchases</span>
+                              <span className="truncate">{t('mock_exp_purchases')}</span>
                               <span>₹41,370 (32%)</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -831,7 +811,7 @@ export default function Home() {
 
                           <div>
                             <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-0.5">
-                              <span className="truncate">Office Expenses</span>
+                              <span className="truncate">{t('mock_exp_office')}</span>
                               <span>₹12,450 (18%)</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -841,7 +821,7 @@ export default function Home() {
 
                           <div>
                             <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-0.5">
-                              <span className="truncate">Travel</span>
+                              <span className="truncate">{t('mock_exp_travel')}</span>
                               <span>₹8,370 (12%)</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -851,7 +831,7 @@ export default function Home() {
 
                           <div>
                             <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-0.5">
-                              <span className="truncate">Marketing</span>
+                              <span className="truncate">{t('mock_exp_marketing')}</span>
                               <span>₹6,550 (9%)</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -872,7 +852,7 @@ export default function Home() {
         {/* TRUST / SOCIAL PROOF SECTION */}
         <section className="text-center mb-32 relative z-10">
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400 mb-8 select-none">
-            Trusted by 10,000+ Businesses Across India
+            {t('trusted_by')}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-60 dark:opacity-40">
@@ -899,15 +879,15 @@ export default function Home() {
           <div className="text-center mb-12 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mb-4 select-none">
               <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
-              Automated Invoice Journey
+              {t('automated_invoice_journey')}
             </div>
             
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              How GST Buddy AI Works
+              {t('how_it_works')}
             </h2>
             
             <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-semibold mt-2.5">
-              The automated compliance journey of an invoice, from upload to tax filing.
+              {t('automated_journey')}
             </p>
           </div>
 
@@ -1015,11 +995,11 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                        Step {activeTimelineStep + 1} of 7
+                        {t('step_x_of_y', { current: activeTimelineStep + 1, total: timelineSteps.length })}
                       </span>
                       <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Active Engine
+                        {t('active_engine')}
                       </span>
                     </div>
                     
@@ -1060,10 +1040,10 @@ export default function Home() {
         >
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Talk to Your AI Accountant
+              {t('talk_to_ai_accountant')}
             </h2>
             <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-semibold mt-2.5">
-              Interact with the compliance chatbot to fetch calculations and audit recommendations in real time.
+              {t('talk_to_ai_accountant_desc')}
             </p>
           </div>
 
@@ -1073,11 +1053,11 @@ export default function Home() {
             <div className="bg-slate-50/80 dark:bg-slate-950/80 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-xs font-extrabold text-slate-900 dark:text-white">AI Accountant Online</span>
+                <span className="text-xs font-extrabold text-slate-900 dark:text-white">{t('ai_accountant_online')}</span>
               </div>
               
               <div className="flex gap-2">
-                {['File GSTR-3B', 'Verify ITC'].map(label => (
+                {[t('file_gstr3b'), t('verify_itc')].map(label => (
                   <button 
                     key={label}
                     onClick={() => setChatState('typing-user')}
@@ -1121,13 +1101,13 @@ export default function Home() {
                               onClick={() => handleMockNav('/gst-forms')}
                               className="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-[10px] font-bold hover:bg-indigo-700 border-0 cursor-pointer"
                             >
-                              File GSTR-3B
+                              {t('file_gstr3b')}
                             </button>
                             <button 
                               onClick={() => handleMockNav('/invoices')}
                               className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-[10px] font-bold hover:bg-slate-50 cursor-pointer"
                             >
-                              View Unmatched Invoices
+                              {t('view_unmatched_invoices')}
                             </button>
                           </div>
                         </div>
@@ -1164,7 +1144,7 @@ export default function Home() {
                 <Counter value={25000} suffix="+" />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
-                Invoices Processed
+                {t('stat_invoices_processed')}
               </span>
             </div>
 
@@ -1174,7 +1154,7 @@ export default function Home() {
                 <Counter value={98.7} suffix="%" decimals={1} />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
-                AI Accuracy Rate
+                {t('stat_ai_accuracy')}
               </span>
             </div>
 
@@ -1184,7 +1164,7 @@ export default function Home() {
                 <Counter value={92} suffix="%" />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
-                Penalty Reduction
+                {t('stat_penalty_reduction')}
               </span>
             </div>
 
@@ -1194,7 +1174,7 @@ export default function Home() {
                 <Counter value={85} suffix="%" />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
-                Time Saved Monthly
+                {t('stat_time_saved')}
               </span>
             </div>
 
@@ -1204,113 +1184,13 @@ export default function Home() {
                 <Counter value={10000} suffix="+" />
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-2">
-                Active Indian Businesses
+                {t('stat_active_businesses')}
               </span>
             </div>
 
           </div>
         </section>
 
-        {/* SECTION 7: Testimonials (Auto-Sliding Glass Carousel) */}
-        <motion.section 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-          className="mb-32 relative z-10"
-        >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Trusted by CFOs & Founders
-            </h2>
-            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-semibold mt-2.5">
-              Read how GST Buddy AI has transformed legal accounting for merchants.
-            </p>
-          </div>
-
-          <div className="max-w-2xl mx-auto relative group">
-            
-            {/* Sliding Container Wrapper */}
-            <div className="overflow-hidden rounded-3xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 p-8 md:p-10 backdrop-blur-md shadow-xl">
-              
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTestimonial}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-left"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-5">
-                    {[...Array(testimonials[activeTestimonial].rating)].map((_, i) => (
-                      <Star key={i} size={16} className="fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-
-                  {/* Testimonial Quote */}
-                  <p className="text-base text-slate-700 dark:text-slate-200 font-medium leading-relaxed italic mb-8">
-                    "{testimonials[activeTestimonial].quote}"
-                  </p>
-
-                  {/* Customer Info row */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <img 
-                        src={testimonials[activeTestimonial].avatar} 
-                        alt={testimonials[activeTestimonial].name} 
-                        className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200"
-                      />
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
-                          {testimonials[activeTestimonial].name}
-                        </h4>
-                        <span className="text-xs text-slate-400 font-medium mt-1 inline-block">
-                          {testimonials[activeTestimonial].role}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-full border border-emerald-200/30">
-                      <CheckCircle2 size={12} />
-                      <span>Verified Buyer</span>
-                    </span>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-
-            </div>
-
-            {/* Pagination sleek dots */}
-            <div className="flex justify-center gap-2 mt-6">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveTestimonial(i)}
-                  className={`w-2.5 h-2.5 rounded-full border-0 cursor-pointer transition-all duration-200 ${
-                    i === activeTestimonial ? 'bg-indigo-600 w-6' : 'bg-slate-300 dark:bg-slate-750 hover:bg-slate-400'
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Slide Arrows with Glass background */}
-            <button
-              onClick={() => setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
-              className="absolute left-[-20px] md:left-[-60px] top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-slate-200/80 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-md cursor-pointer hover:scale-105 transition-transform"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)}
-              className="absolute right-[-20px] md:right-[-60px] top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-slate-200/80 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-md cursor-pointer hover:scale-105 transition-transform"
-            >
-              <ChevronRight size={20} />
-            </button>
-
-          </div>
-        </motion.section>
 
         {/* SECTION 8: Final Hero CTA Banner */}
         <motion.section 
@@ -1326,10 +1206,10 @@ export default function Home() {
 
             <div className="relative z-10 max-w-2xl mx-auto">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-5 leading-tight text-slate-900 dark:text-white">
-                Ready to Let AI Handle Your GST?
+                {t('cta_ready_title')}
               </h2>
               <p className="text-sm sm:text-base text-slate-600 dark:text-indigo-100 font-medium leading-relaxed mb-10 max-w-xl mx-auto">
-                Join over 10,000+ businesses saving 20+ hours and escaping late notices every month.
+                {t('cta_ready_desc')}
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-4">
@@ -1337,14 +1217,14 @@ export default function Home() {
                   onClick={handleStartFree}
                   className="btn-hover-effect px-7 py-4 bg-indigo-600 dark:bg-white text-white dark:text-indigo-950 hover:bg-indigo-700 dark:hover:bg-slate-50 rounded-lg text-base font-extrabold shadow-xl border-0 cursor-pointer"
                 >
-                  Start Free Trial
+                  {t('start_free_trial')}
                 </button>
                 <button 
                   onClick={() => handleMockNav('/support')}
                   className="btn-hover-effect px-6 py-4 bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/15 border border-slate-350 dark:border-white/20 rounded-lg text-base font-bold flex items-center gap-2 cursor-pointer"
                 >
                   <Play size={16} fill="currentColor" />
-                  <span>Book Demo</span>
+                  <span>{t('book_demo')}</span>
                 </button>
               </div>
             </div>
@@ -1353,155 +1233,48 @@ export default function Home() {
 
       </main>
 
-      {/* 9. ULTRA-PROFESSIONAL DUAL-THEME FOOTER */}
+      {/* 9. CONCISE DUAL-THEME FOOTER */}
       <footer className="w-full mt-24 border-t border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-[#0B0F19] py-16 text-left relative z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-
-
-          {/* 6-Column Navigation Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 lg:gap-6 mb-16">
-            
-            {/* Brand Column (Spans 2 cols) */}
-            <div className="col-span-2 flex flex-col items-start gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[var(--primary-600)] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
-                  GST
-                </div>
-                <span className="font-extrabold text-lg leading-none text-slate-900 dark:text-white tracking-tight">
-                  GST Buddy <span className="text-[var(--primary-600)]">AI</span>
-                </span>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            {/* Brand Column */}
+            <div className="flex flex-col items-start gap-4">
+              <Logo variant={isDarkMode ? "white" : "main"} size="160px" />
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-sm">
-                Automating finance compliance, invoice extraction, and returns drafting using Google Gemini AI.
+                {t('footer_tagline', 'AI-powered GST compliance for businesses.')}
               </p>
-              
-              {/* SSL & ISO Badges */}
-              <div className="flex gap-2 flex-wrap mt-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
-                  256-Bit SSL Secured
-                </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200/50 text-[var(--primary-600)] dark:text-indigo-400 text-[10px] font-bold">
-                  ISO 27001 Certified
-                </span>
-              </div>
-
-              {/* Social Media Buttons */}
-              <div className="flex gap-4 mt-3">
-                <span className="text-xs font-bold text-slate-400 hover:text-[var(--primary-600)] transition-colors cursor-pointer">Twitter</span>
-                <span className="text-xs font-bold text-slate-400 hover:text-[var(--primary-600)] transition-colors cursor-pointer">LinkedIn</span>
-                <span className="text-xs font-bold text-slate-400 hover:text-[var(--primary-600)] transition-colors cursor-pointer">YouTube</span>
-                <span className="text-xs font-bold text-slate-400 hover:text-[var(--primary-600)] transition-colors cursor-pointer">GitHub</span>
-              </div>
             </div>
 
             {/* Product Column */}
             <div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 leading-none">
-                Product
+                {t('footer_product', 'Product')}
               </h4>
               <ul className="list-none p-0 m-0 flex flex-col gap-3">
                 <li>
-                  <span onClick={() => handleMockNav('/agent')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    AI Accountant
+                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('dashboard_title', 'Dashboard')}
                   </span>
                 </li>
                 <li>
-                  <span onClick={() => handleMockNav('/bill-upload')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Invoice Intelligence
+                  <span onClick={() => handleMockNav('/invoices')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('invoices', 'Invoices')}
                   </span>
                 </li>
                 <li>
                   <span onClick={() => handleMockNav('/compliance')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Compliance Center
+                    {t('compliance_center', 'GST Compliance')}
                   </span>
                 </li>
                 <li>
-                  <span onClick={() => handleMockNav('/audit')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    ITC Reconciliation
+                  <span onClick={() => handleMockNav('/reports')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('analytics_reports', 'Reports')}
                   </span>
                 </li>
                 <li>
-                  <span onClick={() => navigate('/pricing')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Pricing Plans
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Tally & Zoho Sync
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Solutions Column */}
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 leading-none">
-                Solutions
-              </h4>
-              <ul className="list-none p-0 m-0 flex flex-col gap-3">
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    For MSMEs
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    For CAs & Tax Pros
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Enterprise & Multi-GSTIN
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    E-commerce Sellers
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/dashboard')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Retail & Wholesale
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Resources Column */}
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 leading-none">
-                Resources
-              </h4>
-              <ul className="list-none p-0 m-0 flex flex-col gap-3">
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    GST Rate Calculator
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    HSN Code Finder
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    E-Invoicing Guide
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Blog & Tax News
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    API Documentation
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Live System Status
+                  <span onClick={() => handleMockNav('/pricing')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('pricing_billing', 'Pricing')}
                   </span>
                 </li>
               </ul>
@@ -1510,59 +1283,57 @@ export default function Home() {
             {/* Company Column */}
             <div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 leading-none">
-                Company
+                {t('footer_company', 'Company')}
               </h4>
               <ul className="list-none p-0 m-0 flex flex-col gap-3">
                 <li>
                   <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    About Us
+                    {t('about_us', 'About')}
                   </span>
                 </li>
                 <li>
                   <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Careers <span className="ml-1 text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase">Hiring</span>
+                    {t('help', 'Support')}
                   </span>
                 </li>
                 <li>
                   <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Contact Sales
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Privacy Policy
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Terms of Service
-                  </span>
-                </li>
-                <li>
-                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
-                    Security & Trust
+                    {t('contact_sales', 'Contact')}
                   </span>
                 </li>
               </ul>
             </div>
 
+            {/* Legal Column */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 leading-none">
+                {t('footer_legal', 'Legal')}
+              </h4>
+              <ul className="list-none p-0 m-0 flex flex-col gap-3">
+                <li>
+                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('footer_privacy', 'Privacy Policy')}
+                  </span>
+                </li>
+                <li>
+                  <span onClick={() => handleMockNav('/support')} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[var(--primary-600)] cursor-pointer transition-colors">
+                    {t('footer_terms', 'Terms of Service')}
+                  </span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <hr className="border-slate-200/60 dark:border-slate-800/65 my-8" />
 
           {/* Bottom Legal Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }} className="items-center text-center sm:items-start sm:text-left">
-              <span>
-                © 2026 GST Buddy AI. All rights reserved.
-              </span>
-            </div>
-            <div className="flex items-center gap-6 flex-wrap justify-center">
-              <span className="hidden sm:inline">•</span>
-              <span className="font-semibold text-slate-600 dark:text-slate-300">
-                {t('made_for_india', 'Made with precision for Indian Businesses')}
-              </span>
-            </div>
+            <span>
+              {t('footer_copyright', { year: 2026 })}
+            </span>
+            <span className="font-semibold text-slate-600 dark:text-slate-300">
+              {t('made_for_india', 'Made with precision for Indian Businesses')}
+            </span>
           </div>
 
         </div>

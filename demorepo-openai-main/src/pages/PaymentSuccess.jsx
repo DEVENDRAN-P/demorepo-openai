@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import { invalidatePlanCache } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 const getApiUrl = (path) => {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -13,6 +14,7 @@ const getApiUrl = (path) => {
 };
 
 function PaymentSuccess() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -96,8 +98,8 @@ function PaymentSuccess() {
   }, [location.search]);
 
   const planLabel = (plan) => {
-    if (plan === 'pro') return 'Pro Plan';
-    if (plan === 'business') return 'Business Plan';
+    if (plan === 'pro') return t('paymentsuccess_pro_plan');
+    if (plan === 'business') return t('paymentsuccess_business_plan');
     return plan || '—';
   };
 
@@ -137,9 +139,9 @@ Thank you for choosing GST Buddy AI!`;
             animation: 'spin 1s linear infinite', margin: '0 auto 1.5rem'
           }}></div>
           <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Verifying your payment...</h2>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>{t('paymentsuccess_verifying')}</h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            We are securely confirming your transaction with Cashfree. This usually takes a few seconds.
+            {t('paymentsuccess_verifying_desc')}
           </p>
         </div>
       </div>
@@ -170,9 +172,9 @@ Thank you for choosing GST Buddy AI!`;
 
         {isSuccess && (
           <>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Payment Confirmed!</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{t('paymentsuccess_confirmed')}</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-              Your payment was verified with Cashfree and your subscription is now active.
+              {t('paymentsuccess_confirmed_desc')}
             </p>
 
             {/* Transaction Summary Card */}
@@ -183,27 +185,27 @@ Thank you for choosing GST Buddy AI!`;
               display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '2rem'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Filing Tier</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_filing_tier')}</span>
                 <strong>{planLabel(payment?.plan)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Amount Paid</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_amount_paid')}</span>
                 <strong>{formatAmount(payment?.amount)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Payment ID</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_payment_id')}</span>
                 <strong style={{ fontFamily: 'monospace' }}>{payment?.paymentId || '—'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Order ID</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_order_id')}</span>
                 <strong style={{ fontFamily: 'monospace' }}>{payment?.orderId || '—'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Payment Method</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_payment_method')}</span>
                 <strong>{payment?.provider === 'cashfree' ? 'Cashfree' : payment?.provider || 'Cashfree'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Date</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('paymentsuccess_date')}</span>
                 <strong>{new Date().toISOString().split('T')[0]}</strong>
               </div>
             </div>
@@ -211,10 +213,10 @@ Thank you for choosing GST Buddy AI!`;
             {/* Action Buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button onClick={() => navigate('/dashboard')} className="btn btn-primary" style={{ padding: '0.75rem', width: '100%', fontWeight: 700 }}>
-                Go to Executive Dashboard
+                {t('paymentsuccess_go_dashboard')}
               </button>
               <button onClick={handleDownloadReceipt} className="btn btn-outline" style={{ padding: '0.75rem', width: '100%' }}>
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Download Statement Receipt
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> {t('paymentsuccess_download_receipt')}
               </button>
             </div>
           </>
@@ -222,7 +224,7 @@ Thank you for choosing GST Buddy AI!`;
 
         {isPending && (
           <>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Your payment is being processed.</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>{t('paymentsuccess_processing')}</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               {message || 'We are waiting for confirmation from Cashfree. Your plan will be activated automatically as soon as the payment is confirmed.'}
             </p>
@@ -232,10 +234,10 @@ Thank you for choosing GST Buddy AI!`;
                 className="btn btn-primary"
                 style={{ padding: '0.75rem', width: '100%', fontWeight: 700 }}
               >
-                Check Status Again
+                {t('paymentsuccess_check_status')}
               </button>
               <button onClick={() => navigate('/dashboard')} className="btn btn-outline" style={{ padding: '0.75rem', width: '100%' }}>
-                Go to Dashboard
+                {t('paymentsuccess_go_dashboard')}
               </button>
             </div>
           </>
@@ -243,16 +245,16 @@ Thank you for choosing GST Buddy AI!`;
 
         {!isSuccess && !isPending && (
           <>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Payment failed</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>{t('paymentsuccess_failed')}</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               {message || 'Your plan has not been upgraded.'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button onClick={() => navigate('/pricing')} className="btn btn-primary" style={{ padding: '0.75rem', width: '100%', fontWeight: 700 }}>
-                Try Again
+                {t('paymentsuccess_try_again')}
               </button>
               <button onClick={() => navigate('/dashboard')} className="btn btn-outline" style={{ padding: '0.75rem', width: '100%' }}>
-                Go to Dashboard
+                {t('paymentsuccess_go_dashboard')}
               </button>
             </div>
           </>

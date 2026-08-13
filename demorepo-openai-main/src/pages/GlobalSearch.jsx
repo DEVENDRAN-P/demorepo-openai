@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getUserBills, getUserActivityLogs } from '../services/firebaseDataService';
 import { getUserBusinesses } from '../utils/businessHelper';
+import { useTranslation } from 'react-i18next';
 
 const buildActivityTitle = (log) => {
   const action = log.action || 'activity';
@@ -18,6 +19,7 @@ const formatLogDate = (ts) => {
 };
 
 function GlobalSearch({ user }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -139,9 +141,9 @@ function GlobalSearch({ user }) {
       
       {/* Search Input Box */}
       <div style={{ marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Intelligent Workspace Search</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('globalsearch_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 1.25rem 0' }}>
-          Query across invoices, entities, vendor registries, GSTIN codes, and recent audit activity logs.
+          {t('globalsearch_subtitle')}
         </p>
 
         <form onSubmit={handleSearchSubmit}>
@@ -153,14 +155,14 @@ function GlobalSearch({ user }) {
               placeholder="Type query terms (e.g. 'Apex', '29ABCDE', 'invoice', 'raw material')..."
               style={{ flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-lg)', fontSize: '0.9rem', outline: 'none' }}
             />
-            <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 1.75rem' }}>Search</button>
+            <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 1.75rem' }}>{t('globalsearch_search')}</button>
           </div>
         </form>
       </div>
 
       {query.trim() && (
         <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Found <strong>{totalResults}</strong> matching results for "{query}"
+          {t('globalsearch_found')} <strong>{totalResults}</strong> {t('globalsearch_results')} "{query}"
         </div>
       )}
 
@@ -170,19 +172,19 @@ function GlobalSearch({ user }) {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mb-2"></div>
-            <div>Querying Firestore ledgers...</div>
+            <div>{t('globalsearch_querying')}</div>
           </div>
         ) : !query.trim() ? (
           <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-secondary)' }} className="glass-panel">
             <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🔎</span>
-            <strong>Enter search terms</strong>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>GSTINs, invoices, vendor merchants, billing payments, and workspace activities.</p>
+            <strong>{t('globalsearch_enter_terms')}</strong>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>{t('globalsearch_enter_terms_desc')}</p>
           </div>
         ) : totalResults === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-secondary)' }} className="glass-panel">
             <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📭</span>
-            <strong>No results matched</strong>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>Check spelling filters or try a different search phrase (e.g. 'BSNL', 'Apex').</p>
+            <strong>{t('globalsearch_no_results')}</strong>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>{t('globalsearch_no_results_desc')}</p>
           </div>
         ) : (
           <>
@@ -190,7 +192,7 @@ function GlobalSearch({ user }) {
             {matchedInvoices.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem', color: 'var(--theme-primary-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1zM16 8H8m8 4H8m6 4H8"/></svg> Matching Invoices ({matchedInvoices.length})</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1zM16 8H8m8 4H8m6 4H8"/></svg> {t('globalsearch_matching_invoices')} ({matchedInvoices.length})</span>
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {matchedInvoices.map((bill, index) => (
@@ -208,7 +210,7 @@ function GlobalSearch({ user }) {
                       <div style={{ textAlign: 'right' }}>
                         <strong style={{ display: 'block', fontSize: '0.9rem' }}>₹{(bill.totalAmount || 0).toLocaleString()}</strong>
                         <span className={`badge-premium ${bill.filed ? 'badge-excellent' : 'badge-average'}`} style={{ fontSize: '0.6rem', marginTop: '0.125rem' }}>
-                          {bill.filed ? 'Filed' : 'Pending'}
+                          {bill.filed ? t('globalsearch_filed') : t('globalsearch_pending')}
                         </span>
                       </div>
                     </div>
@@ -221,7 +223,7 @@ function GlobalSearch({ user }) {
             {matchedBusinesses.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem', color: 'var(--theme-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  🏢 Registered Workspaces ({matchedBusinesses.length})
+                  🏢 {t('globalsearch_workspaces')} ({matchedBusinesses.length})
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {matchedBusinesses.map((biz, index) => (
@@ -247,7 +249,7 @@ function GlobalSearch({ user }) {
             {matchedVendors.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  👥 Verified Vendor Merchants ({matchedVendors.length})
+                  👥 {t('globalsearch_vendors')} ({matchedVendors.length})
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {matchedVendors.map((vendor, index) => (
@@ -273,7 +275,7 @@ function GlobalSearch({ user }) {
             {matchedActivities.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  📋 Action Activities ({matchedActivities.length})
+                  📋 {t('globalsearch_activities')} ({matchedActivities.length})
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {matchedActivities.map((act, index) => (

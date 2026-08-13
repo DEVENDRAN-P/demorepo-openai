@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getUserBills, updateUserBill, deleteUserBill, logUserActivity } from '../services/firebaseDataService';
 import { scrollToTop } from '../utils/scroll';
 
 function Invoices({ user }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
@@ -160,7 +162,7 @@ function Invoices({ user }) {
       setTimeout(() => setSaveIndicator(''), 4000);
     } catch (e) {
       console.error(e);
-      alert('Error during bulk return filing.');
+      alert(t('bulk_filing_error'));
     } finally {
       setLoading(false);
     }
@@ -188,7 +190,7 @@ function Invoices({ user }) {
       setTimeout(() => setSaveIndicator(''), 4000);
     } catch (e) {
       console.error(e);
-      alert('Error during bulk deletion.');
+      alert(t('bulk_delete_error'));
     } finally {
       setLoading(false);
     }
@@ -268,15 +270,15 @@ function Invoices({ user }) {
       {/* Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Invoices Ledger</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('invoices_ledger')}</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Vetted corporate purchases and sales ledger. Verify classifications and export files.
+            {t('invoices_ledger_desc')}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button onClick={handleExportCSV} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>Export CSV</button>
-          <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Upload Invoice</button>
+          <button onClick={handleExportCSV} className="btn btn-outline" style={{ fontSize: '0.825rem' }}>{t('export_csv')}</button>
+          <button onClick={() => navigate('/bill-upload')} className="btn btn-primary" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> {t('upload_invoice')}</button>
         </div>
       </div>
 
@@ -285,56 +287,56 @@ function Invoices({ user }) {
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
           
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Search Ledger</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('search_ledger')}</label>
             <input 
               type="text"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              placeholder="Invoice #, supplier, notes..."
+              placeholder={t('search_placeholder_invoices')}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none' }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Filing Status</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('filing_status')}</label>
             <select 
               value={statusFilter} 
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="all">All Invoices</option>
-              <option value="pending">Pending Returns</option>
-              <option value="filed">Filed Returns</option>
-              <option value="approved">Approved / Vetted</option>
+              <option value="all">{t('all_invoices')}</option>
+              <option value="pending">{t('pending_returns')}</option>
+              <option value="filed">{t('filed_returns')}</option>
+              <option value="approved">{t('approved_vetted')}</option>
             </select>
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Category</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('category')}</label>
             <select 
               value={categoryFilter} 
               onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="all">All Categories</option>
-              <option value="raw material">Raw Material</option>
-              <option value="utilities">Utilities</option>
-              <option value="office supplies">Office Supplies</option>
-              <option value="services">Services</option>
+              <option value="all">{t('all_categories')}</option>
+              <option value="raw material">{t('cat_raw_material')}</option>
+              <option value="utilities">{t('cat_utilities')}</option>
+              <option value="office supplies">{t('cat_office_supplies')}</option>
+              <option value="services">{t('cat_services')}</option>
             </select>
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Sort By</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('sort_by')}</label>
             <select 
               value={sortField} 
               onChange={(e) => setSortField(e.target.value)}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="invoiceDate">Filing Date</option>
-              <option value="totalAmount">Invoice Value</option>
-              <option value="supplierName">Supplier Name</option>
-              <option value="invoiceNumber">Invoice Number</option>
+              <option value="invoiceDate">{t('filing_date')}</option>
+              <option value="totalAmount">{t('invoice_value')}</option>
+              <option value="supplierName">{t('supplier_name')}</option>
+              <option value="invoiceNumber">{t('invoice_number')}</option>
             </select>
           </div>
 
@@ -354,10 +356,10 @@ function Invoices({ user }) {
           marginBottom: '1.25rem',
           fontSize: '0.85rem'
         }}>
-          <span><strong>{selectedIds.length}</strong> invoices selected</span>
+          <span><strong>{selectedIds.length}</strong> {t('invoices_selected')}</span>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={handleBulkFile} className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>File Selected</button>
-            <button onClick={handleBulkDelete} className="btn btn-outline" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', borderColor: 'var(--error)', color: 'var(--error)' }}>Delete Selected</button>
+            <button onClick={handleBulkFile} className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>{t('file_selected')}</button>
+            <button onClick={handleBulkDelete} className="btn btn-outline" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', borderColor: 'var(--error)', color: 'var(--error)' }}>{t('delete_selected')}</button>
           </div>
         </div>
       )}
@@ -377,8 +379,8 @@ function Invoices({ user }) {
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
               </svg>
             </span>
-            <strong style={{ fontSize: '1rem', display: 'block', color: 'var(--text-primary)' }}>No Invoices Registered</strong>
-            <span style={{ fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>Upload invoice documents to see records in this directory workspace.</span>
+            <strong style={{ fontSize: '1rem', display: 'block', color: 'var(--text-primary)' }}>{t('no_invoices_registered')}</strong>
+            <span style={{ fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>{t('invoices_empty_desc')}</span>
           </div>
         ) : (
           <>
@@ -394,20 +396,20 @@ function Invoices({ user }) {
                     />
                   </th>
                   <th onClick={() => handleToggleSort('invoiceNumber')} style={{ padding: '0.75rem', cursor: 'pointer' }}>
-                    Invoice Number {sortField === 'invoiceNumber' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    {t('invoice_number')} {sortField === 'invoiceNumber' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
                   <th onClick={() => handleToggleSort('supplierName')} style={{ padding: '0.75rem', cursor: 'pointer' }}>
-                    Supplier Name {sortField === 'supplierName' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    {t('supplier_name')} {sortField === 'supplierName' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
                   <th onClick={() => handleToggleSort('invoiceDate')} style={{ padding: '0.75rem', cursor: 'pointer' }}>
-                    Date {sortField === 'invoiceDate' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    {t('date')} {sortField === 'invoiceDate' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
                   <th onClick={() => handleToggleSort('totalAmount')} style={{ padding: '0.75rem', textAlign: 'right', cursor: 'pointer' }}>
-                    Grand Total {sortField === 'totalAmount' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    {t('grand_total')} {sortField === 'totalAmount' && (sortOrder === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>Classification</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>Actions</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('classification')}</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('filing_status')}</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -440,15 +442,15 @@ function Invoices({ user }) {
                       </td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                         <span className={`badge-premium ${bill.filed ? 'badge-excellent' : 'badge-average'}`} style={{ fontSize: '0.65rem' }}>
-                          {bill.filed ? 'Filed' : 'Pending'}
+                          {bill.filed ? t('filed') : t('pending')}
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center' }}>
                           {!bill.filed && (
-                            <button onClick={(e) => handleMarkAsFiledSingle(bill.id, e)} className="btn btn-outline" style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem' }}>File</button>
+                            <button onClick={(e) => handleMarkAsFiledSingle(bill.id, e)} className="btn btn-outline" style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem' }}>{t('file')}</button>
                           )}
-                          <button onClick={() => navigate(`/bill/${bill.id}`)} className="btn btn-outline" style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem' }}>Edit</button>
+                          <button onClick={() => navigate(`/bill/${bill.id}`)} className="btn btn-outline" style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem' }}>{t('edit')}</button>
                         </div>
                       </td>
                     </tr>
@@ -459,7 +461,7 @@ function Invoices({ user }) {
 
             {/* Pagination Controls */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              <span>Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, sortedBills.length)} of {sortedBills.length} records</span>
+              <span>{t('showing_records', { start: (currentPage - 1) * itemsPerPage + 1, end: Math.min(currentPage * itemsPerPage, sortedBills.length), total: sortedBills.length })}</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 
                   disabled={currentPage === 1} 
@@ -467,7 +469,7 @@ function Invoices({ user }) {
                   className="btn btn-outline" 
                   style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
                 >
-                  Previous
+                  {t('previous')}
                 </button>
                 <button 
                   disabled={currentPage === totalPages} 
@@ -475,7 +477,7 @@ function Invoices({ user }) {
                   className="btn btn-outline" 
                   style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
                 >
-                  Next
+                  {t('next')}
                 </button>
               </div>
             </div>
@@ -513,7 +515,7 @@ function Invoices({ user }) {
             {/* Modal Header */}
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--theme-primary)', fontWeight: 700 }}>Invoice Details Vetting</span>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--theme-primary)', fontWeight: 700 }}>{t('invoice_details_vetting')}</span>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{previewInvoice.invoiceNumber || 'INV-TEMP'}</h3>
               </div>
               <button 
@@ -529,32 +531,32 @@ function Invoices({ user }) {
               
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Supplier Name</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('supplier_name')}</span>
                   <strong style={{ fontSize: '0.95rem' }}>{previewInvoice.supplierName || 'N/A'}</strong>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Supplier GSTIN</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('supplier_gstin')}</span>
                   <strong style={{ fontSize: '0.95rem', fontFamily: 'monospace' }}>{previewInvoice.gstin || 'N/A'}</strong>
                 </div>
               </div>
 
               <div className="grid grid-cols-3" style={{ gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Taxable Value</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('taxable_value')}</span>
                   <span style={{ fontWeight: 700 }}>₹{(previewInvoice.amount || 0).toLocaleString()}</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>GST Tax Amount</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('gst_tax_amount')}</span>
                   <span style={{ fontWeight: 700 }}>₹{(previewInvoice.taxAmount || 0).toLocaleString()} ({previewInvoice.taxPercent}%)</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Grand Total</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('grand_total')}</span>
                   <span style={{ fontWeight: 800, color: 'var(--theme-primary)' }}>₹{(previewInvoice.totalAmount || 0).toLocaleString()}</span>
                 </div>
               </div>
 
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Expense Classification</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('expense_classification')}</span>
                 <span style={{ background: 'var(--bg-tertiary)', padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600 }}>
                   {previewInvoice.expenseType || 'Others'} (Category: {previewInvoice.category || 'Standard'})
                 </span>
@@ -562,20 +564,20 @@ function Invoices({ user }) {
 
               {previewInvoice.notes && (
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Audit Notes</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('audit_notes')}</span>
                   <p style={{ fontSize: '0.8rem', margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{previewInvoice.notes}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2" style={{ gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Extraction Confidence</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('extraction_confidence')}</span>
                   <span style={{ textTransform: 'capitalize', fontWeight: 600, color: previewInvoice.extractionConfidence === 'high' ? 'var(--success)' : 'var(--warning)' }}>
                     ● {previewInvoice.extractionConfidence || 'Medium'}
                   </span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>Filing Deadline</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block' }}>{t('filing_deadline')}</span>
                   <span style={{ fontWeight: 600 }}>{previewInvoice.gstrDeadline || 'N/A'}</span>
                 </div>
               </div>
@@ -584,11 +586,11 @@ function Invoices({ user }) {
 
             {/* Modal Footer */}
             <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', background: 'var(--bg-secondary)' }}>
-              <button onClick={() => setPreviewInvoice(null)} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>Close</button>
+              <button onClick={() => setPreviewInvoice(null)} className="btn btn-outline" style={{ fontSize: '0.8rem' }}>{t('close')}</button>
               {!previewInvoice.filed && (
-                <button onClick={(e) => { handleMarkAsFiledSingle(previewInvoice.id, e); }} className="btn btn-primary" style={{ fontSize: '0.8rem' }}>File return</button>
+                <button onClick={(e) => { handleMarkAsFiledSingle(previewInvoice.id, e); }} className="btn btn-primary" style={{ fontSize: '0.8rem' }}>{t('file_return')}</button>
               )}
-              <button onClick={() => { setPreviewInvoice(null); navigate(`/bill/${previewInvoice.id}`); }} className="btn btn-primary" style={{ fontSize: '0.8rem', background: 'var(--theme-secondary)' }}>Edit Invoice</button>
+              <button onClick={() => { setPreviewInvoice(null); navigate(`/bill/${previewInvoice.id}`); }} className="btn btn-primary" style={{ fontSize: '0.8rem', background: 'var(--theme-secondary)' }}>{t('edit_invoice')}</button>
             </div>
           </div>
         </div>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 import { getUserBills, updateUserBill, logUserActivity } from '../services/firebaseDataService';
 import { getUserBusinesses } from '../utils/businessHelper';
+import { useTranslation } from 'react-i18next';
 
 function GSTForms({ user }) {
+  const { t } = useTranslation();
   const [formType, setFormType] = useState('GSTR-1');
   const [bills, setBills] = useState([]);
   const [gstr1Data, setGstr1Data] = useState([]);
@@ -269,13 +271,13 @@ function GSTForms({ user }) {
             </svg>
           </span>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>
-              No GST Invoices Found
+              {t('gstforms_no_invoices')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
-              Please upload purchases/sales invoices in the dashboard to generate and preview official GSTR compliance forms.
+              {t('gstforms_no_invoices_desc')}
             </p>
             <a href="/bill-upload" className="btn btn-primary btn-lg">
-              Upload First Invoice
+              {t('gstforms_upload_first')}
             </a>
           </div>
         </div>
@@ -299,15 +301,15 @@ function GSTForms({ user }) {
               </svg>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                 <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{readinessPercent}%</span>
-                <span style={{ fontSize: '0.625rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Ready</span>
+                <span style={{ fontSize: '0.625rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>{t('gstforms_ready')}</span>
               </div>
             </div>
 
             <div>
               <span className="pulse-dot" style={{ display: 'inline-block', marginBottom: '0.5rem' }}></span>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>GSTR Filing Readiness</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>{t('gstforms_filing_readiness')}</h2>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                Our compliance engine has compiled your parameters. Verified tasks: {completedTasks} of {totalTasks}. Fix blocking errors below to unlock one-click electronic filing.
+                {t('gstforms_readiness_desc', { completedTasks, totalTasks })}
               </p>
               
               <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem' }}>
@@ -317,34 +319,34 @@ function GSTForms({ user }) {
                   className="btn btn-primary"
                   style={{ padding: '0.625rem 1.75rem', fontSize: '0.9rem' }}
                 >
-                  {filingLoading ? 'Processing file...' : '⚡ One-Click GST Auto-File'}
+                  {filingLoading ? t('gstforms_processing') : `⚡ ${t('gstforms_auto_file')}`}
                 </button>
               </div>
             </div>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem' }}>Filing Checklist</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1rem' }}>{t('gstforms_checklist')}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.825rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: 'var(--success)', fontWeight: 800 }}>✓</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Invoice Math & Double Check</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('gstforms_math_check')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: 'var(--success)', fontWeight: 800 }}>✓</span>
-                <span style={{ color: 'var(--text-secondary)' }}>Duplicate Bill Detection scan</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('gstforms_duplicate_check')}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: errors.length === 0 ? 'var(--success)' : 'var(--error)', fontWeight: 800 }}>
                   {errors.length === 0 ? '✓' : '✗'}
                 </span>
-                <span style={{ color: 'var(--text-secondary)' }}>Valid Supplier GSTIN formats ({errors.length} errors)</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('gstforms_gstin_check', { count: errors.length })}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: warnings.length === 0 ? 'var(--success)' : 'var(--warning)', fontWeight: 800 }}>
                   {warnings.length === 0 ? '✓' : '!'}
                 </span>
-                <span style={{ color: 'var(--text-secondary)' }}>Low-Confidence OCR alerts ({warnings.length} warnings)</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('gstforms_ocr_check', { count: warnings.length })}</span>
               </div>
             </div>
           </div>
@@ -354,9 +356,9 @@ function GSTForms({ user }) {
         {/* Filing success state message */}
         {filingSuccess && (
           <div className="glass-panel" style={{ padding: '1.25rem 2rem', background: '#1b5e20', borderRadius: 'var(--radius-lg)', color: 'white', marginBottom: '2rem', borderLeft: '6px solid var(--success)' }}>
-            <strong><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--success)' }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> GSTR Return Form Auto-Filed successfully!</strong>
+            <strong><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--success)' }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> {t('gstforms_filed_success')}</strong>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
-              All outstanding bills are locked as filed in your records. Activity log has been synced to Vercel/Firebase gateway.
+              {t('gstforms_filed_success_desc')}
             </p>
           </div>
         )}
@@ -366,12 +368,12 @@ function GSTForms({ user }) {
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
             {errors.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.5rem', borderLeft: '4px solid var(--error)' }}>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--error)', margin: '0 0 1rem 0' }}>Blocking Errors ({errors.length})</h4>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--error)', margin: '0 0 1rem 0' }}>{t('gstforms_blocking_errors', { count: errors.length })}</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.75rem' }}>
                   {errors.map((err, i) => (
                     <div key={i} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                      <strong>Missing/Invalid GSTIN on Invoice #{err.invoiceNumber}</strong>
-                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Vendor: {err.supplierName}. Fix this field in details before filing returns.</div>
+                      <strong>{t('gstforms_missing_gstin', { number: err.invoiceNumber })}</strong>
+                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{t('gstforms_missing_gstin_desc', { supplier: err.supplierName })}</div>
                     </div>
                   ))}
                 </div>
@@ -380,12 +382,12 @@ function GSTForms({ user }) {
 
             {warnings.length > 0 && (
               <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.5rem', borderLeft: '4px solid var(--warning)' }}>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--warning)', margin: '0 0 1rem 0' }}>Filing Warnings ({warnings.length})</h4>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--warning)', margin: '0 0 1rem 0' }}>{t('gstforms_filing_warnings', { count: warnings.length })}</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.75rem' }}>
                   {warnings.map((warn, i) => (
                     <div key={i} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                      <strong>Low Confidence AI scan on Invoice #{warn.invoiceNumber}</strong>
-                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.125rem' }}>Supplier: {warn.supplierName || 'Unknown'}. Please review the math breakdown.</div>
+                      <strong>{t('gstforms_low_confidence', { number: warn.invoiceNumber })}</strong>
+                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{t('gstforms_low_confidence_desc', { supplier: warn.supplierName || t('gstforms_unknown') })}</div>
                     </div>
                   ))}
                 </div>
@@ -403,19 +405,19 @@ function GSTForms({ user }) {
                 onClick={() => setFormType('GSTR-1')}
                 className={formType === 'GSTR-1' ? 'btn btn-primary' : 'btn btn-outline'}
               >
-                GSTR-1 Outward Register
+                {t('gstforms_gstr1_register')}
               </button>
               <button 
                 onClick={() => setFormType('GSTR-3B')}
                 className={formType === 'GSTR-3B' ? 'btn btn-primary' : 'btn btn-outline'}
               >
-                GSTR-3B Summary return
+                {t('gstforms_gstr3b_summary')}
               </button>
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', marginLeft: 'auto' }}>
-              <button onClick={downloadPDF} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Download Return PDF</button>
-              <button onClick={exportJSON} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Export Return JSON</button>
+              <button onClick={downloadPDF} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> {t('gstforms_download_pdf')}</button>
+              <button onClick={exportJSON} className="btn btn-outline" style={{ fontSize: '0.825rem' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> {t('gstforms_export_json')}</button>
             </div>
           </div>
 
@@ -425,14 +427,14 @@ function GSTForms({ user }) {
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)' }}>
                     <th style={{ padding: '0.75rem', textAlign: 'left' }}>GSTIN</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left' }}>Supplier</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Invoice #</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Date</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Taxable Val</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left' }}>{t('gstforms_supplier')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('gstforms_invoice_no')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('gstforms_date')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>{t('gstforms_taxable_val')}</th>
                     <th style={{ padding: '0.75rem', textAlign: 'right' }}>CGST</th>
                     <th style={{ padding: '0.75rem', textAlign: 'right' }}>SGST</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Total Amount</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>{t('gstforms_total_amount')}</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('gstforms_filing_status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -448,7 +450,7 @@ function GSTForms({ user }) {
                       <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 700 }}>₹{row.invoiceValue.toLocaleString()}</td>
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                         <span className={`badge-premium ${row.filed ? 'badge-excellent' : 'badge-average'}`} style={{ fontSize: '0.65rem' }}>
-                          {row.filed ? 'Filed' : 'Pending'}
+                          {row.filed ? t('gstforms_filed') : t('gstforms_pending')}
                         </span>
                       </td>
                     </tr>
@@ -460,26 +462,26 @@ function GSTForms({ user }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="grid grid-cols-4" style={{ gap: '1rem' }}>
                 <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Outward Supplies (Revenue)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('gstforms_outward_supplies')}</span>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{gstr3bData?.outwardSupplies.toLocaleString()}</div>
                 </div>
                 <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Inward Supplies (Expenses)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('gstforms_inward_supplies')}</span>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{gstr3bData?.inwardSupplies.toLocaleString()}</div>
                 </div>
                 <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Liability (Sales Tax)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('gstforms_total_liability')}</span>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{gstr3bData?.totalTax.toLocaleString()}</div>
                 </div>
                 <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Input Tax Credit Utilized</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('gstforms_itc_utilized')}</span>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-secondary)' }}>-₹{gstr3bData?.itc.toLocaleString()}</div>
                 </div>
               </div>
 
               <div className="glass-panel" style={{ padding: '1.5rem 2rem', borderRadius: 'var(--radius-lg)', background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(20, 184, 166, 0.05) 100%)', border: '1px solid var(--theme-secondary)', display: 'flex', justifyBetween: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Estimated Net Payable Tax (to Government)</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('gstforms_net_payable')}</span>
                   <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{gstr3bData?.netPayable.toLocaleString()}</div>
                 </div>
                 <span style={{ color: 'var(--theme-secondary)', display: 'inline-block', verticalAlign: 'middle' }}>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getUserBills } from '../services/firebaseDataService';
 import { getUserBusinesses } from '../utils/businessHelper';
+import { useTranslation } from 'react-i18next';
 
 function Recommendations({ user }) {
+  const { t } = useTranslation();
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
     return localStorage.getItem('activeBusinessId') || null;
   });
@@ -141,22 +143,22 @@ function Recommendations({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Tax Optimization Advisor</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('recommendations_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Continuously audit transactions to identify missing deductions, supplier correction tasks, and compliance checks.
+          {t('recommendations_subtitle')}
         </p>
       </div>
 
       {/* Recommendations ledger */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>AI Optimization Action Checklist</h3>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('recommendations_checklist')}</h3>
 
         {bills.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🎯</span>
-            <strong style={{ display: 'block', fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>No Advisor Recommendations</strong>
+            <strong style={{ display: 'block', fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('recommendations_none')}</strong>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', lineHeight: '1.6' }}>
-              Tax advisory tips, Input Tax Credit (ITC) alerts, and late fee warnings will populate dynamically after invoices are uploaded.
+              {t('recommendations_none_desc')}
             </p>
           </div>
         ) : (
@@ -166,7 +168,7 @@ function Recommendations({ user }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--theme-primary-light)' }}>{rec.category}</span>
                   <span className={`badge-premium ${rec.priority === 'High' ? 'badge-critical' : 'badge-good'}`} style={{ fontSize: '0.65rem' }}>
-                    {rec.priority} Priority
+                    {rec.priority} {t('recommendations_priority')}
                   </span>
                 </div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '0.25rem 0 0.5rem 0' }}>{rec.title}</h4>
@@ -174,7 +176,7 @@ function Recommendations({ user }) {
                   {rec.desc}
                 </p>
                 <div style={{ fontSize: '0.75rem', color: 'var(--theme-secondary-light)', fontWeight: 700 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-600)' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> Estimated Saving: {rec.saving}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-600)' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> {t('recommendations_estimated_saving')}: {rec.saving}</span>
                 </div>
               </div>
             ))}

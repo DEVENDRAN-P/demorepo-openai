@@ -239,7 +239,7 @@ function AIFinanceAgent({ user }) {
             </strong>
           </div>
           <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', lineHeight: '1.3', display: 'block' }}>
-            {activePlan === 'free' && "Answers direct questions using current data. Upgrade to Pro to unlock proactive audit suggestions."}
+            {activePlan === 'free' && t('ai_finance.free_plan_desc')}
             {activePlan === 'pro' && "Proactively audits transactions, explains tax anomalies, and drafts GSTR returns."}
             {activePlan === 'business' && "Continuous compliance monitoring, automated risk detection, and one-click reconciliation workflows."}
           </span>
@@ -283,20 +283,20 @@ function AIFinanceAgent({ user }) {
               type="text" 
               value={agentInput}
               onChange={(e) => setAgentInput(e.target.value)}
-              placeholder="Enter accounting task or question (e.g. 'Analyze our electricity bills tax component')..."
+              placeholder={t('ai_finance.input_placeholder')}
               style={{ flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-lg)', fontSize: '0.85rem', outline: 'none' }}
               disabled={agentLoading}
             />
             <button type="submit" disabled={agentLoading} className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '0.85rem' }}>
-              {agentLoading ? t('executing', 'Executing...') : t('Run Query')}
+              {agentLoading ? t('ai_finance.executing_short') : t('ai_finance.run_query')}
             </button>
           </form>
 
           {agentLoading && (
             <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)' }}>
               <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent mb-3"></div>
-              <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>Executing Accounting Commands...</p>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Querying invoice ledgers, checking compliance rule-base, and drafting summaries.</span>
+              <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>{t('ai_finance.executing')}</p>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t('ai_finance.executing_sub')}</span>
             </div>
           )}
 
@@ -313,17 +313,17 @@ function AIFinanceAgent({ user }) {
                   <span style={{ color: 'var(--theme-secondary-light)', display: 'inline-flex' }}>
                     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                   </span>
-                  <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>CFO Audit & Executive Analysis</span>
+                  <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{t('ai_finance.cfo_analysis')}</span>
                 </div>
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(agentResponse);
-                    alert('Analysis copied to clipboard!');
+                    alert(t('ai_finance.copied'));
                   }}
                   className="btn btn-outline" 
                   style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', marginLeft: 'auto' }}
                 >
-                  Copy Report
+                  {t('ai_finance.copy_report')}
                 </button>
               </div>
               <div style={{ fontSize: '0.85rem', lineHeight: '1.6', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
@@ -338,27 +338,27 @@ function AIFinanceAgent({ user }) {
           
           {/* Real Context Summary Widget */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 1rem 0' }}>{t('Real-Time Business Context')}</h3>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 1rem 0' }}>{t('ai_finance.real_time_context')}</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.775rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Linked Entity</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('ai_finance.linked_entity')}</span>
                 <strong>{activeBusiness?.name || '—'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Ledger Invoices</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('ai_finance.ledger_invoices')}</span>
                 <strong>{totalBillsUploaded} Invoices</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Calculated Outward GST</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('ai_finance.outward_gst')}</span>
                 <strong>₹{gstPayable.toLocaleString()}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Claimable ITC</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('ai_finance.claimable_itc')}</span>
                 <strong>₹{inputTaxCredit.toLocaleString()}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Net GST Payable</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{t('ai_finance.net_gst_payable')}</span>
                 <strong style={{ color: netPayable > 0 ? 'var(--warning)' : 'var(--success)' }}>₹{netPayable.toLocaleString()}</strong>
               </div>
             </div>
@@ -374,7 +374,7 @@ function AIFinanceAgent({ user }) {
             overflow: 'hidden'
           }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ color: 'var(--success)' }}>⚡</span> Compliance Alerts
+              <span style={{ color: 'var(--success)' }}>⚡</span> {t('ai_finance.compliance_alerts')}
             </h3>
 
             {activePlan !== 'business' && activePlan !== 'pro' && (
@@ -398,9 +398,9 @@ function AIFinanceAgent({ user }) {
                 <span style={{ display: 'block', marginBottom: '0.25rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
                   <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
-                <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>Agent Monitoring</strong>
+                <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{t('ai_finance.agent_monitoring')}</strong>
                 <p style={{ fontSize: '0.7rem', color: '#cbd5e1', margin: '0.25rem 0 0.75rem 0', maxWidth: '85%', lineHeight: '1.4' }}>
-                  Upgrade to run the compliance, forecast, and intelligence agents on your invoice data.
+                  {t('ai_finance.upgrade_to_run')}
                 </p>
                 <button 
                   onClick={() => {
@@ -410,7 +410,7 @@ function AIFinanceAgent({ user }) {
                   className="btn btn-primary" 
                   style={{ padding: '0.4rem 0.85rem', fontSize: '0.7rem' }}
                 >
-                  Upgrade to Pro
+                  {t('ai_finance.upgrade_to_pro')}
                 </button>
               </div>
             )}

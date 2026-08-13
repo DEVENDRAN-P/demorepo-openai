@@ -134,7 +134,7 @@ function PenaltyLateFeeEstimator() {
         </div>
 
         {/* Date Inputs */}
-        <div style={{
+        <div className="grid" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '1rem',

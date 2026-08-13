@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getAgentRuns } from '../services/agentService';
 
 const STATUS_COLORS = {
@@ -42,6 +43,7 @@ function formatTime(isoString) {
 }
 
 function AgentRunCard({ run }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const icon = AGENT_ICONS[run.agent] || '🤖';
   const color = STATUS_COLORS[run.status] || '#6b7280';
@@ -97,15 +99,15 @@ function AgentRunCard({ run }) {
         <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
           {/* Timing */}
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            <span>Started: {formatTime(run.startedAt)}</span>
-            <span>Completed: {formatTime(run.completedAt)}</span>
+            <span>{t('agent_activity.started')}: {formatTime(run.startedAt)}</span>
+            <span>{t('agent_activity.completed')}: {formatTime(run.completedAt)}</span>
           </div>
 
           {/* Decisions */}
           {run.decisions && run.decisions.length > 0 && (
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.375rem', color: 'var(--text-primary)' }}>
-                Decisions
+                {t('agent_activity.decisions')}
               </div>
               {run.decisions.map((d, i) => (
                 <div
@@ -129,7 +131,7 @@ function AgentRunCard({ run }) {
           {run.actions && run.actions.length > 0 && (
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.375rem', color: 'var(--text-primary)' }}>
-                Actions Executed
+                {t('agent_activity.actions_executed')}
               </div>
               {run.actions.map((a, i) => (
                 <div
@@ -169,6 +171,7 @@ function AgentRunCard({ run }) {
 }
 
 export default function AgentActivity({ userId }) {
+  const { t } = useTranslation();
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -236,9 +239,9 @@ export default function AgentActivity({ userId }) {
     <div style={{ maxWidth: '800px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>AI Agent Activity</h2>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{t('agent_activity.title')}</h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Real-time execution history of all AI agents. Every decision and action is recorded.
+            {t('agent_activity.subtitle')}
           </p>
         </div>
         <button
@@ -253,13 +256,13 @@ export default function AgentActivity({ userId }) {
             color: 'var(--text-primary)',
           }}
         >
-          ↻ Refresh
+          ↻ {t('agent_activity.refresh')}
         </button>
       </div>
 
       {loading && runs.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-          Loading agent activity...
+          {t('agent_activity.loading')}
         </div>
       )}
 
@@ -273,7 +276,7 @@ export default function AgentActivity({ userId }) {
           fontSize: '0.85rem',
           marginBottom: '1rem',
         }}>
-          Failed to load agent activity: {error}
+          {t('agent_activity.load_failed')}: {error}
         </div>
       )}
 
@@ -286,9 +289,9 @@ export default function AgentActivity({ userId }) {
           textAlign: 'center',
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤖</div>
-          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.5rem' }}>No Agent Activity Yet</div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.5rem' }}>{t('agent_activity.empty_title')}</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto' }}>
-            Upload an invoice to trigger the AI agent chain. Each agent will analyze your data, make decisions, and record its execution here.
+            {t('agent_activity.empty_desc')}
           </div>
         </div>
       )}

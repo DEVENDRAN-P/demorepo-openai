@@ -8,6 +8,7 @@ import { scrollToTop } from '../utils/scroll';
 import { extractInvoiceData } from '../services/aiService';
 import { processInvoice } from '../services/agentService';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 // Configure the PDF.js worker (webpack 5 / CRA 5 compatible).
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -173,6 +174,7 @@ const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
 };
 
 function BillUpload() {
+  const { t } = useTranslation();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -581,9 +583,9 @@ function BillUpload() {
       {/* Title Header */}
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Invoice Intelligence</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('billupload_title')}</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Upload merchant invoices. AI Accountant automatically extracts metadata, validates GSTIN integrity, and runs tax audit risk analysis.
+            {t('billupload_subtitle')}
           </p>
         </div>
 
@@ -596,7 +598,7 @@ function BillUpload() {
           fontSize: '0.75rem',
           textAlign: 'right'
         }}>
-          <div>Monthly scans: <strong>{billsCount} / {limit === Infinity ? 'Unlimited' : limit}</strong></div>
+          <div>{t('billupload_monthly_scans')}: <strong>{billsCount} / {limit === Infinity ? t('billupload_unlimited') : limit}</strong></div>
           <div style={{ width: '120px', background: 'var(--bg-tertiary)', height: '4px', borderRadius: '2px', display: 'inline-block', overflow: 'hidden', marginTop: '0.25rem' }}>
             <div style={{ width: `${limit === Infinity ? 100 : Math.min(100, (billsCount / limit) * 100)}%`, background: billsCount >= limit ? 'var(--error)' : 'var(--theme-primary)', height: '100%' }}></div>
           </div>
@@ -624,7 +626,7 @@ function BillUpload() {
         {/* Left Side: Invoice Preview & Highlights */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span className="pulse-dot"></span> Bounding Box Overlay
+            <span className="pulse-dot"></span> {t('billupload_bounding_box')}
           </h3>
           
           <div className="ocr-image-wrapper" style={{ minHeight: '300px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', background: 'var(--bg-secondary)' }}>
@@ -654,15 +656,15 @@ function BillUpload() {
                       <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1zM16 8H8m8 4H8m6 4H8"/>
                     </svg>
                   </span>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>No Invoice Uploaded</p>
-                <p style={{ margin: '0.25rem 0 1.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Upload an invoice receipt or capture via camera to analyze metadata.</p>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem' }}>{t('billupload_no_invoice')}</p>
+                <p style={{ margin: '0.25rem 0 1.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('billupload_no_invoice_desc')}</p>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                   <label className="btn btn-primary" style={{ display: 'inline-block', cursor: 'pointer', fontSize: '0.8rem' }}>
                     <input type="file" accept="image/*,application/pdf" onChange={handleFileUpload} style={{ display: 'none' }} />
-                    Upload Invoice
+                    {t('billupload_upload_invoice')}
                   </label>
                   <button onClick={openCamera} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8rem' }}>
-                    <IconCamera /> Capture
+                    <IconCamera /> {t('billupload_capture')}
                   </button>
                 </div>
               </div>
@@ -677,9 +679,9 @@ function BillUpload() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={() => { setFile(null); setPreview(null); }} className="btn btn-outline" style={{ flex: 1 }}>Clear</button>
+                <button onClick={() => { setFile(null); setPreview(null); }} className="btn btn-outline" style={{ flex: 1 }}>{t('billupload_clear')}</button>
                 <button onClick={handleExtract} disabled={loading} className="btn btn-primary" style={{ flex: 2 }}>
-                  {loading ? `Extracting... (${progress}%)` : '⚡ Run AI Extraction'}
+                  {loading ? `${t('billupload_extracting')}... (${progress}%)` : `⚡ ${t('billupload_run_extraction')}`}
                 </button>
               </div>
             </div>
@@ -690,20 +692,20 @@ function BillUpload() {
         {preview && (
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              AI Accountant Vetting Panel
+              {t('billupload_vetting_panel')}
             </h3>
 
             {loading && !extractedData ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 1.5rem', gap: '1rem' }}>
                 <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent"></div>
-                <strong style={{ fontSize: '0.9rem' }}>OCR Scanning & AI Vetting Active...</strong>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Extracting lines, computing Indian SGST/CGST rules.</span>
+                <strong style={{ fontSize: '0.9rem' }}>{t('billupload_ocr_active')}</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('billupload_ocr_active_desc')}</span>
               </div>
             ) : extractedData ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 700 }}>CONFIDENCE INDEX</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{t('billupload_confidence_index')}</span>
                   <span style={{ 
                     fontSize: '0.675rem', 
                     padding: '0.15rem 0.5rem', 
@@ -713,7 +715,7 @@ function BillUpload() {
                     color: extractedData.extractionConfidence === 'high' ? 'var(--success)' : 'var(--warning)',
                     textTransform: 'uppercase'
                   }}>
-                    ● {extractedData.extractionConfidence} Confidence
+                    ● {extractedData.extractionConfidence} {t('billupload_confidence')}
                   </span>
                 </div>
 
@@ -722,7 +724,7 @@ function BillUpload() {
                   
                   <div className="grid grid-cols-2" style={{ gap: '0.75rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Document Type</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_doc_type')}</label>
                       <input 
                         type="text" 
                         value={extractedData.gstDocumentType || 'Tax Invoice'} 
@@ -732,7 +734,7 @@ function BillUpload() {
                       />
                     </div>
                     <div onMouseEnter={() => setHoveredField('supplierName')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Supplier Name</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_supplier_name')}</label>
                       <input 
                         type="text" 
                         value={extractedData.supplierName} 
@@ -744,7 +746,7 @@ function BillUpload() {
 
                   <div className="grid grid-cols-2" style={{ gap: '0.75rem' }}>
                     <div onMouseEnter={() => setHoveredField('gstin')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Supplier GSTIN</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_supplier_gstin')}</label>
                       <input 
                         type="text" 
                         value={extractedData.gstin} 
@@ -753,7 +755,7 @@ function BillUpload() {
                       />
                     </div>
                     <div onMouseEnter={() => setHoveredField('invoiceNumber')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Invoice Number</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_invoice_number')}</label>
                       <input 
                         type="text" 
                         value={extractedData.invoiceNumber} 
@@ -765,7 +767,7 @@ function BillUpload() {
 
                   <div className="grid grid-cols-2" style={{ gap: '0.75rem' }}>
                     <div onMouseEnter={() => setHoveredField('invoiceDate')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Invoice Date</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_invoice_date')}</label>
                       <input 
                         type="text" 
                         value={extractedData.invoiceDate} 
@@ -774,24 +776,24 @@ function BillUpload() {
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Classification</label>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_classification')}</label>
                       <select 
                         value={extractedData.expenseType} 
                         onChange={(e) => setExtractedData({ ...extractedData, expenseType: e.target.value })}
                         style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                       >
-                        <option value="Raw Material">Raw Material</option>
-                        <option value="Utilities">Utilities</option>
-                        <option value="Office Supplies">Office Supplies</option>
-                        <option value="Services">Services</option>
-                        <option value="Others">Others</option>
+                        <option value="Raw Material">{t('billupload_raw_material')}</option>
+                        <option value="Utilities">{t('billupload_utilities')}</option>
+                        <option value="Office Supplies">{t('billupload_office_supplies')}</option>
+                        <option value="Services">{t('billupload_services')}</option>
+                        <option value="Others">{t('billupload_others')}</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3" style={{ gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
                     <div onMouseEnter={() => setHoveredField('amount')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Taxable Val</label>
+                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_taxable_val')}</label>
                       <input 
                         type="number" 
                         value={extractedData.amount} 
@@ -804,7 +806,7 @@ function BillUpload() {
                       />
                     </div>
                     <div onMouseEnter={() => setHoveredField('taxAmount')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>GST Tax</label>
+                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_gst_tax')}</label>
                       <input 
                         type="number" 
                         value={extractedData.taxAmount} 
@@ -816,7 +818,7 @@ function BillUpload() {
                       />
                     </div>
                     <div onMouseEnter={() => setHoveredField('totalAmount')} onMouseLeave={() => setHoveredField(null)}>
-                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Grand Total</label>
+                      <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>{t('billupload_grand_total')}</label>
                       <input 
                         type="number" 
                         value={extractedData.totalAmount} 
@@ -832,20 +834,20 @@ function BillUpload() {
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8rem' }}>
                   
                   <div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Tax Split analysis</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('billupload_tax_split')}</span>
                     <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{extractedData.taxAnalysis}</p>
                   </div>
 
                   {extractedData.riskAnalysis && (
                     <div style={{ background: 'rgba(239, 68, 68, 0.08)', borderLeft: '3px solid var(--error)', padding: '0.5rem 0.75rem', borderRadius: '4px' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--error)', fontWeight: 700, textTransform: 'uppercase' }}>Audit Risk Indicator</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--error)', fontWeight: 700, textTransform: 'uppercase' }}>{t('billupload_audit_risk')}</span>
                       <p style={{ margin: '0.15rem 0 0 0', color: 'var(--text-primary)', lineHeight: '1.4' }}>{extractedData.riskAnalysis}</p>
                     </div>
                   )}
 
                   {extractedData.aiSuggestions && extractedData.aiSuggestions.length > 0 && (
                     <div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>AI Audit Suggestions</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>{t('billupload_ai_suggestions')}</span>
                       <ul style={{ paddingLeft: '1.1rem', margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                         {extractedData.aiSuggestions.map((sug, i) => (
                           <li key={i}>{sug}</li>
@@ -863,7 +865,7 @@ function BillUpload() {
                     className="btn btn-outline" 
                     style={{ flex: 1, padding: '0.5rem' }}
                   >
-                    Reset
+                    {t('billupload_reset')}
                   </button>
                   <button 
                     onClick={handleConfirm} 
@@ -871,14 +873,14 @@ function BillUpload() {
                     className="btn btn-primary" 
                     style={{ flex: 2, padding: '0.5rem' }}
                   >
-                    Confirm & Sync to Firebase
+                    {t('billupload_confirm_sync')}
                   </button>
                 </div>
 
               </div>
             ) : (
               <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1.5rem' }}>
-                Run OCR and AI Extraction on the uploaded invoice to review details here.
+                {t('billupload_run_ocr_hint')}
               </div>
             )}
           </div>
@@ -896,8 +898,8 @@ function BillUpload() {
                   <video ref={videoRef} style={{ width: '100%', height: 'auto', display: 'block' }} playsInline muted />
                   <canvas ref={canvasRef} style={{ display: 'none' }} />
                   <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px' }}>
-                    <button onClick={() => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment')} className="btn" style={{ background: 'var(--bg-primary)', padding: '0.45rem 0.85rem', fontSize: '0.75rem' }}>Switch</button>
-                    <button onClick={closeCameraModal} className="btn btn-secondary" style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem' }}>Close</button>
+                    <button onClick={() => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment')} className="btn" style={{ background: 'var(--bg-primary)', padding: '0.45rem 0.85rem', fontSize: '0.75rem' }}>{t('billupload_switch')}</button>
+                    <button onClick={closeCameraModal} className="btn btn-secondary" style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem' }}>{t('billupload_close')}</button>
                   </div>
                   <div style={{ position: 'absolute', bottom: '16px', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
                     <button onClick={captureFromCamera} style={{ borderRadius: '50%', width: '56px', height: '56px', background: 'red', border: '4px solid white', cursor: 'pointer', outline: 'none' }}></button>
@@ -907,8 +909,8 @@ function BillUpload() {
                 <div style={{ position: 'relative' }}>
                   <img src={modalCapturedPreview} alt="Captured preview" style={{ width: '100%', height: 'auto', display: 'block' }} />
                   <div style={{ position: 'absolute', bottom: '16px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                    <button onClick={() => setModalCapturedPreview(null)} className="btn btn-secondary" style={{ padding: '0.45rem 1.25rem', fontSize: '0.8rem' }}>Retake</button>
-                    <button onClick={acceptCapture} className="btn btn-primary" style={{ padding: '0.45rem 1.25rem', fontSize: '0.8rem' }}>Accept Invoice</button>
+                    <button onClick={() => setModalCapturedPreview(null)} className="btn btn-secondary" style={{ padding: '0.45rem 1.25rem', fontSize: '0.8rem' }}>{t('billupload_retake')}</button>
+                    <button onClick={acceptCapture} className="btn btn-primary" style={{ padding: '0.45rem 1.25rem', fontSize: '0.8rem' }}>{t('billupload_accept_invoice')}</button>
                   </div>
                 </div>
               )}

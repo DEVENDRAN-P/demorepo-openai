@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getUserBills } from '../services/firebaseDataService';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 function ComplianceCenter({ user }) {
+  const { t } = useTranslation();
   const [bills, setBills] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
     return localStorage.getItem('activeBusinessId') || null;
@@ -62,11 +64,11 @@ function ComplianceCenter({ user }) {
       issues.push({
         invoiceNumber: bill.invoiceNumber || 'INV-AUTO',
         supplierName: bill.supplierName || 'Unknown',
-        type: 'Tax Mismatch',
+        type: t('compliance_tax_mismatch'),
         severity: 'Medium',
-        explanation: 'The sum of taxable value and calculated tax does not equal the invoice grand total.',
-        businessImpact: 'Potential auditing flags by tax officers or ITC mismatch in GSTR-2B.',
-        recommendedFix: 'Review the invoice breakdown values and edit details manually.'
+        explanation: t('compliance_tax_mismatch_explanation'),
+        businessImpact: t('compliance_tax_mismatch_impact'),
+        recommendedFix: t('compliance_tax_mismatch_fix')
       });
     }
 
@@ -74,11 +76,11 @@ function ComplianceCenter({ user }) {
       issues.push({
         invoiceNumber: bill.invoiceNumber || 'INV-AUTO',
         supplierName: bill.supplierName || 'Unknown',
-        type: 'Missing/Invalid GSTIN',
+        type: t('compliance_missing_gstin'),
         severity: 'High',
-        explanation: 'Supplier GSTIN is either completely missing or formatted incorrectly.',
-        businessImpact: 'Complete loss of Input Tax Credit (ITC) for this invoice, increasing tax liabilities.',
-        recommendedFix: 'Contact the supplier to obtain their registered GSTIN details and update metadata.'
+        explanation: t('compliance_missing_gstin_explanation'),
+        businessImpact: t('compliance_missing_gstin_impact'),
+        recommendedFix: t('compliance_missing_gstin_fix')
       });
     }
 
@@ -86,11 +88,11 @@ function ComplianceCenter({ user }) {
       issues.push({
         invoiceNumber: bill.invoiceNumber || 'INV-AUTO',
         supplierName: bill.supplierName || 'Unknown',
-        type: 'Missing HSN Code',
+        type: t('compliance_missing_hsn'),
         severity: 'Low',
-        explanation: 'Harmonized System of Nomenclature (HSN) code is missing for items.',
-        businessImpact: 'HSN reporting is mandatory under GST rules for business sales exceeding ₹5 crores.',
-        recommendedFix: 'Assign appropriate HSN code based on business expense categories.'
+        explanation: t('compliance_missing_hsn_explanation'),
+        businessImpact: t('compliance_missing_hsn_impact'),
+        recommendedFix: t('compliance_missing_hsn_fix')
       });
     }
   });
@@ -102,9 +104,9 @@ function ComplianceCenter({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>GST Compliance Center</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('compliance_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Continuously audit transactions, resolve portal filing blocks, and optimize Input Tax Credits.
+          {t('compliance_subtitle')}
         </p>
       </div>
 
@@ -112,7 +114,7 @@ function ComplianceCenter({ user }) {
       <div className="grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '2rem', marginBottom: '2.5rem' }}>
         
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Filing Score</span>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{t('compliance_filing_score')}</span>
           <div style={{ position: 'relative', width: '130px', height: '130px', margin: '1rem 0' }}>
             <svg width="130" height="130" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color)" strokeWidth="8" />
@@ -120,34 +122,34 @@ function ComplianceCenter({ user }) {
             </svg>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
               <span style={{ fontSize: '1.75rem', fontWeight: 800 }}>{totalPossible}%</span>
-              <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Audited</span>
+              <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('compliance_audited')}</span>
             </div>
           </div>
           <span style={{ fontSize: '0.85rem', color: totalPossible >= 90 ? 'var(--success)' : 'var(--warning)', fontWeight: 700 }}>
-            {totalPossible >= 90 ? '✓ HIGH COMPLIANCE' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ACTIONS REQUIRED</span>}
+            {totalPossible >= 90 ? `✓ ${t('compliance_high')}` : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--warning)' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {t('compliance_actions_required')}</span>}
           </span>
         </div>
 
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Compliance Summary</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>{t('compliance_summary')}</h3>
           
           <div className="grid grid-cols-3" style={{ gap: '1.25rem' }}>
             <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Outstanding Alerts</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('compliance_outstanding_alerts')}</span>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: issues.length > 0 ? 'var(--error)' : 'var(--success)' }}>
                 {issues.length}
               </div>
             </div>
             <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ITC Vetted (This month)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('compliance_itc_vetted')}</span>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-secondary-light)' }}>
                 ₹{(bills.reduce((sum, b) => sum + (b.taxAmount || 0), 0)).toLocaleString()}
               </div>
             </div>
             <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Risk Assessment</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('compliance_risk_assessment')}</span>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: issues.some(i => i.severity === 'High') ? 'var(--error)' : 'var(--success)' }}>
-                {issues.some(i => i.severity === 'High') ? 'HIGH' : 'LOW'}
+                {issues.some(i => i.severity === 'High') ? t('compliance_high_risk') : t('compliance_low_risk')}
               </div>
             </div>
           </div>
@@ -157,11 +159,11 @@ function ComplianceCenter({ user }) {
 
       {/* Compliance issues details */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Pending Compliance Tasks</h3>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('compliance_pending_tasks')}</h3>
 
         {issues.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-            🎉 Complete compliance! No errors or warnings detected in current invoice ledger.
+            🎉 {t('compliance_all_clear')}
           </div>
         ) : activePlan === 'free' ? (
           <div style={{ 
@@ -180,9 +182,9 @@ function ComplianceCenter({ user }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Compliance Task Audits are Locked</strong>
+            <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('compliance_audits_locked')}</strong>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-              We detected <strong>{issues.length} compliance warnings</strong> in your ledger. Upgrade to the Pro Plan to view the specific invoice numbers, detailed explanations, and recommended legal fixes.
+              {t('compliance_audits_locked_desc', { count: issues.length })}
             </p>
             <button 
               onClick={() => {
@@ -192,7 +194,7 @@ function ComplianceCenter({ user }) {
               className="btn btn-primary" 
               style={{ background: 'var(--primary-600)', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
             >
-              Upgrade to Pro (₹199/mo)
+              {t('compliance_upgrade_pro')}
             </button>
           </div>
         ) : (
@@ -202,24 +204,24 @@ function ComplianceCenter({ user }) {
                   <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
                     <div>
                       <span style={{ fontSize: '0.675rem', background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, marginRight: '0.5rem' }}>{issue.type}</span>
-                      <strong style={{ fontSize: '0.9rem' }}>Invoice #{issue.invoiceNumber} (Supplier: {issue.supplierName})</strong>
+                      <strong style={{ fontSize: '0.9rem' }}>{t('compliance_invoice_supplier', { number: issue.invoiceNumber, supplier: issue.supplierName })}</strong>
                     </div>
                     <span className={`badge-premium ${issue.severity === 'High' ? 'badge-critical' : 'badge-average'}`} style={{ fontSize: '0.65rem' }}>
-                      {issue.severity} Severity
+                      {issue.severity} {t('compliance_severity')}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3" style={{ gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     <div>
-                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Problem Explanation</strong>
+                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>{t('compliance_problem_explanation')}</strong>
                       {issue.explanation}
                     </div>
                     <div>
-                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Business Impact</strong>
+                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>{t('compliance_business_impact')}</strong>
                       {issue.businessImpact}
                     </div>
                     <div>
-                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Recommended Action</strong>
+                      <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>{t('compliance_recommended_action')}</strong>
                       {issue.recommendedFix}
                     </div>
                   </div>

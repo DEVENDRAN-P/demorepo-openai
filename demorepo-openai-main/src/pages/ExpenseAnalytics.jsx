@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getUserBills } from '../services/firebaseDataService';
+import { useTranslation } from 'react-i18next';
 
 function ExpenseAnalytics({ user }) {
+  const { t } = useTranslation();
   const [bills, setBills] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [activeBusinessId, setActiveBusinessId] = useState(() => {
@@ -53,9 +55,9 @@ function ExpenseAnalytics({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Expense Analytics Workspace</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('expense_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Evaluate category spending variance, top suppliers, and cost optimizations.
+          {t('expense_subtitle')}
         </p>
       </div>
 
@@ -64,9 +66,9 @@ function ExpenseAnalytics({ user }) {
         
         {/* Pie Category */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Category Distribution</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('expense_category_distribution')}</h3>
           {categoryData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>No expense data.</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{t('expense_no_data')}</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -83,9 +85,9 @@ function ExpenseAnalytics({ user }) {
 
         {/* Bar values */}
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.75rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Expenses By Category Value</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('expense_by_category')}</h3>
           {categoryData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>No expense data.</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{t('expense_no_data')}</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={categoryData}>
@@ -103,17 +105,17 @@ function ExpenseAnalytics({ user }) {
 
       {/* Top Expenses List */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Top Invoice Outlays</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('expense_top_outlays')}</h3>
         
         {bills.length === 0 ? (
-          <div style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>No invoices.</div>
+          <div style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>{t('expense_no_invoices')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {bills.slice(0, 5).map((bill, index) => (
               <div key={index} style={{ padding: '1rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', display: 'flex', justifyBetween: 'space-between', alignItems: 'center' }}>
                 <div>
                   <strong style={{ display: 'block', fontSize: '0.9rem' }}>{bill.supplierName || 'Unknown Vendor'}</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Category: {bill.expenseType || 'Others'} | Date: {bill.invoiceDate}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{t('expense_category')}: {bill.expenseType || 'Others'} | {t('expense_date')}: {bill.invoiceDate}</span>
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>₹{(bill.totalAmount || 0).toLocaleString()}</div>
               </div>

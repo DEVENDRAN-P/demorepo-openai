@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getUserBusinesses, saveUserBusinesses } from '../utils/businessHelper';
+import { useTranslation } from 'react-i18next';
 
 function BusinessDirectory({ user }) {
+  const { t } = useTranslation();
   const [businesses, setBusinesses] = useState([]);
 
   useEffect(() => {
@@ -132,13 +134,13 @@ function BusinessDirectory({ user }) {
       {/* Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Business Directory</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('bizdir_title')}</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Switch active workspace workspaces, check GST compliance scores, and administer multi-entity operations.
+            {t('bizdir_subtitle')}
           </p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
-          🏢 Add New Business
+          🏢 {t('bizdir_add_business')}
         </button>
       </div>
 
@@ -146,7 +148,7 @@ function BusinessDirectory({ user }) {
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.25rem', marginBottom: '2rem' }}>
         <div className="grid" style={{ gridTemplateColumns: '1.5fr 1fr 1fr', gap: '1rem' }}>
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Search Entities</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('bizdir_search_entities')}</label>
             <input 
               type="text"
               value={searchTerm}
@@ -157,13 +159,13 @@ function BusinessDirectory({ user }) {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>State Jurisdiction</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('bizdir_state_jurisdiction')}</label>
             <select 
               value={stateFilter} 
               onChange={(e) => setStateFilter(e.target.value)}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="all">All States</option>
+              <option value="all">{t('bizdir_all_states')}</option>
               <option value="Karnataka">Karnataka</option>
               <option value="Maharashtra">Maharashtra</option>
               <option value="Delhi">Delhi</option>
@@ -171,15 +173,15 @@ function BusinessDirectory({ user }) {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>Filing Sort Criteria</label>
+            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.375rem' }}>{t('bizdir_sort_criteria')}</label>
             <select 
               value={sortField} 
               onChange={(e) => setSortField(e.target.value)}
               style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="name">Company Name</option>
-              <option value="complianceScore">Compliance Score</option>
-              <option value="state">Location State</option>
+              <option value="name">{t('bizdir_sort_name')}</option>
+              <option value="complianceScore">{t('bizdir_sort_compliance')}</option>
+              <option value="state">{t('bizdir_sort_state')}</option>
             </select>
           </div>
         </div>
@@ -220,19 +222,19 @@ function BusinessDirectory({ user }) {
 
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.775rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Location:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('bizdir_location')}:</span>
                   <strong>{biz.state}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Category:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('bizdir_category')}:</span>
                   <strong>{biz.type}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Owner:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('bizdir_owner')}:</span>
                   <strong>{biz.owner}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Compliance:</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('bizdir_compliance')}:</span>
                   <strong style={{ 
                     fontSize: '0.85rem',
                     color: biz.complianceScore >= 90 ? 'var(--success)' : biz.complianceScore >= 80 ? 'var(--warning)' : 'var(--error)' 
@@ -248,7 +250,7 @@ function BusinessDirectory({ user }) {
                 style={{ width: '100%', padding: '0.45rem', fontSize: '0.75rem', marginTop: '0.5rem' }}
                 disabled={isSelected}
               >
-                {isSelected ? 'Activated Workspace' : 'Activate Workspace'}
+                {isSelected ? t('bizdir_activated') : t('bizdir_activate')}
               </button>
             </div>
           );
@@ -257,7 +259,7 @@ function BusinessDirectory({ user }) {
 
       {/* Team management */}
       <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Team Access Directory</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>{t('bizdir_team_directory')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {team.map((t, idx) => (
             <div key={idx} style={{ padding: '1rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -275,11 +277,11 @@ function BusinessDirectory({ user }) {
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
           <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '2rem', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '480px', border: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>🏢 Register New Business</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>🏢 {t('bizdir_register_business')}</h3>
             
             <form onSubmit={handleCreateBusiness} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Business Shop Name</label>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>{t('bizdir_shop_name')}</label>
                 <input 
                   type="text" 
                   value={newBiz.name} 
@@ -290,7 +292,7 @@ function BusinessDirectory({ user }) {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>GSTIN Identifier (15-chars)</label>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>{t('bizdir_gstin')}</label>
                 <input 
                   type="text" 
                   value={newBiz.gstin} 
@@ -303,7 +305,7 @@ function BusinessDirectory({ user }) {
 
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>State Jurisdiction</label>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>{t('bizdir_state_jurisdiction')}</label>
                   <select 
                     value={newBiz.state} 
                     onChange={(e) => setNewBiz({ ...newBiz, state: e.target.value })}
@@ -315,22 +317,22 @@ function BusinessDirectory({ user }) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Category Segment</label>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>{t('bizdir_category_segment')}</label>
                   <select 
                     value={newBiz.type} 
                     onChange={(e) => setNewBiz({ ...newBiz, type: e.target.value })}
                     style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                   >
-                    <option value="Retail & Distribution">Retail & Distribution</option>
-                    <option value="IT Services & Consulting">IT Services & Consulting</option>
-                    <option value="Transport & Warehouse">Transport & Warehouse</option>
+                    <option value="Retail & Distribution">{t('bizdir_retail')}</option>
+                    <option value="IT Services & Consulting">{t('bizdir_it_services')}</option>
+                    <option value="Transport & Warehouse">{t('bizdir_transport')}</option>
                   </select>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>Register Business</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-outline" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>{t('bizdir_cancel')}</button>
+                <button type="submit" className="btn btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.8rem' }}>{t('bizdir_register')}</button>
               </div>
             </form>
           </div>

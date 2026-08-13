@@ -309,7 +309,7 @@ function Dashboard({ user }) {
               </span>
             </div>
             <h1 className="gradient-text" style={{ fontSize: '2.25rem', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              Welcome back, {user?.name || user?.displayName || 'User'} 👋
+              {t('welcome_back', { name: user?.name || user?.displayName || t('user_profile') })} 👋
               <span style={{
                 fontSize: '0.75rem',
                 padding: '0.25rem 0.75rem',
@@ -322,7 +322,7 @@ function Dashboard({ user }) {
                 letterSpacing: '0.05em',
                 lineHeight: 1
               }}>
-                {activePlan} Tier
+                {t(activePlan === 'free' ? 'free_tier' : activePlan === 'pro' ? 'pro_tier' : 'business_tier')} {t('tier')}
               </span>
             </h1>
             <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.95rem' }}>
@@ -384,7 +384,7 @@ function Dashboard({ user }) {
                 <span className={`badge-premium ${healthRating.class}`}>{healthRating.label}</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>
-                Derived from {totalVerified} vetted transactions, high expense categorization quality, and strong working capital levels.
+                {t('health_derived_desc', { count: totalVerified })}
               </p>
             </div>
           </div>
@@ -406,7 +406,7 @@ function Dashboard({ user }) {
                 <span className={`badge-premium ${complianceRating.class}`}>{complianceRating.label}</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>
-                Audit status highlights {pendingFilings} pending uploads. 100% of GSTIN structures validated against portal regulations.
+                {t('compliance_derived_desc', { count: pendingFilings })}
               </p>
             </div>
           </div>
@@ -437,27 +437,27 @@ function Dashboard({ user }) {
         <div className="grid grid-cols-4" style={{ gap: '1.25rem', marginBottom: '2rem' }}>
           
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Monthly Revenue</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monthly_revenue')}</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{revenue === null ? '—' : '₹' + revenue.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Requires sales invoices (not derived from purchases)</span>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>{t('revenue_requires_sales')}</span>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Monthly Expenses</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>{t('monthly_expenses')}</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{expenses.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Includes {totalBillsUploaded} uploaded receipts</span>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>{t('expenses_receipts', { count: totalBillsUploaded })}</span>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--warning)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>GST Payable</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>{t('gst_payable')}</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>{gstPayable === null ? '—' : '₹' + gstPayable.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Requires sales data (not derivable from purchases)</span>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>{t('gst_payable_requires_sales')}</span>
           </div>
 
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--success)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Input Tax Credit</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>{t('input_tax_credit')}</span>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>₹{inputTaxCredit.toLocaleString()}</div>
-            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#4ade80' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> ITC from invoices with valid supplier GSTIN</span></span>
+            <span style={{ fontSize: '0.675rem', color: '#4ade80', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ color: '#4ade80' }}><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"/></svg> {t('itc_valid_supplier')}</span></span>
           </div>
 
         </div>
@@ -467,8 +467,8 @@ function Dashboard({ user }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div style={{ background: 'var(--theme-primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: 'white' }}><IconRobot /></div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>AI Autonomous Accountant Agent</h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>Assign tasks to your AI employee. It reads business context and executes return compilations, risk analysis, and audit tasks.</p>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{t('agent_console_title')}</h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>{t('agent_console_subtitle')}</p>
             </div>
           </div>
 
@@ -476,7 +476,7 @@ function Dashboard({ user }) {
             <input 
               type="text" 
               className="ai-agent-input" 
-              placeholder="Ask: 'Prepare GST', 'Check compliance', 'Find risks', 'Verify GSTR-3B numbers', 'Optimize tax savings'..."
+              placeholder={t('agent_console_placeholder')}
               value={agentInput}
               onChange={(e) => setAgentInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAgentAction()}
@@ -488,23 +488,23 @@ function Dashboard({ user }) {
               disabled={agentLoading}
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}
             >
-              {agentLoading ? 'Running...' : 'Execute'}
+              {agentLoading ? t('running') : t('execute')}
             </button>
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Analyze this month')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analyze Month</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Check compliance')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4m5 .5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Check Compliance</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Prepare GST')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Prepare GST Return</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Find risks')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Find Audit Risks</button>
-            <button className="chip-interactive" onClick={() => handleAgentAction('Suggest tax savings')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9.663 17h4.673M12 3v1M6.364 5.636l-.707-.707M21 12h-1"/><path d="M3 12H2m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Tax Saving Options</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Analyze this month')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> {t('analyze_month')}</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Check compliance')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4m5 .5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> {t('check_compliance')}</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Prepare GST')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> {t('prepare_gst')}</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Find risks')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {t('find_audit_risks')}</button>
+            <button className="chip-interactive" onClick={() => handleAgentAction('Suggest tax savings')}><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9.663 17h4.673M12 3v1M6.364 5.636l-.707-.707M21 12h-1"/><path d="M3 12H2m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> {t('tax_saving_options')}</button>
           </div>
 
           {agentResponse && (
             <div className="glass-panel" style={{ marginTop: '1.25rem', padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: 'var(--bg-secondary)', borderLeft: '4px solid var(--theme-secondary)' }}>
               <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-secondary)' }}>Agent Execution Logs</span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>Live analysis</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-secondary)' }}>{t('agent_execution_logs')}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{t('live_analysis')}</span>
               </div>
               <div style={{ fontSize: '0.875rem', lineHeight: '1.6', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
                 {agentResponse}
@@ -525,11 +525,11 @@ function Dashboard({ user }) {
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Intelligent global search (by vendor, invoice #, HSN, category, amount)..." 
+                  placeholder={t('search_placeholder')} 
                   style={{ flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-lg)', fontSize: '0.875rem', outline: 'none' }}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.825rem' }}>Clear</button>
+                  <button onClick={() => setSearchQuery('')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.825rem' }}>{t('clear')}</button>
                 )}
               </div>
             </div>
@@ -541,24 +541,24 @@ function Dashboard({ user }) {
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <span style={{ display: 'flex' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--theme-secondary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Quick Operations</h2>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{t('quick_operations')}</h2>
               </div>
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
                 <Link to="/bill-upload" className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconUploadCloud />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Smart Upload</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('smart_upload')}</span>
                 </Link>
                 <Link to="/gst-forms" onClick={(e) => handleFeatureClick('pro', e)} className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconDocuments />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filing Readiness</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('filing_readiness')}</span>
                 </Link>
                 <Link to="/reports" onClick={(e) => handleFeatureClick('pro', e)} className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconBarChart />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Deep Analytics</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('deep_analytics')}</span>
                 </Link>
                 <Link to="/chat" className="glass-panel hover-glow" style={{ padding: '1.5rem', textAlign: 'center', textDecoration: 'none', borderRadius: 'var(--radius-lg)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                   <IconRobot />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>AI Accountant Chat</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('ai_accountant_chat')}</span>
                 </Link>
               </div>
             </div>
@@ -573,32 +573,32 @@ function Dashboard({ user }) {
             {/* Live AI Activity Timeline */}
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>AI System Timeline</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>{t('ai_system_timeline')}</h3>
                 <span className="pulse-dot"></span>
               </div>
               <div className="timeline-container">
                 <div className="timeline-item success">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">Live</div>
-                    <strong>Invoice Ledger Synced</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{totalBillsUploaded} invoices in your ledger. {totalVerified} verified and ready for return preparation.</div>
+                    <div className="timeline-time">{t('live')}</div>
+                    <strong>{t('timeline_ledger_synced')}</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{t('timeline_ledger_desc', { total: totalBillsUploaded, verified: totalVerified })}</div>
                   </div>
                 </div>
                 <div className="timeline-item info">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">Live</div>
-                    <strong>GST Position Calculated</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Recorded ₹{inputTaxCredit.toLocaleString()} input tax credit from purchase invoices. GST payable requires sales data.</div>
+                    <div className="timeline-time">{t('live')}</div>
+                    <strong>{t('timeline_gst_position')}</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{t('timeline_gst_position_desc', { itc: inputTaxCredit.toLocaleString() })}</div>
                   </div>
                 </div>
                 <div className="timeline-item warning">
                   <div className="timeline-marker"></div>
                   <div className="timeline-content">
-                    <div className="timeline-time">Live</div>
-                    <strong>Filing Status</strong>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{pendingFilings} invoices pending filing. <Link to="/agent-activity" style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>View agent activity →</Link></div>
+                    <div className="timeline-time">{t('live')}</div>
+                    <strong>{t('filing_status')}</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{t('timeline_filing_desc', { count: pendingFilings })} <Link to="/agent-activity" style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>{t('view_agent_activity')} →</Link></div>
                   </div>
                 </div>
               </div>
@@ -624,10 +624,10 @@ function Dashboard({ user }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                  Financial Impact & Cost Optimization
+                  {t('financial_impact')}
                 </h2>
                 <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  Real-time ROI analysis comparing automated workflows against legacy accounting overheads
+                  {t('financial_impact_desc')}
                 </p>
               </div>
             </div>
@@ -635,7 +635,7 @@ function Dashboard({ user }) {
             {/* Last Updated Badge */}
             <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', background: 'var(--bg-secondary)', padding: '0.25rem 0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span className="pulse-dot" style={{ width: '5px', height: '5px' }}></span>
-              <span>Auto-calculated from your {totalBillsUploaded} invoices</span>
+              <span>{t('auto_calculated', { count: totalBillsUploaded })}</span>
             </div>
           </div>
 
@@ -645,12 +645,12 @@ function Dashboard({ user }) {
             {/* Card 1: Total Savings */}
             <div className="glass-panel hover-glow" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--success)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Input Tax Credit (ITC)</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('itc_card_title')}</span>
                 <div style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0 0 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                   <span>₹{inputTaxCredit.toLocaleString()}</span>
                 </div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0', lineHeight: '1.4' }}>
-                  GST recorded on your purchase invoices. Claimable where the supplier GSTIN is valid.
+                  {t('itc_card_desc')}
                 </p>
               </div>
               <div style={{
@@ -674,15 +674,15 @@ function Dashboard({ user }) {
             {/* Card 2: ROI & Net Monthly Savings */}
             <div className="glass-panel hover-glow" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-secondary-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ROI & Monthly Yield</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('roi_monthly_yield')}</span>
                 <div style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0 0 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                   <span>6.0x</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--theme-secondary-light)', fontWeight: 600 }}>
-                    ₹2,500/mo net yield
+                    {t('net_yield')}
                   </span>
                 </div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0', lineHeight: '1.4' }}>
-                  GST Buddy AI saves ₹2,500 every single month on overhead.
+                  {t('ai_saves_desc')}
                 </p>
               </div>
               <div style={{
@@ -705,7 +705,7 @@ function Dashboard({ user }) {
             {/* Card 3: Cost Comparison */}
             <div className="glass-panel hover-glow" style={{ borderRadius: 'var(--radius-lg)', padding: '1.25rem', borderLeft: '4px solid var(--theme-primary-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Reduction</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('cost_reduction')}</span>
                 <div style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0 0 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                   <span>83%</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
@@ -713,7 +713,7 @@ function Dashboard({ user }) {
                   </span>
                 </div>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0 0', lineHeight: '1.4' }}>
-                  Comparison: Average Market Cost vs GST Buddy AI Subscription.
+                  {t('cost_comparison_desc')}
                 </p>
               </div>
               <div style={{
@@ -741,8 +741,8 @@ function Dashboard({ user }) {
             {/* Savings Progress Target */}
             <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: 'var(--radius-lg)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                <span>Savings Progress vs Annual Target</span>
-                <strong style={{ marginLeft: 'auto' }}>84% Achieved</strong>
+                <span>{t('savings_progress')}</span>
+                <strong style={{ marginLeft: 'auto' }}>{t('achieved_84')}</strong>
               </div>
               
               {/* CSS Progress Bar */}
@@ -751,14 +751,14 @@ function Dashboard({ user }) {
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>
-                <span>Annual Target: ₹20,000</span>
-                <span style={{ marginLeft: 'auto' }}>Unclaimed target: ₹3,200</span>
+                <span>{t('annual_target')}</span>
+                <span style={{ marginLeft: 'auto' }}>{t('unclaimed_target')}</span>
               </div>
             </div>
 
             {/* Calculations Breakdown */}
             <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: 'var(--radius-lg)' }}>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: 'var(--text-secondary)' }}>How is this calculated?</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: 'var(--text-secondary)' }}>{t('how_calculated')}</h4>
               
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                 <div style={{ flex: 1, minWidth: '100px', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -782,9 +782,9 @@ function Dashboard({ user }) {
           <div style={{ background: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.15)', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <div style={{ color: 'var(--theme-primary-light)', display: 'flex' }}><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9.663 17h4.673M12 3v1M6.364 5.636l-.707-.707M21 12h-1M4 12H3m3.343-5.657L5.636 5.636"/><path d="M12 3v1m6.364 4.636.707-.707"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
             <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-primary-light)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Impact & Efficiency Insight</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--theme-primary-light)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('ai_impact_insight')}</span>
               <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                GST Buddy AI reduced operational accounting overhead costs by approximately <strong>83%</strong> through automated real-time invoice processing, compliance checks, error validation, and autonomous tax filing preparation.
+                {t('ai_impact_desc')}
               </p>
             </div>
           </div>
@@ -854,12 +854,12 @@ function Dashboard({ user }) {
 
             <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>⭐</div>
              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>
-               {upgradeTarget === 'pro' ? 'Unlock AI Accountant' : 'Unlock Advanced Operations'}
+               {upgradeTarget === 'pro' ? t('upgrade_unlock_pro') : t('upgrade_unlock_business')}
              </h3>
              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
                {upgradeTarget === 'pro' 
-                 ? "Your AI finance assistant can analyze your invoices, expenses, GST liability, and business performance."
-                 : "Automatically compare transactions, invoices, and GST records, and audit multiple business profiles."}
+                 ? t('upgrade_pro_desc')
+                 : t('upgrade_business_desc')}
              </p>
 
              <div style={{ 
@@ -873,25 +873,25 @@ function Dashboard({ user }) {
                color: 'var(--text-secondary)'
              }}>
                <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.5rem' }}>
-                 Available with {upgradeTarget === 'pro' ? 'Pro Plan' : 'Business Plan'}:
+                 {t(upgradeTarget === 'pro' ? 'available_with_pro' : 'available_with_business')}:
                </strong>
                {upgradeTarget === 'pro' ? (
                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                   <li>✓ Analyze financial performance</li>
-                   <li>✓ Detect expense leakage</li>
-                   <li>✓ Explain GST transactions</li>
-                   <li>✓ Generate AI recommendations</li>
+                   <li>✓ {t('feat_analyze_performance')}</li>
+                   <li>✓ {t('feat_detect_leakage')}</li>
+                   <li>✓ {t('feat_explain_gst')}</li>
+                   <li>✓ {t('feat_ai_recommendations')}</li>
                  </ul>
                ) : (
                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                   <li>✓ Continuous compliance monitoring</li>
-                   <li>✓ Advanced anomaly detection & reconciliation</li>
-                   <li>✓ Cash-flow and predictive tax planning</li>
-                   <li>✓ Multi-business profile support (up to 5)</li>
+                   <li>✓ {t('feat_continuous_monitoring')}</li>
+                   <li>✓ {t('feat_anomaly_detection')}</li>
+                   <li>✓ {t('feat_cashflow_planning')}</li>
+                   <li>✓ {t('feat_multi_business')}</li>
                  </ul>
                )}
                <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '0.75rem', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Pricing:</span>
+                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{t('pricing_colon')}:</span>
                  <strong style={{ fontSize: '1.05rem', color: 'var(--theme-primary-light)' }}>
                    {upgradeTarget === 'pro' ? '₹199/month' : '₹499/month'}
                  </strong>
@@ -917,7 +917,7 @@ function Dashboard({ user }) {
                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
                  }}
                >
-                 Upgrade to {upgradeTarget === 'pro' ? 'Pro' : 'Business'}
+                 {t(upgradeTarget === 'pro' ? 'upgrade_to_pro' : 'upgrade_to_business')}
                </button>
               <button
                 onClick={() => setShowUpgradeModal(false)}
@@ -932,7 +932,7 @@ function Dashboard({ user }) {
                   cursor: 'pointer'
                 }}
               >
-                Maybe Later
+                {t('maybe_later')}
               </button>
             </div>
           </div>

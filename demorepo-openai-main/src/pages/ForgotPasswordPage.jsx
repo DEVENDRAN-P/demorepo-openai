@@ -375,7 +375,7 @@ function ForgotPasswordPage() {
                     color: '#64748b',
                     fontSize: '0.75rem'
                 }}>
-                    By resetting your password, you agree to our <Link to="#" style={{ color: '#3b82f6', textDecoration: 'none' }}>Terms of Service</Link>
+                    {t('forgot_password.agree_terms')} <Link to="#" style={{ color: '#3b82f6', textDecoration: 'none' }}>{t('forgot_password.terms_of_service')}</Link>
                 </p>
             </div>
 

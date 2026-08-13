@@ -354,7 +354,7 @@ function Support({ user }) {
                                     fontSize: '0.85rem',
                                     margin: 0,
                                 }}>
-                                    <strong>Hours:</strong> {item.hours}
+                                    <strong>{t('support.hours')}:</strong> {item.hours}
                                 </p>
                             </div>
                         ))}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
+import { useTranslation } from 'react-i18next';
 
 const getApiUrl = (path) => {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -49,6 +50,7 @@ const safeParseJson = async (response) => {
 };
 
 function CheckoutPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const [planAmount, setPlanAmount] = useState(199);
@@ -204,9 +206,9 @@ function CheckoutPage() {
         backdropFilter: 'blur(20px)',
         textAlign: 'center'
       }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Complete Subscription</h2>
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>{t('checkout_complete_subscription')}</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '2rem' }}>
-          Secure Checkout powered by Cashfree Payments
+          {t('checkout_secure_checkout')}
         </p>
 
         {errorMsg && (
@@ -230,7 +232,7 @@ function CheckoutPage() {
           marginBottom: '1.5rem',
           textAlign: 'left'
         }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, letterSpacing: '0.05em' }}>Order Summary</span>
+          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, letterSpacing: '0.05em' }}>{t('checkout_order_summary')}</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
             <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>
               GST Buddy {selectedPlan === 'pro' ? 'Pro' : 'Business'}
@@ -241,13 +243,13 @@ function CheckoutPage() {
           </div>
 
           <div style={{ marginTop: '1rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>Tier benefits included:</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}>{t('checkout_tier_benefits')}:</span>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <li>✓ Unlimited Invoices OCR extraction</li>
-              <li>✓ AI Compliance Score Advisor</li>
-              <li>✓ GSTR-1 & GSTR-3B filings support</li>
-              <li>✓ Business Health Analytics Ledger</li>
-              {selectedPlan === 'business' && <li>✓ Multiple Business profiles & API access</li>}
+              <li>✓ {t('checkout_benefit_unlimited')}</li>
+              <li>✓ {t('checkout_benefit_compliance')}</li>
+              <li>✓ {t('checkout_benefit_gstr')}</li>
+              <li>✓ {t('checkout_benefit_health')}</li>
+              {selectedPlan === 'business' && <li>✓ {t('checkout_benefit_multi')}</li>}
             </ul>
           </div>
         </div>
@@ -255,7 +257,7 @@ function CheckoutPage() {
         {/* Phone number — required by Cashfree for order creation */}
         <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>
-            Mobile Number (required for payment)
+            {t('checkout_mobile_required')}
           </label>
           <input
             type="tel"
@@ -279,14 +281,14 @@ function CheckoutPage() {
             <p style={{ color: '#f87171', fontSize: '0.75rem', margin: '0.4rem 0 0 0' }}>{phoneError}</p>
           )}
           <p style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', margin: '0.4rem 0 0 0' }}>
-            Your number is used only for payment processing by Cashfree.
+            {t('checkout_number_privacy')}
           </p>
         </div>
 
         {alreadySubscribed ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', padding: '0.9rem 1rem', borderRadius: '10px', border: '1px solid rgba(34, 197, 94, 0.2)', fontSize: '0.85rem', textAlign: 'left' }}>
-              You are already subscribed to the {selectedPlan === 'pro' ? 'Pro' : 'Business'} plan. No duplicate payment needed.
+              {t('checkout_already_subscribed', { plan: selectedPlan === 'pro' ? 'Pro' : 'Business' })}
             </div>
             <button
               onClick={() => navigate('/pricing')}
@@ -302,7 +304,7 @@ function CheckoutPage() {
                 boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
               }}
             >
-              Go to Pricing
+              {t('checkout_go_pricing')}
             </button>
           </div>
         ) : (
@@ -343,7 +345,7 @@ function CheckoutPage() {
                 cursor: 'pointer'
               }}
             >
-              Cancel & Go Back
+              {t('checkout_cancel_back')}
             </button>
           </div>
         )}

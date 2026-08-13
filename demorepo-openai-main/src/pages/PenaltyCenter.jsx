@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchActivePlan } from '../services/subscriptionService';
 import { getUserBills } from '../services/firebaseDataService';
+import { useTranslation } from 'react-i18next';
 
 function PenaltyCenter({ user }) {
+  const { t } = useTranslation();
   // Calculator States
   const [returnType, setReturnType] = useState('normal'); // 'nil' or 'normal'
   const [daysDelayed, setDaysDelayed] = useState(0);
@@ -85,9 +87,9 @@ function PenaltyCenter({ user }) {
       
       {/* Title Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>GST Penalty Avoidance Center</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('penalty_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Evaluate late filing fees, calculate statutory Section 50 interest, and follow AI suggestions to mitigate compliance penalties.
+          {t('penalty_subtitle')}
         </p>
       </div>
 
@@ -97,34 +99,34 @@ function PenaltyCenter({ user }) {
         <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '2rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
-            Penalty & Interest Estimator
+            {t('penalty_estimator')}
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Filing Classification</label>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>{t('penalty_filing_classification')}</label>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button 
                   onClick={() => setReturnType('nil')} 
                   className={`btn ${returnType === 'nil' ? 'btn-primary' : 'btn-outline'}`}
                   style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }}
                 >
-                  Nil Return (GSTR-1/3B)
+                  {t('penalty_nil_return')}
                 </button>
                 <button 
                   onClick={() => setReturnType('normal')} 
                   className={`btn ${returnType === 'normal' ? 'btn-primary' : 'btn-outline'}`}
                   style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }}
                 >
-                  Normal Return (Taxable)
+                  {t('penalty_normal_return')}
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Days Delayed</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('penalty_days_delayed')}</label>
                 <input 
                   type="number" 
                   value={daysDelayed}
@@ -133,7 +135,7 @@ function PenaltyCenter({ user }) {
                 />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>Net GST Liability (₹)</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.375rem' }}>{t('penalty_net_liability')} (₹)</label>
                 <input 
                   type="number" 
                   value={netTaxPayable}
@@ -145,7 +147,7 @@ function PenaltyCenter({ user }) {
             </div>
 
             <button onClick={calculatePenalties} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', fontWeight: 700 }}>
-              Calculate Penalty Liability
+              {t('penalty_calculate')}
             </button>
 
             {hasCalculated && (
@@ -158,11 +160,11 @@ function PenaltyCenter({ user }) {
                 gap: '0.85rem' 
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Late Filing Fee (CGST+SGST):</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('penalty_late_fee')}:</span>
                   <strong>₹{lateFees.toLocaleString()}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Delay Interest (Section 50 @18% p.a.):</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('penalty_delay_interest')}:</span>
                   <strong>₹{interestCharged.toLocaleString()}</strong>
                 </div>
                 <div style={{ 
@@ -174,7 +176,7 @@ function PenaltyCenter({ user }) {
                   paddingTop: '0.75rem',
                   color: totalPenalty > 0 ? 'var(--error)' : 'var(--success)'
                 }}>
-                  <span>Estimated Total Penalty:</span>
+                  <span>{t('penalty_total_estimate')}:</span>
                   <span>₹{totalPenalty.toLocaleString()}</span>
                 </div>
               </div>
@@ -190,15 +192,15 @@ function PenaltyCenter({ user }) {
           {activePlan === 'business' ? (
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem', borderLeft: '4px solid var(--error)', background: 'rgba(239, 68, 68, 0.03)' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: 'var(--error)' }}>
-                ⚡ Proactive Compliance Warning
+                ⚡ {t('penalty_proactive_warning')}
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 1rem 0' }}>
-                <strong>Compliance Risk Detected</strong>: GSTR-3B filing for {businessName} has unpaid invoices in your records. File before the 20th of next month to avoid automated late fees.
+                <strong>{t('penalty_risk_detected')}</strong>: {t('penalty_risk_desc', { businessName })}
               </p>
               <div style={{ background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.75rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Unfiled invoice records:</span>
-                  <strong style={{ color: 'var(--error)' }}>{pendingInvoices} {pendingInvoices === 1 ? 'invoice' : 'invoices'}</strong>
+                  <span>{t('penalty_unfiled_records')}:</span>
+                  <strong style={{ color: 'var(--error)' }}>{pendingInvoices} {pendingInvoices === 1 ? t('penalty_invoice') : t('penalty_invoices')}</strong>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -207,14 +209,14 @@ function PenaltyCenter({ user }) {
                   className="btn btn-primary" 
                   style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', background: 'var(--primary-600)' }}
                 >
-                  Review Compliance
+                  {t('penalty_review_compliance')}
                 </button>
                 <button 
                   onClick={() => alert("Open the GST Forms page to generate GSTR-1 / GSTR-3B drafts from your records.")}
                   className="btn btn-outline" 
                   style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
                 >
-                  Prepare Return
+                  {t('penalty_prepare_return')}
                 </button>
               </div>
             </div>
@@ -238,9 +240,9 @@ function PenaltyCenter({ user }) {
                   <span style={{ display: 'block', marginBottom: '0.25rem', color: 'var(--text-tertiary)' }}>
                     <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </span>
-                  <strong style={{ fontSize: '0.85rem', color: 'white' }}>Proactive Penalty Warning</strong>
+                  <strong style={{ fontSize: '0.85rem', color: 'white' }}>{t('penalty_proactive_warning')}</strong>
                   <p style={{ fontSize: '0.7rem', color: '#cbd5e1', margin: '0.25rem 0 0.75rem 0', maxWidth: '85%', lineHeight: '1.4' }}>
-                    Detect late filing risks, calculate exposure dynamically, and auto-escalate tasks to your CA.
+                    {t('penalty_proactive_desc')}
                   </p>
                   <button 
                     onClick={() => {
@@ -250,22 +252,22 @@ function PenaltyCenter({ user }) {
                     className="btn btn-primary" 
                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.7rem', background: 'var(--primary-600)' }}
                   >
-                    Unlock Business
+                    {t('penalty_unlock_business')}
                   </button>
                 </div>
               )}
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: 'var(--text-primary)' }}>Filing Deadlines Warning</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: 'var(--text-primary)' }}>{t('penalty_deadlines_warning')}</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 1rem 0' }}>
-                Statutory filing deadlines for GSTR-1 and GSTR-3B are approaching. Missing these triggers automated late fees.
+                {t('penalty_deadlines_desc')}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.25rem' }}>
-                  <span><strong>GSTR-1</strong> (Sales Outward)</span>
-                  <span>Due: 11th of Next Month</span>
+                  <span><strong>GSTR-1</strong> ({t('penalty_sales_outward')})</span>
+                  <span>{t('penalty_due_11th')}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span><strong>GSTR-3B</strong> (Tax Summary & Payment)</span>
-                  <span>Due: 20th of Next Month</span>
+                  <span><strong>GSTR-3B</strong> ({t('penalty_tax_summary')})</span>
+                  <span>{t('penalty_due_20th')}</span>
                 </div>
               </div>
             </div>
@@ -274,26 +276,26 @@ function PenaltyCenter({ user }) {
           {/* AI Penalty Mitigation */}
           <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--warning)' }}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/></svg> AI Penalty Mitigation Tips
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', color: 'var(--warning)' }}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2-1 4-2 5v1a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1c-1-1-2-3-2-5a7 7 0 0 1 7-7z"/></svg> {t('penalty_mitigation_tips')}
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.8rem', lineHeight: '1.4' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span style={{ color: 'var(--success)' }}>✔</span>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                  <strong>Verify Nil Status early</strong>: Nil returns still trigger a Rs 20/day penalty. File them via SMS or one-click before due date.
+                  <strong>{t('penalty_tip_nil')}</strong>: {t('penalty_tip_nil_desc')}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span style={{ color: 'var(--success)' }}>✔</span>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                  <strong>Leverage Net Cash Rule</strong>: Section 50 interest is calculated <em>only</em> on the tax portion paid via Cash Ledger, not via ITC ledger. Utilize input credits to reduce cash payments.
+                  <strong>{t('penalty_tip_cash')}</strong>: {t('penalty_tip_cash_desc')}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span style={{ color: 'var(--success)' }}>✔</span>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                  <strong>Register automatic email alerts</strong>: Enable GSTR filing notifications in Settings to dispatch reminders 5, 3, and 1 day prior to the deadlines.
+                  <strong>{t('penalty_tip_alerts')}</strong>: {t('penalty_tip_alerts_desc')}
                 </span>
               </div>
             </div>
@@ -323,9 +325,9 @@ function PenaltyCenter({ user }) {
             <span style={{ display: 'block', marginBottom: '0.75rem', color: 'var(--text-tertiary)' }}>
               <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </span>
-            <strong style={{ fontSize: '1rem', color: 'white', marginBottom: '0.25rem' }}>Penalty Tracking Ledger is Locked</strong>
+            <strong style={{ fontSize: '1rem', color: 'white', marginBottom: '0.25rem' }}>{t('penalty_ledger_locked')}</strong>
             <p style={{ color: '#cbd5e1', fontSize: '0.775rem', maxWidth: '400px', margin: '0 0 1rem 0' }}>
-              Upgrade to the Pro Plan to log historical return delay fees, view interest settlements, and track payment receipts.
+              {t('penalty_ledger_locked_desc')}
             </p>
             <button 
               onClick={() => {
@@ -335,21 +337,22 @@ function PenaltyCenter({ user }) {
               className="btn btn-primary" 
               style={{ background: 'var(--primary-600)', padding: '0.45rem 1.25rem', fontSize: '0.725rem' }}
             >
-              Upgrade to Pro (₹199/mo)
+              {t('penalty_upgrade_pro')}
             </button>
           </div>
         )}
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>Historical Late Fee Settlement Log</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.25rem' }}>{t('penalty_history_log')}</h3>
         
+        <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-              <th style={{ padding: '0.75rem' }}>Filing Period</th>
-              <th style={{ padding: '0.75rem' }}>Form Type</th>
-              <th style={{ padding: '0.75rem', textAlign: 'center' }}>Days Delayed</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Late Fees Paid</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Interest Paid</th>
-              <th style={{ padding: '0.75rem', textAlign: 'center' }}>Filing Status</th>
+              <th style={{ padding: '0.75rem' }}>{t('penalty_filing_period')}</th>
+              <th style={{ padding: '0.75rem' }}>{t('penalty_form_type')}</th>
+              <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('penalty_days_delayed')}</th>
+              <th style={{ padding: '0.75rem', textAlign: 'right' }}>{t('penalty_late_fees_paid')}</th>
+              <th style={{ padding: '0.75rem', textAlign: 'right' }}>{t('penalty_interest_paid')}</th>
+              <th style={{ padding: '0.75rem', textAlign: 'center' }}>{t('penalty_filing_status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -357,7 +360,7 @@ function PenaltyCenter({ user }) {
               <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <td style={{ padding: '0.75rem', fontWeight: 600 }}>{item.period}</td>
                 <td style={{ padding: '0.75rem' }}>{item.type}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.delayedDays} Days</td>
+                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.delayedDays} {t('penalty_days')}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'right' }}>{item.feePaid}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'right' }}>{item.interestPaid}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>
@@ -367,6 +370,7 @@ function PenaltyCenter({ user }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
     </div>

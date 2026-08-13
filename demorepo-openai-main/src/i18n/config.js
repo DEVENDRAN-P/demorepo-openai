@@ -14,6 +14,16 @@ const resources = {
   kn: { translation: kn },
 };
 
+// Helper function to clean up raw underscore variable names into natural text
+function cleanKeyName(key) {
+  if (!key || typeof key !== "string") return key;
+  // Extract last segment if dot-notated (e.g. "agent_activity.title" -> "title")
+  const text = key.includes(".") ? key.split(".").pop() : key;
+  return text
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 i18n.use(initReactI18next).init({
   resources,
   lng: localStorage.getItem("language") || "en",
@@ -27,6 +37,11 @@ i18n.use(initReactI18next).init({
     useSuspense: false,
     transEmptyNodeValue: "",
     transSupportBasicHtmlNodes: true,
+  },
+  // Format missing keys cleanly so underscores never appear in the UI
+  parseMissingKeyHandler: (key, defaultValue) => {
+    if (defaultValue && defaultValue !== key) return defaultValue;
+    return cleanKeyName(key);
   },
   // Enable event listeners for language change
   detection: {
@@ -42,3 +57,4 @@ i18n.on("languageChanged", (lng) => {
 });
 
 export default i18n;
+

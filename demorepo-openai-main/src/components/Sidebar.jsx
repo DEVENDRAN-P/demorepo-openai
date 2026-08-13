@@ -402,6 +402,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             <NavLink
               key={idx}
               to={item.path}
+              onClick={() => { if (setMobileOpen) setMobileOpen(false); }}
               // Warm up the page chunk while the user is still hovering the link,
               // so clicking it navigates instantly (no Suspense fallback).
               onMouseEnter={() => preloadRoute(item.path)}

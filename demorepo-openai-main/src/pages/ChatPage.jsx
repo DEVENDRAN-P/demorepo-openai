@@ -13,7 +13,7 @@ function ChatPage({ user }) {
               {t('gst_buddy_assistant')}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
-              {t('Get instant answers to your GST compliance questions')}
+              {t('chat.subtitle')}
             </p>
           </div>
 

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserBills } from '../services/firebaseDataService';
 import { fetchActivePlan } from '../services/subscriptionService';
+import { useTranslation } from 'react-i18next';
 
 function TaxForecast({ user }) {
+  const { t } = useTranslation();
   const [forecastData, setForecastData] = useState([]);
   const [liability, setLiability] = useState(0);
   const [itcTotal, setItcTotal] = useState(0);
@@ -110,34 +112,34 @@ function TaxForecast({ user }) {
       
       {/* Title Header */}
       <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Tax Forecasting Console</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{t('taxforecast_title')}</h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-          Evaluate future tax liabilities, Input Tax Credit trend run-rates, and set aside savings buffers.
+          {t('taxforecast_subtitle')}
         </p>
       </div>
 
       {/* Overview Cards */}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Next Month Est. Liability</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('taxforecast_next_liability')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem' }}>₹{liability.toLocaleString()}</div>
-          <span style={{ fontSize: '0.675rem', color: confidence === 'High' ? 'var(--success)' : 'var(--warning)' }}>Confidence: {confidence}</span>
+          <span style={{ fontSize: '0.675rem', color: confidence === 'High' ? 'var(--success)' : 'var(--warning)' }}>{t('taxforecast_confidence')}: {confidence}</span>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--success)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Expected Credit (ITC)</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('taxforecast_expected_credit')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--success)' }}>
             -₹{itcTotal.toLocaleString()}
           </div>
-          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>From invoices with valid supplier GSTIN ({invoiceCount} invoices)</span>
+          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>{t('taxforecast_credit_desc', { count: invoiceCount })}</span>
         </div>
 
         <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--theme-primary-light)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recommended Cash Reserve</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('taxforecast_cash_reserve')}</span>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-secondary-light)' }}>
             ₹{Math.round(liability * 0.1).toLocaleString()}
           </div>
-          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>10% buffer of next-month estimate (recommendation)</span>
+          <span style={{ fontSize: '0.675rem', color: 'var(--text-secondary)' }}>{t('taxforecast_reserve_desc')}</span>
         </div>
       </div>
 
@@ -163,9 +165,9 @@ function TaxForecast({ user }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <strong style={{ fontSize: '1.1rem', color: 'white', marginBottom: '0.5rem' }}>4-Month Trend Projection is Locked</strong>
+            <strong style={{ fontSize: '1.1rem', color: 'white', marginBottom: '0.5rem' }}>{t('taxforecast_trend_locked')}</strong>
             <p style={{ color: '#cbd5e1', fontSize: '0.8rem', maxWidth: '400px', margin: '0 0 1.25rem 0', lineHeight: '1.5' }}>
-              Upgrade to the Pro Plan to visualize upcoming monthly liabilities, purchase input tax credits, and optimized saving allocations.
+              {t('taxforecast_trend_locked_desc')}
             </p>
             <button 
               onClick={() => {
@@ -175,15 +177,15 @@ function TaxForecast({ user }) {
               className="btn btn-primary" 
               style={{ background: 'var(--primary-600)', padding: '0.5rem 1.25rem', fontSize: '0.75rem' }}
             >
-              Upgrade to Pro (₹199/mo)
+              {t('taxforecast_upgrade_pro')}
             </button>
           </div>
         )}
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>Next 4-Months Projected GST Balance</h3>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '1.5rem' }}>{t('taxforecast_4month_balance')}</h3>
         
         {forecastData.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            No business data yet — upload invoices to generate a GST forecast.
+            {t('taxforecast_no_data')}
           </div>
         ) : (
         <ResponsiveContainer width="100%" height={300}>
@@ -223,9 +225,9 @@ function TaxForecast({ user }) {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <strong style={{ fontSize: '0.95rem', color: 'white', marginBottom: '0.25rem' }}>AI Cash-flow & Scenario Simulator</strong>
+            <strong style={{ fontSize: '0.95rem', color: 'white', marginBottom: '0.25rem' }}>{t('taxforecast_simulator')}</strong>
             <p style={{ color: '#cbd5e1', fontSize: '0.75rem', maxWidth: '450px', margin: '0 0 1rem 0', lineHeight: '1.4' }}>
-              Simulate dynamic business scenario expansions, cash flow liquidity projections, and quarterly tax impact audits.
+              {t('taxforecast_simulator_desc')}
             </p>
             <button 
               onClick={() => {
@@ -235,30 +237,30 @@ function TaxForecast({ user }) {
               className="btn btn-primary" 
               style={{ background: 'var(--primary-600)', padding: '0.4rem 1rem', fontSize: '0.7rem' }}
             >
-              Upgrade to Business (₹499/mo)
+              {t('taxforecast_upgrade_business')}
             </button>
           </div>
         )}
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg></span> Cash Flow Readiness
+          <span><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg></span> {t('taxforecast_cash_flow_readiness')}
         </h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Figures are computed from your recorded invoices.
+          {t('taxforecast_computed_from')}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }} className="grid">
           <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Computed Next-Month GST Estimate</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('taxforecast_next_month_estimate')}</span>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--theme-primary-light)' }}>
               ₹{liability.toLocaleString()}
             </div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Average of your last 3 months of recorded GST.</span>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>{t('taxforecast_avg_desc')}</span>
           </div>
           <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Recommended Reserve (10% buffer)</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t('taxforecast_recommended_reserve')}</span>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--warning)' }}>
               ₹{Math.round(liability * 0.1).toLocaleString()}
             </div>
-            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>Keep aside before the next filing period.</span>
+            <span style={{ fontSize: '0.675rem', color: 'var(--text-tertiary)' }}>{t('taxforecast_keep_aside')}</span>
           </div>
         </div>
       </div>
