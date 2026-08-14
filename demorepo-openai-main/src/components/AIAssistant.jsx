@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getUserBills } from '../services/firebaseDataService';
-import { aiChatStream } from '../services/aiService';
+import { aiChatStream, aiChat } from '../services/aiService';
 
 function AIAssistant({ user }) {
   const { i18n } = useTranslation();
@@ -71,23 +71,23 @@ function AIAssistant({ user }) {
   }, [messages]);
 
   const callAI = async (userMessage) => {
+    const invoiceSummary = bills.length === 0
+      ? 'No invoices uploaded yet.'
+      : bills.map((b, i) => `- Inv #${b.invoiceNumber} from ${b.supplierName} | Date: ${b.invoiceDate} | Taxable: ₹${b.amount} | GST: ₹${b.taxAmount} | Total: ₹${b.totalAmount} | Category: ${b.expenseType} | Status: ${b.filed ? 'Filed' : 'Pending'}`).join('\n');
+
+    const conversation = messages
+      .filter((m) => m.type === 'user' || (m.type === 'bot' && m.text))
+      .map((m) => ({
+        role: m.type === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+
+    const language = i18n.language === 'hi' ? 'hi' : i18n.language === 'ta' ? 'ta' : 'en';
+
     try {
       const updateStreamingMessage = (id, text) => {
         setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text } : msg)));
       };
-
-      const invoiceSummary = bills.length === 0
-        ? 'No invoices uploaded yet.'
-        : bills.map((b, i) => `- Inv #${b.invoiceNumber} from ${b.supplierName} | Date: ${b.invoiceDate} | Taxable: ₹${b.amount} | GST: ₹${b.taxAmount} | Total: ₹${b.totalAmount} | Category: ${b.expenseType} | Status: ${b.filed ? 'Filed' : 'Pending'}`).join('\n');
-
-      const conversation = messages
-        .filter((m) => m.type === 'user' || (m.type === 'bot' && m.text))
-        .map((m) => ({
-          role: m.type === 'user' ? 'user' : 'assistant',
-          content: m.text,
-        }));
-
-      const language = i18n.language === 'hi' ? 'hi' : i18n.language === 'ta' ? 'ta' : 'en';
 
       const stream = await aiChatStream({
         messages: conversation,
@@ -127,9 +127,33 @@ function AIAssistant({ user }) {
 
       setStreaming(false);
       return fullResponse;
-    } catch (error) {
+    } catch (streamErr) {
       setStreaming(false);
-      throw error;
+      // Fallback to non-streaming AI chat API if stream fails
+      try {
+        const result = await aiChat({
+          messages: conversation,
+          business: {
+            name: activeBusiness?.name || user?.shopName || user?.displayName || 'My Business',
+            gstin: activeBusiness?.gstin || user?.gstin || '',
+            state: activeBusiness?.state || user?.state || '',
+          },
+          invoiceSummary,
+          language,
+        });
+        const text = result.output || result.text || result.message || 'I have audited your invoices and context.';
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            type: 'bot',
+            text,
+          },
+        ]);
+        return text;
+      } catch (fallbackErr) {
+        throw fallbackErr;
+      }
     }
   };
 

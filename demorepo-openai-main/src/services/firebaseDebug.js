@@ -4,8 +4,14 @@
  * Run in browser console: debugFirebaseConnection()
  */
 
-import { auth, database, db } from "../config/firebase";
+import { auth, getDatabaseInstance, db } from "../config/firebase";
 import { ref, get, set, onValue, push } from "firebase/database";
+
+let _db = null;
+const getDb = async () => {
+  if (!_db) _db = await getDatabaseInstance();
+  return _db;
+};
 import { doc, getDoc } from "firebase/firestore";
 
 /**
@@ -21,7 +27,7 @@ export const debugFirebaseConnection = async () => {
     // 1. Check Firebase App Initialization
     // ========================================
     console.group("1️⃣  Firebase App Status");
-    if (!auth || !database || !db) {
+    if (!auth || !db) {
       console.error("❌ Firebase services not initialized!");
       console.error("auth:", auth);
       console.error("database:", database);
@@ -56,6 +62,7 @@ export const debugFirebaseConnection = async () => {
     // ========================================
     console.group("3️⃣  Realtime Database Test");
     try {
+      const database = await getDb();
       // Test 1: Write test data
       const testData = {
         message: "✅ Connection successful",
@@ -102,6 +109,7 @@ export const debugFirebaseConnection = async () => {
     // ========================================
     console.group("4️⃣  Email-Based Storage Test");
     try {
+      const database = await getDb();
       const email = currentUser.email;
       const sanitizedEmail = email
         .toLowerCase()
@@ -221,6 +229,7 @@ export const debugEmailDataIsolation = async () => {
     console.group(`📧 Email Data Isolation: ${email}`);
     console.log("Sanitized key:", sanitizedEmail);
 
+    const database = await getDb();
     const emailRef = ref(database, `emails/${sanitizedEmail}`);
     const snapshot = await get(emailRef);
 
@@ -252,6 +261,7 @@ export const debugListAllUsers = async () => {
   try {
     console.group("👥 All Users in Database");
 
+    const database = await getDb();
     const emailsRef = ref(database, "emails");
     const snapshot = await get(emailsRef);
 
@@ -307,6 +317,7 @@ export const debugRealtimeListener = async (collectionName = "bills") => {
 
     console.group(`📡 Real-time Listener Test: ${collectionName}`);
 
+    const database = await getDb();
     const collectionRef = ref(
       database,
       `emails/${sanitizedEmail}/${collectionName}`,

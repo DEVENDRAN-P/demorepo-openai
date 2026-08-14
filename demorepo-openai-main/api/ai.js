@@ -23,8 +23,8 @@ const config = require("../lib/config");
 const { verifyAuth, AiHttpError } = require("../lib/admin");
 const { aiLog } = require("../lib/logger");
 const handlers = require("../lib/aiTasks");
-const { checkUsageLimit, incrementUsage } = require("../lib/usage");
-const { setCorsHeaders, handleCors } = require("../lib/cors");
+const { reserveUsage, releaseUsage, checkLimit } = require("../lib/usage");
+const { setCorsHeaders, handleCors, ALLOWED_ORIGINS } = require("../lib/cors");
 
 // Friendly user-facing messages for known error codes (never stack traces).
 const ERROR_MESSAGES = {
@@ -42,11 +42,15 @@ const ERROR_MESSAGES = {
     "The uploaded file is too large. Please upload a smaller file.",
   LIMIT_EXCEEDED:
     "You have reached the monthly limit for this feature on your current plan.",
+  FAIR_USE_LIMIT_REACHED:
+    "Fair-use processing threshold reached. Please try again later or contact support.",
 };
 
+// Tasks that consume a monthly usage quota. The metric name is the key used
+// in lib/plans.js PLAN_LIMITS (single source of truth).
 const USAGE_TASKS = {
-  invoice_extraction: "invoice_extractions",
-  document_analysis: "document_analyses",
+  invoice_extraction: "aiExtractions",
+  document_analysis: "documents",
 };
 
 const TEXT_TASKS = new Set([
@@ -110,13 +114,17 @@ function sendError(res, err) {
 }
 
 async function handleStream(req, res, decoded, body) {
+  const reqOrigin = (req && req.headers && req.headers.origin) || ALLOWED_ORIGINS[0];
+  const originToSet = ALLOWED_ORIGINS.includes(reqOrigin) ? reqOrigin : (reqOrigin || ALLOWED_ORIGINS[0]);
   const generator = await handlers.gst_assistant_stream(body, decoded);
   res.writeHead(200, {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive",
     "X-Accel-Buffering": "no",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Origin": originToSet,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   });
   res.flushHeaders();
   let output = "";
@@ -186,24 +194,45 @@ module.exports = async (req, res) => {
         });
       }
       // Server-side entitlement check BEFORE spending AI credits.
+      // Reserve the quota slot atomically (idempotent via the optional
+      // requestId in the payload); on AI failure the slot is released so a
+      // temporary internal error never consumes the user's monthly quota.
+      let reserved = null;
       if (USAGE_TASKS[task]) {
-        const limit = await checkUsageLimit(decoded.uid, USAGE_TASKS[task]);
-        if (!limit.allowed) {
+        const requestId =
+          body && typeof body.requestId === "string" && body.requestId.trim()
+            ? body.requestId.trim()
+            : undefined;
+        reserved = await reserveUsage(decoded.uid, USAGE_TASKS[task], requestId, {
+          requiredPlan: null,
+        });
+        if (!reserved.allowed) {
+          const code =
+            reserved.reason === "FAIR_USE_LIMIT_REACHED"
+              ? "FAIR_USE_LIMIT_REACHED"
+              : "LIMIT_EXCEEDED";
           throw new AiHttpError(
             403,
-            "LIMIT_EXCEEDED",
-            `Monthly limit reached (${limit.used}/${limit.limit}). Please upgrade your plan to continue.`
+            code,
+            `Monthly limit reached (${reserved.used}/${reserved.limit}). Please upgrade your plan to continue.`
           );
         }
       }
-      result = await handlers[task](body, decoded);
-      // Only count a usage unit when the AI task actually succeeded.
-      if (USAGE_TASKS[task] && result && result.success !== false) {
-        try {
-          await incrementUsage(decoded.uid, USAGE_TASKS[task]);
-        } catch (usageErr) {
-          aiLog("error", { task, uid: decoded.uid, errorCategory: "USAGE_INCREMENT_FAILED" });
+      try {
+        result = await handlers[task](body, decoded);
+        // If the handler reports failure, refund the reserved slot.
+        if (reserved && result && result.success === false) {
+          await releaseUsage(decoded.uid, USAGE_TASKS[task], reserved.key).catch(() => {});
         }
+      } catch (err) {
+        if (reserved) {
+          try {
+            await releaseUsage(decoded.uid, USAGE_TASKS[task], reserved.key);
+          } catch (usageErr) {
+            aiLog("error", { task, uid: decoded.uid, errorCategory: "USAGE_RELEASE_FAILED" });
+          }
+        }
+        throw err;
       }
     }
 

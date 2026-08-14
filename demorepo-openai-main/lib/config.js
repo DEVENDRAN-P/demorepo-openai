@@ -8,8 +8,9 @@
 
 module.exports = {
   // Google Gemini model used for structured agent tasks.
-  // Supported structured-output models include gemini-2.0-flash / gemini-2.5-flash.
-  model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+  // Model must support responseSchema (structured output). gemini-2.x-flash
+  // models are retired/404 on most keys; gemini-3.1-flash-lite is the default.
+  model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
 
   // Maximum allowed characters for text inputs (OCR text, document text).
   maxInputChars: parseInt(process.env.AI_MAX_INPUT_CHARS || "60000", 10),

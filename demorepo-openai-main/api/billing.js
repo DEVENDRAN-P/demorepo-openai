@@ -12,6 +12,8 @@ const {
   saveFailedPayment,
   downgradeUserToFree,
 } = require("../lib/database");
+const { getUsageForUser, reserveUsage, releaseUsage, getPlanForUser } = require("../lib/usage");
+const { getEntitlementSnapshot } = require("../lib/entitlements");
 
 // ---------------------------------------------------------------------------
 // Cashfree configuration (server-side secrets only — never exposed to the
@@ -119,10 +121,16 @@ function generateOrderId(uid) {
 
 /** Derive the SPA origin for the Cashfree return_url. */
 function getAppOrigin(req) {
-  if (process.env.APP_URL) return String(process.env.APP_URL).replace(/\/+$/, "");
-  const origin = req.headers.origin || req.headers.referer;
-  if (origin) return String(origin).replace(/\/+$/, "");
-  return "https://gstbuddy.vercel.app";
+  let origin =
+    process.env.APP_URL || req.headers.origin || req.headers.referer || "https://gstbuddy.vercel.app";
+  origin = String(origin).replace(/\/+$/, "");
+  // Cashfree validates order_meta.return_url and rejects non-https URLs
+  // ("url should be https"). Local dev serves http, so force the https
+  // scheme; in production the origin is already https.
+  if (/^http:\/\//i.test(origin)) {
+    origin = "https://" + origin.slice(origin.indexOf("://") + 3);
+  }
+  return origin;
 }
 
 /**
@@ -709,6 +717,205 @@ const handleWebhook = async (req, res) => {
   return sendJson(res, 200, { received: true, status: "FAILED" });
 };
 
+// 6. Usage Handler — real monthly usage counters (read-only for the user)
+const handleUsage = async (req, res, decodedToken) => {
+  const uid = decodedToken.uid;
+  console.log(`📥 [GET /api/usage] Request received for UID: ${uid}`);
+  try {
+    const usage = await getUsageForUser(uid);
+    return sendJson(res, 200, { success: true, usage });
+  } catch (error) {
+    console.error(JSON.stringify({ type: "usage_status_error", uid, error: error.message }));
+    return sendJson(res, 500, {
+      success: false,
+      error: "Failed to fetch usage. Please try again.",
+    });
+  }
+};
+
+// 7. Entitlements Handler — full feature matrix for the user's effective plan
+const handleEntitlements = async (req, res, decodedToken) => {
+  const uid = decodedToken.uid;
+  console.log(`📥 [GET /api/entitlements] Request received for UID: ${uid}`);
+  try {
+    const snapshot = await getEntitlementSnapshot(uid);
+    return sendJson(res, 200, { success: true, ...snapshot });
+  } catch (error) {
+    console.error(JSON.stringify({ type: "entitlements_error", uid, error: error.message }));
+    return sendJson(res, 500, {
+      success: false,
+      error: "Failed to fetch entitlements. Please try again.",
+    });
+  }
+};
+
+// 8. Usage Reserve Handler — atomically reserve one unit of a monthly metric
+//    (idempotent by requestId). Used by AI Insights / report generation etc.
+const handleUsageReserve = async (req, res, decodedToken) => {
+  const uid = decodedToken.uid;
+  const { metric, requestId } = req.body || {};
+  console.log(`📥 [POST /api/usage/reserve] UID: '${uid}', metric: '${metric}'`);
+
+  if (!metric || typeof metric !== "string") {
+    return sendJson(res, 400, {
+      success: false,
+      error: "Missing required parameter: metric",
+      code: "INVALID_METRIC",
+    });
+  }
+  if (!requestId || typeof requestId !== "string" || !requestId.trim()) {
+    return sendJson(res, 400, {
+      success: false,
+      error: "Missing required parameter: requestId (idempotency key)",
+      code: "INVALID_REQUEST_ID",
+    });
+  }
+
+  try {
+    const plan = await getPlanForUser(uid);
+    const outcome = await reserveUsage(uid, metric, requestId.trim(), { plan });
+    if (!outcome.allowed) {
+      return sendJson(res, 403, {
+        success: false,
+        code: outcome.reason,
+        error:
+          outcome.reason === "FAIR_USE_LIMIT_REACHED"
+            ? `Fair-use processing threshold reached (${outcome.used}). Please try again later.`
+            : `Monthly limit reached (${outcome.used}/${outcome.limit}). Please upgrade your plan to continue.`,
+        usage: {
+          used: outcome.used,
+          limit: outcome.limit,
+          plan: outcome.plan,
+          period: outcome.period,
+          fairUse: outcome.fairUse,
+        },
+      });
+    }
+    return sendJson(res, 200, {
+      success: true,
+      reserved: true,
+      alreadyProcessed: outcome.alreadyProcessed,
+      usage: {
+        used: outcome.used,
+        limit: outcome.limit,
+        plan: outcome.plan,
+        period: outcome.period,
+        fairUse: outcome.fairUse,
+      },
+    });
+  } catch (error) {
+    console.error(JSON.stringify({ type: "usage_reserve_error", uid, metric, error: error.message }));
+    return sendJson(res, 500, {
+      success: false,
+      error: "Failed to reserve usage. Please try again.",
+    });
+  }
+};
+
+// 9. Usage Release Handler — refund a previously reserved slot (compensating)
+const handleUsageRelease = async (req, res, decodedToken) => {
+  const uid = decodedToken.uid;
+  const { metric, requestId } = req.body || {};
+  console.log(`📥 [POST /api/usage/release] UID: '${uid}', metric: '${metric}'`);
+  if (!metric || !requestId) {
+    return sendJson(res, 400, {
+      success: false,
+      error: "Missing required parameters: metric, requestId",
+      code: "INVALID_REQUEST",
+    });
+  }
+  try {
+    const outcome = await releaseUsage(uid, metric, String(requestId).trim());
+    return sendJson(res, 200, { success: true, released: outcome.released });
+  } catch (error) {
+    console.error(JSON.stringify({ type: "usage_release_error", uid, metric, error: error.message }));
+    return sendJson(res, 500, {
+      success: false,
+      error: "Failed to release usage. Please try again.",
+    });
+  }
+};
+
+// 10. Multi-business creation — server-side plan limit enforcement
+//     (Free: 1 total, Pro: up to 2, Business: up to 5).
+const handleCreateBusiness = async (req, res, decodedToken) => {
+  const uid = decodedToken.uid;
+  const { name, gstin, state, type, owner } = req.body || {};
+  console.log(`📥 [POST /api/businesses] UID: '${uid}', name: '${name || ""}'`);
+
+  if (!name || !gstin) {
+    return sendJson(res, 400, {
+      success: false,
+      error: "Business name and GSTIN are required.",
+      code: "INVALID_BUSINESS",
+    });
+  }
+  if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(String(gstin).trim().toUpperCase())) {
+    return sendJson(res, 400, {
+      success: false,
+      error: "GSTIN must be a valid 15-character GST number.",
+      code: "INVALID_GSTIN",
+    });
+  }
+
+  try {
+    const { MULTI_BUSINESS_LIMITS } = require("../lib/plans");
+    const { getDb } = require("../lib/admin");
+    const plan = await getPlanForUser(uid);
+    const limit = MULTI_BUSINESS_LIMITS[plan] !== undefined ? MULTI_BUSINESS_LIMITS[plan] : 1;
+
+    const db = getDb();
+    const businessesSnap = await db
+      .collection("users")
+      .doc(uid)
+      .collection("businesses")
+      .get();
+    const currentCount = businessesSnap.size;
+
+    if (currentCount >= limit) {
+      const requiredPlan = plan === "pro" ? "business" : "pro";
+      return sendJson(res, 403, {
+        success: false,
+        code: "BUSINESS_LIMIT_REACHED",
+        error:
+          plan === "free"
+            ? "Your Free plan supports 1 business. Upgrade to Pro for up to 2 businesses."
+            : `Your ${plan === "pro" ? "Pro" : "Business"} plan supports up to ${limit} businesses.`,
+        usage: { used: currentCount, limit, plan },
+        requiredPlan,
+      });
+    }
+
+    const businessRef = await db
+      .collection("users")
+      .doc(uid)
+      .collection("businesses")
+      .add({
+        name: String(name),
+        gstin: String(gstin).trim().toUpperCase(),
+        state: String(state || ""),
+        type: String(type || "Retail & Distribution"),
+        owner: String(owner || ""),
+        createdAt: new Date().toISOString(),
+        uid,
+      });
+
+    console.log(`✅ [businesses] Created business '${businessRef.id}' for UID '${uid}' (${plan} plan).`);
+    return sendJson(res, 200, {
+      success: true,
+      businessId: businessRef.id,
+      plan,
+      usage: { used: currentCount + 1, limit, plan },
+    });
+  } catch (error) {
+    console.error(JSON.stringify({ type: "businesses_create_error", uid, error: error.message }));
+    return sendJson(res, 500, {
+      success: false,
+      error: "Failed to create business. Please try again.",
+    });
+  }
+};
+
 // 6. Downgrade Handler — server-authoritative plan reset to Free
 const handleDowngrade = async (req, res, decodedToken) => {
   const uid = decodedToken.uid;
@@ -743,7 +950,7 @@ module.exports = async (req, res) => {
   if (handleCors(req, res)) return;
   setCorsHeaders(res, req);
 
-  console.log(`📡 [Billing Router] Request received. Path: ${req.url}, Method: ${req.method}`);
+  console.log(`[Billing Router] Request received. Path: ${req.url}, Method: ${req.method}`);
 
   // Determine target route action based on request path/query
   const action = req.query.action || req.url.split("?")[0].split("/").pop();
@@ -752,7 +959,7 @@ module.exports = async (req, res) => {
   if (action === "webhook") {
     if (req.method === "POST") {
       console.log(
-        `📡 [webhook] POST received. signature=${!!req.headers["x-webhook-signature"]}, timestamp=${!!req.headers["x-webhook-timestamp"]}, version=${req.headers["x-webhook-version"] || "n/a"}, bodyBytes=${req.headers["content-length"] || "stream"}, origin=${req.headers.origin || "none"}`
+        `[webhook] POST received. signature=${!!req.headers["x-webhook-signature"]}, timestamp=${!!req.headers["x-webhook-timestamp"]}, version=${req.headers["x-webhook-version"] || "n/a"}, bodyBytes=${req.headers["content-length"] || "stream"}, origin=${req.headers.origin || "none"}`
       );
       try {
         return await handleWebhook(req, res);
@@ -761,10 +968,6 @@ module.exports = async (req, res) => {
         return sendJson(res, 500, { success: false, error: "Webhook processing failed" });
       }
     }
-    // GET/HEAD probes — Cashfree's dashboard sends a connectivity check when
-    // testing/saving a webhook URL, and browsers may open the URL directly.
-    // Answer with 200 so the endpoint passes validation; only POST events
-    // (signature-verified) are ever processed.
     return sendJson(res, 200, {
       status: "Payment API running (webhook)",
       method: "POST",
@@ -778,10 +981,10 @@ module.exports = async (req, res) => {
     const hasAuthHeader = !!authHeader;
     const authHeaderLength = authHeader ? authHeader.length : 0;
 
-    console.log(`🔒 [auth] Checking Authorization header. Present: ${hasAuthHeader}, Length: ${authHeaderLength}`);
+    console.log(`[auth] Checking Authorization header. Present: ${hasAuthHeader}, Length: ${authHeaderLength}`);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.warn("⚠️ [auth] Unauthorized request: Missing or invalid authorization headers.");
+      console.warn("[auth] Unauthorized request: Missing or invalid authorization headers.");
       return sendJson(res, 401, {
         success: false,
         error: "Unauthorized: Invalid token",
@@ -790,7 +993,7 @@ module.exports = async (req, res) => {
     }
 
     const idToken = authHeader.split("Bearer ")[1];
-    console.log(`🔒 [auth] Extracting ID Token. Length: ${idToken ? idToken.length : 0}`);
+    console.log(`[auth] Extracting ID Token. Length: ${idToken ? idToken.length : 0}`);
 
     let decodedToken;
     try {
@@ -804,7 +1007,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`👉 [Billing Router] Resolved action: '${action}'`);
+    console.log(`[Billing Router] Resolved action: '${action}'`);
 
     if (action === "create-order" && req.method === "POST") {
       return await handleCreateOrder(req, res, decodedToken);
@@ -816,6 +1019,16 @@ module.exports = async (req, res) => {
       return await handleHistory(req, res, decodedToken);
     } else if ((action === "status" || action === "subscription-status") && req.method === "GET") {
       return await handleStatus(req, res, decodedToken);
+    } else if (action === "usage" && req.method === "GET") {
+      return await handleUsage(req, res, decodedToken);
+    } else if (action === "entitlements" && req.method === "GET") {
+      return await handleEntitlements(req, res, decodedToken);
+    } else if (action === "usage-reserve" && req.method === "POST") {
+      return await handleUsageReserve(req, res, decodedToken);
+    } else if (action === "usage-release" && req.method === "POST") {
+      return await handleUsageRelease(req, res, decodedToken);
+    } else if (action === "businesses-create" && req.method === "POST") {
+      return await handleCreateBusiness(req, res, decodedToken);
     } else {
       console.warn(`⚠️ [Billing Router] Route action '${action}' for method ${req.method} not matched.`);
       return sendJson(res, 404, { success: false, error: `Not found: action '${action}' for method ${req.method}` });

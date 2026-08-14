@@ -430,6 +430,7 @@ function Profile({ user }) {
     t('save_changes');
 
   const planTier = (localStorage.getItem('saas_active_plan') || 'Free').toUpperCase();
+
   const lastAuthenticated = formatTimestamp(user?.lastLogin);
 
   /* ============================================================

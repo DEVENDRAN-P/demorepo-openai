@@ -34,7 +34,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node server.js",
-    "verify:langs": "node verify_langs.js"
+    "verify:langs": "node verify_langs.js",
+    "test:backend": "node test/run-all.js"
   },
   "eslintConfig": {
     "extends": [

@@ -48,7 +48,12 @@ const fetchActivePlanFromServer = async () => {
     const res = await fetch(getApiUrl('/api/subscription/status'), {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return 'free';
+    if (!res.ok) {
+      // A server error must never silently downgrade a paying user to Free.
+      // Fall back to the cached display value instead.
+      const cached = localStorage.getItem('saas_active_plan');
+      return cached === 'pro' || cached === 'business' ? cached : 'free';
+    }
     const data = await safeJson(res);
     const plan = data?.subscription?.subscriptionPlan || 'free';
     if (plan === 'pro' || plan === 'business') {

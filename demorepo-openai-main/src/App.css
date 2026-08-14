@@ -2446,6 +2446,13 @@ select option {
     gap: 1.5rem !important;
   }
 
+  /* On mobile the sidebar is a full-width drawer opened by the hamburger —
+     the desktop collapse/expand toggle buttons ('<' '>') are meaningless and
+     should not appear. */
+  .sidebar-collapse-toggle {
+    display: none !important;
+  }
+
   /* OCR split screen layout collapse */
   .ocr-viewer-container {
     grid-template-columns: 1fr !important;
@@ -2465,13 +2472,19 @@ select option {
     bottom: 0;
     height: 100vh !important;
     transform: translateX(-100%);
-    width: 260px !important;
+    width: 280px !important;
+    max-width: 85vw !important;
     z-index: 1000 !important;
     box-shadow: var(--shadow-2xl);
+    flex-shrink: 0 !important;
   }
 
   .sidebar-aside.mobile-open {
     transform: translateX(0) !important;
+  }
+
+  .mobile-sidebar-close-btn {
+    display: flex !important;
   }
 
   /* Hide search bar inside sticky header (use page search/sidebar instead) */
@@ -2486,9 +2499,9 @@ select option {
 }
 
 @media (max-width: 600px) {
-  /* Hide text inside header action buttons (show icon symbols only) */
+  /* Keep text keywords visible alongside icons */
   .header-btn-text {
-    display: none !important;
+    display: inline-block !important;
   }
 
   /* Hide score widget in header to save row space */

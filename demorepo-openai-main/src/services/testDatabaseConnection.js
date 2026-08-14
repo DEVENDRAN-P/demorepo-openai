@@ -1,5 +1,11 @@
 import { ref, set, get } from "firebase/database";
-import { database, auth } from "../config/firebase";
+import { getDatabaseInstance, auth } from "../config/firebase";
+
+let _db = null;
+const getDb = async () => {
+  if (!_db) _db = await getDatabaseInstance();
+  return _db;
+};
 
 /**
  * Test if Realtime Database connection is working
@@ -10,6 +16,7 @@ export const testDatabaseConnection = async () => {
     console.log("🔍 Starting database connection test...");
 
     // Check 1: Database instance exists
+    const database = await getDb();
     if (!database) {
       console.error("❌ Database instance not initialized!");
       return false;
@@ -64,6 +71,7 @@ export const clearTestData = async () => {
       return;
     }
 
+    const database = await getDb();
     const testPath = `test/${auth.currentUser.uid}`;
     const testRef = ref(database, testPath);
 

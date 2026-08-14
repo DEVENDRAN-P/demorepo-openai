@@ -225,12 +225,19 @@ function Navbar({ user }) {
   };
 
   const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
+    i18n.changeLanguageAsync(lng);
     localStorage.setItem('language', lng);
     setLangOpen(false);
   };
 
   const isActive = (path) => location.pathname === path;
+
+  // Non-Latin scripts (Devanagari, Tamil, Malayalam, Kannada) render wider
+  // per character, so the nav labels use a slightly smaller font to keep
+  // the bar from overflowing when the language is switched.
+  const isWideScript = ['hi', 'ta', 'ml', 'kn'].includes(i18n.language);
+  const navLabelFontSize = isWideScript ? '0.8rem' : '0.875rem';
+  const navLinkPadding = isWideScript ? '0.625rem 0.625rem' : '0.625rem 1rem';
 
   const navItems = [
     { path: '/dashboard', label: t('dashboard'), icon: (a) => <IconHome active={a} /> },
@@ -281,6 +288,10 @@ function Navbar({ user }) {
             display: 'none',
             alignItems: 'center',
             gap: '0.375rem',
+            minWidth: 0,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }} className="nav-desktop">
             {navItems.map((item) => {
               const active = isActive(item.path);
@@ -292,13 +303,15 @@ function Navbar({ user }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    padding: '0.625rem 1rem',
+                    padding: navLinkPadding,
                     borderRadius: 'var(--radius-lg)',
                     textDecoration: 'none',
                     color: active ? 'var(--primary-700)' : 'var(--text-secondary)',
                     background: active ? 'var(--primary-50)' : 'transparent',
                     fontWeight: active ? 600 : 500,
-                    fontSize: '0.875rem',
+                    fontSize: navLabelFontSize,
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.2,
                     transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
@@ -867,7 +880,7 @@ function Navbar({ user }) {
               fontSize: '0.9375rem',
             }}
           >
-            <span>👤</span>
+            <IconUser size={18} />
             <span>{t('profile')}</span>
           </Link>
           <Link
@@ -885,7 +898,7 @@ function Navbar({ user }) {
               fontSize: '0.9375rem',
             }}
           >
-            <span>⚙️</span>
+            <IconSettings size={18} />
             <span>{t('settings')}</span>
           </Link>
           <Link
@@ -903,7 +916,7 @@ function Navbar({ user }) {
               fontSize: '0.9375rem',
             }}
           >
-            <span>📞</span>
+            <IconPhone size={18} />
             <span>{t('contact_us')}</span>
           </Link>
           <Link
@@ -921,7 +934,7 @@ function Navbar({ user }) {
               fontSize: '0.9375rem',
             }}
           >
-            <span>❓</span>
+            <IconHelp size={18} />
             <span>{t('help')}</span>
           </Link>
           <button
@@ -947,6 +960,9 @@ function Navbar({ user }) {
       )}
 
       <style>{`
+        .nav-desktop::-webkit-scrollbar {
+          display: none;
+        }
         @media (min-width: 768px) {
           .nav-desktop {
             display: flex !important;

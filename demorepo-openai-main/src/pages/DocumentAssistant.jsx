@@ -1,38 +1,82 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Tesseract from 'tesseract.js';
 import { analyzeDocument } from '../services/aiService';
-import { fetchActivePlan } from '../services/subscriptionService';
+import { fetchUsage, invalidateUsageCache } from '../services/usageService';
 import { useTranslation } from 'react-i18next';
+import { useUpload } from '../context/UploadContext';
 
 function DocumentAssistant() {
   const { t } = useTranslation();
-  // Entitlement is resolved from the server — localStorage is display cache only.
-  const [activePlan, setActivePlan] = useState('free');
+  const navigate = useNavigate();
+  const uploadCtx = useUpload();
 
-  const [documentCount, setDocumentCount] = useState(() => {
-    return Number(localStorage.getItem('saas_doc_count')) || 0;
-  });
+  const docFile = uploadCtx.docFile;
+  const setDocFile = uploadCtx.setDocFile;
+  const docPreview = uploadCtx.docPreview;
+  const setDocPreview = uploadCtx.setDocPreview;
+  const docExtracted = uploadCtx.docExtracted;
+  const setDocExtracted = uploadCtx.setDocExtracted;
+  const clearDocUpload = uploadCtx.clearDocUpload;
 
-  useEffect(() => {
-    fetchActivePlan().then((plan) => setActivePlan(plan));
-    const handlePlanChanged = () => {
-      fetchActivePlan().then((plan) => setActivePlan(plan));
-    };
-    window.addEventListener('planChanged', handlePlanChanged);
-    return () => window.removeEventListener('planChanged', handlePlanChanged);
-  }, []);
-
-  const limit = activePlan === 'free' ? 3 : activePlan === 'pro' ? 50 : Infinity;
-  const [docFile, setDocFile] = useState(null);
-  const [docPreview, setDocPreview] = useState(null);
-  const [docExtracted, setDocExtracted] = useState(null);
+  // Real monthly usage from the backend (GET /api/usage) — the Document
+  // Assistant limit (free 3 / pro 50 / business fair-use) is enforced
+  // server-side on /api/ai document_analysis; the counter shown here is the
+  // same authoritative value.
+  const [usage, setUsage] = useState(null);
+  const [documentCount, setDocumentCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [progress, setProgress] = useState(0);
 
+  const refreshUsage = (force = false) => {
+    if (force) invalidateUsageCache();
+    return fetchUsage(force).then((u) => {
+      setUsage(u);
+      setDocumentCount(typeof u?.counts?.documents === 'number' ? u.counts.documents : 0);
+      return u;
+    }).catch(() => null);
+  };
+
+  useEffect(() => {
+    const load = () => {
+      refreshUsage().then(() => {});
+    };
+    load();
+    const handlePlanChanged = () => {
+      invalidateUsageCache();
+      load();
+    };
+    window.addEventListener('planChanged', handlePlanChanged);
+    window.addEventListener('usageChanged', handlePlanChanged);
+    return () => {
+      window.removeEventListener('planChanged', handlePlanChanged);
+      window.removeEventListener('usageChanged', handlePlanChanged);
+    };
+  }, []);
+
+  const activePlan = usage?.plan || 'free';
+  const docLimitInfo = usage?.limits?.documents || { limit: Number.MAX_SAFE_INTEGER, display: 'Unlimited', fairUse: false };
+  // Number.MAX_SAFE_INTEGER (backend 'unlimited') is treated like Infinity so
+  // the UI never renders the raw 9007199254740991 value.
+  const rawLimit = docLimitInfo.limit;
+  const limit = docLimitInfo.fairUse || !rawLimit || rawLimit >= Number.MAX_SAFE_INTEGER || String(rawLimit) === '9007199254740991' ? Infinity : Number(rawLimit);
+
   const handleDocUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (limit !== Infinity && documentCount >= limit) {
+        setNotification({
+          message: `Monthly document limit reached. You've used all ${limit} document analyses for this month. Upgrade to continue.`,
+          type: 'warning',
+        });
+        const goPricing = window.confirm('You have reached your monthly document analysis limit. Would you like to go to the pricing page to upgrade?');
+        if (goPricing) {
+          navigate('/pricing');
+        }
+        e.target.value = '';
+        return;
+      }
       setDocFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -63,14 +107,51 @@ function DocumentAssistant() {
     }
   };
 
+  // True when an AI error is a quota rejection (never waste time on fallbacks).
+  const isQuotaError = (err) =>
+    err?.code === 'LIMIT_EXCEEDED' ||
+    err?.code === 'PLAN_LIMIT_REACHED' ||
+    err?.code === 'FAIR_USE_LIMIT_REACHED' ||
+    /limit reached/i.test(err?.message || '');
+
   const handleAnalyze = async () => {
     if (!docFile) return;
 
-    // Limit check
-    if (documentCount >= limit) {
-      alert(`⚠️ Document Limit Reached: You have analyzed ${documentCount} of ${limit} documents this month under the ${activePlan === 'free' ? 'Free' : 'Pro'} Plan. Please upgrade your subscription to process more documents.`);
+    // Pre-analysis limit check (display mirror — the server enforces too).
+    // Refresh usage first so the counter is current (no stale cache) — the
+    // block is INSTANT, no Vision/OCR work is started. Use the fresh usage
+    // object directly (state updates are async).
+    const freshUsage = await refreshUsage(true);
+    if (freshUsage) {
+      const freshCount = typeof freshUsage.counts?.documents === 'number' ? freshUsage.counts.documents : documentCount;
+      if (freshCount >= limit) {
+        setNotification({
+          message: activePlan === 'free'
+            ? `Monthly document limit reached. You've used all ${limit} document analyses available on the Free plan. Upgrade to Pro for 20/month.`
+            : `Monthly document limit reached. You've used all ${limit} document analyses available on the Pro plan. Upgrade to Business for fair-use processing.`,
+          type: 'warning',
+        });
+        localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
+        // Ask the user before navigating (never force-redirect).
+        const goPricing = window.confirm('You have reached your monthly document analysis limit. Would you like to go to the pricing page to upgrade?');
+        if (goPricing) {
+          window.location.href = '/pricing';
+        }
+        return;
+      }
+    } else if (documentCount >= limit) {
+      // Usage fetch failed — fall back to the (possibly stale) state counter.
+      setNotification({
+        message: activePlan === 'free'
+          ? `Monthly document limit reached. You've used all ${limit} document analyses available on the Free plan. Upgrade to Pro for 20/month.`
+          : `Monthly document limit reached. You've used all ${limit} document analyses available on the Pro plan. Upgrade to Business for fair-use processing.`,
+        type: 'warning',
+      });
       localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
-      window.location.href = '/pricing';
+      const goPricing = window.confirm('You have reached your monthly document analysis limit. Would you like to go to the pricing page to upgrade?');
+      if (goPricing) {
+        window.location.href = '/pricing';
+      }
       return;
     }
 
@@ -89,6 +170,11 @@ function DocumentAssistant() {
           const result = await analyzeDocument({ image: docPreview });
           analysis = result.data;
         } catch (visionErr) {
+          // Quota exhaustion means Vision AND every other AI path will fail —
+          // stop immediately instead of burning time on an OCR fallback.
+          if (isQuotaError(visionErr)) {
+            throw visionErr;
+          }
           console.warn('Vision notice analysis failed. Falling back to local OCR:', visionErr);
         }
       }
@@ -109,13 +195,26 @@ function DocumentAssistant() {
       setDocExtracted(analysis);
       setNotification({ message: 'Legal document audit complete!', type: 'success' });
       setProgress(100);
-      
-      const newCount = documentCount + 1;
-      setDocumentCount(newCount);
-      localStorage.setItem('saas_doc_count', newCount);
+
+      // The server counted this analysis (idempotent). Refresh from the
+      // authoritative counter instead of guessing locally.
+      invalidateUsageCache();
+      fetchUsage().then((u) => {
+        setUsage(u);
+        setDocumentCount(typeof u?.counts?.documents === 'number' ? u.counts.documents : 0);
+      }).catch(() => {});
     } catch (e) {
       console.error(e);
-      setNotification({ message: e.message || 'Analysis failed. Please ensure the document is clear and try again.', type: 'error' });
+      if (isQuotaError(e)) {
+        setNotification({ message: e.message || 'Monthly limit reached. Please upgrade your plan to continue.', type: 'warning' });
+        localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
+        const goPricing = window.confirm('You have reached your monthly document analysis limit. Would you like to go to the pricing page to upgrade?');
+        if (goPricing) {
+          window.location.href = '/pricing';
+        }
+      } else {
+        setNotification({ message: e.message || 'Analysis failed. Please ensure the document is clear and try again.', type: 'error' });
+      }
     } finally {
       setLoading(false);
     }
@@ -191,9 +290,12 @@ function DocumentAssistant() {
                 </div>
               )}
 
-              <button onClick={handleAnalyze} disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-                {loading ? `${t('docassist_analyzing')} (${progress}%)...` : `⚡ ${t('docassist_extract')}`}
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                <button onClick={clearDocUpload} className="btn btn-outline" style={{ flex: 1 }}>{t('clear', 'Clear')}</button>
+                <button onClick={handleAnalyze} disabled={loading} className="btn btn-primary" style={{ flex: 2, padding: '0.75rem' }}>
+                  {loading ? `${t('docassist_analyzing')} (${progress}%)...` : `⚡ ${t('docassist_extract')}`}
+                </button>
+              </div>
             </div>
           )}
         </div>

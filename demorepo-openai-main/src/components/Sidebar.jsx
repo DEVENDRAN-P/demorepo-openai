@@ -290,6 +290,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
 
   const menuItems = [
     { name: 'Dashboard', translationKey: 'dashboard', path: '/dashboard', icon: iconMap.dashboard },
+    { name: 'AI Accountant Console', translationKey: 'ai_accountant_console', path: '/chat', icon: iconMap.chat },
     { name: 'AI Accountant Agent', translationKey: 'ai_accountant_agent_menu', path: '/agent', icon: iconMap.agent },
     { name: 'Agent Activity', translationKey: 'agent_activity', path: '/agent-activity', icon: iconMap.agent },
     { name: 'Invoice Intelligence', translationKey: 'invoice_intelligence_menu', path: '/bill-upload', icon: iconMap.upload },
@@ -308,8 +309,22 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
     { name: 'Profile', translationKey: 'profile', path: '/profile', icon: iconMap.profile }
   ];
 
+  // Close mobile drawer on Escape key press (accessibility requirement)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && mobileOpen && setMobileOpen) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen, setMobileOpen]);
+
   return (
     <aside 
+      id="mobile-sidebar"
+      role="navigation"
+      aria-label={t('sidebar_navigation', 'Sidebar navigation')}
       className={`sidebar-aside ${mobileOpen ? 'mobile-open' : ''}`}
       style={{
         width: collapsed ? '70px' : '260px',
@@ -341,6 +356,7 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
             <Logo variant="icon" size="28px" onClick={() => setCollapsed(false)} style={{ cursor: 'pointer' }} />
             <button 
               onClick={() => setCollapsed(false)}
+              className="sidebar-collapse-toggle"
               style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title={t('expand_sidebar', 'Expand Sidebar')}
             >
@@ -350,13 +366,29 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
         ) : (
           <>
             <Logo variant="sidebar" size="145px" />
-            <button 
-              onClick={() => setCollapsed(true)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title={t('collapse_sidebar', 'Collapse Sidebar')}
-            >
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button 
+                onClick={() => setCollapsed(true)}
+                className="sidebar-collapse-toggle"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title={t('collapse_sidebar', 'Collapse Sidebar')}
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              {setMobileOpen && (
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="mobile-sidebar-close-btn"
+                  aria-label="Close sidebar"
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', outline: 'none', padding: '0.25rem', alignItems: 'center', justifyContent: 'center', display: 'none' }}
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -426,7 +458,11 @@ function Sidebar({ mobileOpen, setMobileOpen }) {
               <span style={{ display: 'flex', alignItems: 'center', color: isActive ? 'var(--theme-secondary)' : 'inherit' }}>
                 {item.icon}
               </span>
-              {!collapsed && <span>{t(item.translationKey, item.name)}</span>}
+              {!collapsed && (
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {t(item.translationKey, item.name)}
+                </span>
+              )}
             </NavLink>
           );
         })}

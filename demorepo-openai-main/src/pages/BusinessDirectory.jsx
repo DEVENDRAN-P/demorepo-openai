@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { getUserBusinesses, saveUserBusinesses } from '../utils/businessHelper';
 import { useTranslation } from 'react-i18next';
+import { getUserBusinesses, saveUserBusinesses } from '../utils/businessHelper';
+import { auth } from '../config/firebase';
+
+const getApiUrl = (path) => {
+  if (typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+    window.location.port !== '5000') {
+    return `http://localhost:5000${path}`;
+  }
+  return path;
+};
 
 function BusinessDirectory({ user }) {
   const { t } = useTranslation();
@@ -63,7 +73,7 @@ function BusinessDirectory({ user }) {
     window.dispatchEvent(new CustomEvent('businessChanged', { detail: { businessId: id } }));
   };
 
-  const handleCreateBusiness = (e) => {
+  const handleCreateBusiness = async (e) => {
     e.preventDefault();
     if (!newBiz.name || !newBiz.gstin) {
       alert('Please fill in Business Name and GSTIN.');
@@ -71,6 +81,44 @@ function BusinessDirectory({ user }) {
     }
     if (newBiz.gstin.length !== 15) {
       alert('GSTIN must be exactly 15 characters.');
+      return;
+    }
+
+    // Backend plan-limit check (Part 27): Free = 1 business total, Pro = up
+    // to 2, Business = up to 5. The backend is the source of truth — the
+    // localStorage list is display-only.
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert('Please sign in to create a business.');
+        return;
+      }
+      const token = await currentUser.getIdToken();
+      const res = await fetch(getApiUrl('/api/businesses'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newBiz.name,
+          gstin: newBiz.gstin.toUpperCase(),
+          state: newBiz.state,
+          type: newBiz.type,
+          owner: newBiz.owner,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        alert(data.error || 'Could not create the business. Please try again.');
+        if (data.code === 'BUSINESS_LIMIT_REACHED' && data.requiredPlan) {
+          localStorage.setItem('selectedPlan', data.requiredPlan);
+          setTimeout(() => { window.location.href = '/pricing'; }, 1500);
+        }
+        return;
+      }
+    } catch (err) {
+      alert('Could not reach the server. Please check your connection and try again.');
       return;
     }
 

@@ -1,84 +1,160 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Fields that only the BACKEND (Admin SDK) may write. A malicious user
+    // must not be able to run updateDoc(userRef, { subscriptionPlan: "business" })
+    // or edit usage counters from the browser console.
+    function protectedSubscriptionFields() {
+      return [
+        'subscriptionPlan',
+        'subscriptionStatus',
+        'subscriptionProvider',
+        'subscriptionOrderId',
+        'subscriptionPaymentId',
+        'subscriptionAmount',
+        'subscriptionCurrency',
+        'subscriptionStart',
+        'subscriptionExpiry'
+      ];
+    }
+
     // ========================================
-    // USER DATA - STRICT USER ISOLATION
+    // USER PROFILE DOCUMENT
     // ========================================
-    
-    // Main users collection - each user can ONLY access their own document
     match /users/{uid} {
-      // User can read/write their own profile
-      allow read, write: if request.auth.uid == uid;
-      
-      // All subcollections inherit the same rule
-      // Bills, forms, reminders, settings, stats, documents, etc.
-      match /{document=**} {
+      allow read: if request.auth.uid == uid;
+
+      allow create: if request.auth.uid == uid
+        && !request.resource.data.keys().hasAny(protectedSubscriptionFields());
+
+      allow update: if request.auth.uid == uid
+        && !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(protectedSubscriptionFields());
+
+      allow delete: if false;
+
+      // ======================================
+      // BACKEND-ONLY WRITE PATHS (read-only for the client)
+      // ======================================
+
+      // Monthly usage counters — backend writes, client reads (display only).
+      match /usage/{period} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
+      }
+
+      // Usage-event audit trail — backend writes only.
+      match /usageEvents/{eventId} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
+      }
+
+      // Billing orders & payment ledger — backend writes only.
+      match /orders/{orderId} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
+      }
+      match /payments/{paymentId} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
+      }
+
+      // Agent metadata (scheduler state) — backend writes only.
+      match /agentMeta/{docId} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
+      }
+
+      // ======================================
+      // APP-OWNED SUBCOLLECTIONS (user-isolated read/write)
+      // ======================================
+      match /bills/{billId} {
         allow read, write: if request.auth.uid == uid;
+      }
+      match /gstForms/{formId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /reports/{reportId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /reminders/{reminderId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /emailReminders/{reminderId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /settings/{docId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /stats/{docId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /documents/{docId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /alerts/{alertId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /activityLogs/{logId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /agentRuns/{runId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /businesses/{businessId} {
+        allow read: if request.auth.uid == uid;
+        // Business creation is plan-limited server-side (POST /api/businesses);
+        // direct client writes are not allowed.
+        allow write: if false;
+      }
+
+      // Unknown subcollections fail closed (no client access).
+      match /{document=**} {
+        allow read: if request.auth.uid == uid;
+        allow write: if false;
       }
     }
 
     // ========================================
-    // REMINDERS - USER ISOLATED
+    // LEGACY ROOT-LEVEL COLLECTIONS (keep working)
     // ========================================
     match /reminders/{reminderId} {
-      // Users can only read reminders they own
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                      request.auth.uid == resource.data.userId;
-      
-      // Users can create reminders for themselves
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
                        request.resource.data.userId == request.auth.uid;
-      
-      // Users can update/delete their own reminders
-      allow update, delete: if request.auth != null && 
+      allow update, delete: if request.auth != null &&
                                request.auth.uid == resource.data.userId;
     }
 
-    // ========================================
-    // BILLS - ROOT LEVEL (legacy support)
-    // ========================================
     match /bills/{billId} {
-      // Users can only access bills they own
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
     }
 
-    // ========================================
-    // DOCUMENTS - ROOT LEVEL (legacy support)
-    // ========================================
     match /documents/{docId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
     }
 
-    // ========================================
-    // GST FORMS - ROOT LEVEL (legacy support)
-    // ========================================
     match /gstForms/{formId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
     }
 
-    // ========================================
-    // REPORTS - ROOT LEVEL (legacy support)
-    // ========================================
     match /reports/{reportId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
                            request.auth.uid == resource.data.userId;
     }
 
     // ========================================
     // FIREBASE EMAIL EXTENSION - SMTP
     // ========================================
-    // Users can create email documents
-    // Firebase Extension service account can read and update them
     match /mail/{mailId} {
-      // Authenticated users can create email documents
       allow create: if request.auth != null;
-      
-      // Firebase Extension service account can read and update (for delivery tracking)
-      allow read, update: if request.auth != null || 
-                             (request.auth.uid == null && 
+      allow read, update: if request.auth != null ||
+                             (request.auth.uid == null &&
                               request.headers['Authorization'].matches('^Bearer .+$'));
     }
 

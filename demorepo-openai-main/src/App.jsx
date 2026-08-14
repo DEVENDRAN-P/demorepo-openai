@@ -9,6 +9,7 @@ import './styles/auth-animations.css';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { DarkModeProvider } from './context/DarkModeContext';
+import { UploadProvider } from './context/UploadContext';
 
 // Components - Import directly (not lazy) — these are lightweight guards/layouts
 import ProtectedRoute from './components/ProtectedRoute';
@@ -147,7 +148,9 @@ function App() {
       <I18nextProvider i18n={i18n}>
         <AuthProvider>
           <DarkModeProvider>
-            <AppContent />
+            <UploadProvider>
+              <AppContent />
+            </UploadProvider>
           </DarkModeProvider>
         </AuthProvider>
       </I18nextProvider>

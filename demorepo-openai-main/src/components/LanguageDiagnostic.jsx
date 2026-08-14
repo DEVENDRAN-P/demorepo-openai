@@ -25,7 +25,7 @@ function LanguageDiagnostic() {
 
             for (const lang of ['en', 'ta', 'hi', 'ml', 'kn']) {
                 try {
-                    await i18n.changeLanguage(lang);
+                    await i18n.changeLanguageAsync(lang);
 
                     // Wait a moment for re-render
                     await new Promise(resolve => setTimeout(resolve, 100));

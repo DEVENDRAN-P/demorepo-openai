@@ -4,6 +4,8 @@ import { getUserBills } from '../services/firebaseDataService';
 import { aiChat } from '../services/aiService';
 import { fetchActivePlan } from '../services/subscriptionService';
 import { runFullAnalysis } from '../services/agentService';
+import FeatureLock from '../components/FeatureLock';
+import { FEATURES } from '../config/plans';
 import {
   collection,
   query,
@@ -202,6 +204,21 @@ function AIFinanceAgent({ user }) {
       setAgentLoading(false);
     }
   };
+
+  // The AI Accountant is a Pro+ entitlement. Free users see a clear upgrade
+  // state (Part 15) — their basic assistant lives in Chat / Dashboard.
+  if (activePlan === 'free') {
+    const def = FEATURES.ai_accountant || {};
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <FeatureLock
+          featureName={def.label || 'AI Accountant'}
+          description={def.description || 'Your AI finance assistant analyzes invoices, expenses, GST liability and business performance.'}
+          requiredPlan="pro"
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>

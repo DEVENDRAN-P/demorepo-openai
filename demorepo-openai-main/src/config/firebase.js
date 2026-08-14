@@ -14,8 +14,9 @@ import {
   persistentMultipleTabManager, 
   connectFirestoreEmulator 
 } from "firebase/firestore";
-import { getAnalytics, isSupported } from "firebase/analytics";
-import { getDatabase, connectDatabaseEmulator } from "firebase/database";
+// firebase/analytics and firebase/database are imported lazily below so they
+// never bloat the main bundle: analytics is non-critical and the Realtime
+// Database is only used by debug tools (FirebaseDebugPanel etc.).
 import { ENABLE_DOCUMENT_STORAGE } from "./features";
 
 // ========================================
@@ -143,22 +144,28 @@ export const db = initializeFirestore(app, {
 // The deprecated enableIndexedDbPersistence() has been removed
 
 // ========================================
-// INITIALIZE FIREBASE ANALYTICS
+// INITIALIZE FIREBASE ANALYTICS (lazy)
 // ========================================
-let analytics = null;
-if (typeof window !== "undefined") {
-  isSupported()
-    .then((supported) => {
-      if (supported) {
-        analytics = getAnalytics(app);
-      }
-    })
-    .catch((error) => {
-      // Analytics initialization not supported
-    });
-}
+let analyticsPromise = null;
 
-export { analytics };
+/**
+ * Lazily resolve Firebase Analytics. Non-critical for startup, so it is
+ * fetched on first use instead of inlining firebase/analytics in the main
+ * bundle.
+ */
+export const getAnalyticsInstance = () => {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  if (!analyticsPromise) {
+    analyticsPromise = Promise.all([
+      import("firebase/analytics").then(({ isSupported, getAnalytics }) =>
+        isSupported().then((ok) => (ok ? getAnalytics(app) : null))
+      ),
+    ]).then(([a]) => a);
+  }
+  return analyticsPromise;
+};
+
+export { getAnalyticsInstance as analytics };
 
 // ========================================
 // INITIALIZE FIREBASE STORAGE (OPTIONAL)
@@ -188,19 +195,39 @@ export const getStorageInstance = () => {
 };
 
 // ========================================
-// INITIALIZE FIREBASE REALTIME DATABASE
+// INITIALIZE FIREBASE REALTIME DATABASE (lazy)
 // ========================================
-export const database = getDatabase(app);
+let databasePromise = null;
+
+/**
+ * Lazily resolve the Realtime Database instance. Only debug tools use it, so
+ * firebase/database stays out of the main bundle until actually requested.
+ */
+export const getDatabaseInstance = () => {
+  if (!databasePromise) {
+    databasePromise = import("firebase/database").then(({ getDatabase, connectDatabaseEmulator }) => {
+      const database = getDatabase(app);
+      if (useEmulator && typeof window !== "undefined") {
+        try {
+          connectDatabaseEmulator(database, "127.0.0.1", 9000);
+          console.log("✅ Connected to Realtime Database Emulator at 127.0.0.1:9000");
+        } catch (error) {
+          console.warn("⚠️  Realtime Database emulator connection skipped:", error.message);
+        }
+      }
+      return database;
+    });
+  }
+  return databasePromise;
+};
+
+// Keep the legacy named export working (resolves on first access via the
+// lazy getter — callers that import `database` get the real instance).
+const database = getDatabaseInstance();
+export { database };
 
 // Connect to Firebase Emulators for local development
 if (useEmulator && typeof window !== "undefined") {
-  try {
-    connectDatabaseEmulator(database, "127.0.0.1", 9000);
-    console.log("✅ Connected to Realtime Database Emulator at 127.0.0.1:9000");
-  } catch (error) {
-    console.warn("⚠️  Realtime Database emulator connection skipped:", error.message);
-  }
-
   try {
     connectFirestoreEmulator(db, "127.0.0.1", 8080);
     console.log("✅ Connected to Firestore Emulator at 127.0.0.1:8080");

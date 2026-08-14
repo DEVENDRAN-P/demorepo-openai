@@ -47,6 +47,30 @@
       "destination": "/api/billing?action=status"
     },
     {
+      "source": "/api/usage",
+      "destination": "/api/billing?action=usage"
+    },
+    {
+      "source": "/api/entitlements",
+      "destination": "/api/billing?action=entitlements"
+    },
+    {
+      "source": "/api/usage/reserve",
+      "destination": "/api/billing?action=usage-reserve"
+    },
+    {
+      "source": "/api/usage/release",
+      "destination": "/api/billing?action=usage-release"
+    },
+    {
+      "source": "/api/businesses",
+      "destination": "/api/billing?action=businesses-create"
+    },
+    {
+      "source": "/api/invoices",
+      "destination": "/api/agent"
+    },
+    {
       "source": "/api/extract",
       "destination": "/api/ai?task=invoice_extraction"
     },

@@ -1,18 +1,21 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "./locales/en.json";
-import ta from "./locales/ta.json";
 import hi from "./locales/hi.json";
+import ta from "./locales/ta.json";
 import ml from "./locales/ml.json";
 import kn from "./locales/kn.json";
 
-const resources = {
-  en: { translation: en },
-  ta: { translation: ta },
-  hi: { translation: hi },
-  ml: { translation: ml },
-  kn: { translation: kn },
-};
+const SUPPORTED_LANGS = ["en", "ta", "hi", "ml", "kn"];
+
+function getSavedLanguage() {
+  try {
+    const saved = localStorage.getItem("language");
+    return saved && SUPPORTED_LANGS.includes(saved) ? saved : "en";
+  } catch {
+    return "en";
+  }
+}
 
 // Helper function to clean up raw underscore variable names into natural text
 function cleanKeyName(key) {
@@ -24,9 +27,17 @@ function cleanKeyName(key) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+const initialLng = getSavedLanguage();
+
 i18n.use(initReactI18next).init({
-  resources,
-  lng: localStorage.getItem("language") || "en",
+  resources: {
+    en: { translation: en },
+    hi: { translation: hi },
+    ta: { translation: ta },
+    ml: { translation: ml },
+    kn: { translation: kn },
+  },
+  lng: initialLng,
   fallbackLng: "en",
   ns: ["translation"],
   defaultNS: "translation",
@@ -56,5 +67,10 @@ i18n.on("languageChanged", (lng) => {
   document.documentElement.lang = lng;
 });
 
-export default i18n;
+// Change-language helper: switch locale cleanly
+i18n.changeLanguageAsync = async (lng) => {
+  if (!SUPPORTED_LANGS.includes(lng)) lng = "en";
+  await i18n.changeLanguage(lng);
+};
 
+export default i18n;

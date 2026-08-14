@@ -476,11 +476,13 @@ function PricingBilling({ user }) {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>{t('pricing_free_desc')}</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
-            <li>{t('pricing_free_10_scans')}</li>
-            <li>{t('pricing_basic_ai_suggestions')}</li>
-            <li>{t('pricing_limited_ocr')}</li>
+            <li>10 {t('pricing_invoice_uploads_month')}</li>
+            <li>10 {t('pricing_ai_extractions_month')}</li>
+            <li>5 {t('pricing_document_analyses_month')}</li>
+            <li>2 {t('pricing_pdf_reports_month')}</li>
+            <li>3 {t('pricing_ai_insights_month')}</li>
             <li>{t('pricing_single_entity')}</li>
-            <li>{t('pricing_csv_exports')}</li>
+            <li>{t('pricing_free_basic_compliance')}</li>
           </ul>
           
           <button 
@@ -506,12 +508,14 @@ function PricingBilling({ user }) {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', minHeight: '36px' }}>{t('pricing_pro_desc')}</p>
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
-            <li><strong>{t('pricing_unlimited')}</strong> {t('pricing_invoice_scans')}</li>
-            <li><strong>{t('pricing_unlimited')}</strong> {t('pricing_ocr_extraction')}</li>
-            <li>{t('pricing_advanced_audit')}</li>
-            <li>{t('pricing_gstr_prefills')}</li>
-            <li>{t('pricing_reminder_sync')}</li>
-            <li>{t('pricing_3_profiles')}</li>
+            <li>50 {t('pricing_invoice_uploads_month')}</li>
+            <li>50 {t('pricing_ai_extractions_month')}</li>
+            <li>20 {t('pricing_document_analyses_month')}</li>
+            <li>10 {t('pricing_pdf_reports_month')}</li>
+            <li>20 {t('pricing_ai_insights_month')}</li>
+            <li>{t('pricing_ai_accountant_included')}</li>
+            <li>{t('pricing_email_reminders')}</li>
+            <li>{t('pricing_2_businesses')}</li>
           </ul>
 
           <button 
@@ -535,11 +539,11 @@ function PricingBilling({ user }) {
           
           <ul style={{ fontSize: '0.8rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', flex: 1, color: 'var(--text-secondary)', textAlign: 'left' }}>
             <li><strong>{t('pricing_everything')}</strong> {t('pricing_in_professional')}</li>
-            <li>{t('pricing_multi_user')}</li>
-            <li>{t('pricing_business_analytics')}</li>
-            <li>{t('pricing_vendor_blocker')}</li>
-            <li>{t('pricing_api_key')}</li>
-            <li>{t('pricing_pdf_exports')}</li>
+            <li>{t('pricing_fair_use_processing')}</li>
+            <li>{t('pricing_autonomous_compliance')}</li>
+            <li>{t('pricing_5_businesses_team')}</li>
+            <li>{t('pricing_advanced_audit_recon')}</li>
+            <li>{t('pricing_priority_support')}</li>
           </ul>
 
           <button 

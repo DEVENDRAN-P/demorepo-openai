@@ -81,7 +81,9 @@ function Header({ onMenuClick }) {
         <button 
           onClick={onMenuClick}
           className="header-menu-btn"
-          title={t('toggle_navigation_menu')}
+          title={t('toggle_navigation_menu', 'Toggle navigation menu')}
+          aria-label={t('toggle_navigation_menu', 'Toggle navigation menu')}
+          aria-controls="mobile-sidebar"
           style={{ alignItems: 'center', justifyContent: 'center' }}
         >
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -147,7 +149,7 @@ function Header({ onMenuClick }) {
           className="btn btn-outline"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', border: '1px solid var(--theme-secondary)' }}
         >
-          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>           <span className="header-btn-text">{t('ai_agent', 'AI Agent')}</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>           <span className="header-btn-text" style={{ whiteSpace: 'nowrap' }}>{t('ai_agent', 'AI Agent')}</span>
         </button>
 
         {/* Quick Upload shortcut */}
@@ -156,7 +158,7 @@ function Header({ onMenuClick }) {
           className="btn btn-primary"
           style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
         >
-          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span>           <span className="header-btn-text">{t('upload')}</span>
+          <span className="header-btn-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span>           <span className="header-btn-text" style={{ whiteSpace: 'nowrap' }}>{t('upload')}</span>
         </button>
 
         {/* Notifications Shortcut */}
@@ -234,7 +236,7 @@ function Header({ onMenuClick }) {
                 <button
                   key={code}
                   onClick={() => {
-                    i18n.changeLanguage(code);
+                    i18n.changeLanguageAsync(code);
                     localStorage.setItem('language', code);
                     setLangOpen(false);
                   }}

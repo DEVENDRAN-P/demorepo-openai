@@ -7,8 +7,15 @@ import {
   onValue,
   push,
 } from "firebase/database";
-import { database } from "../config/firebase";
-import { auth } from "../config/firebase";
+import { getDatabaseInstance, auth } from "../config/firebase";
+
+// Realtime Database is lazy-loaded (debug tooling only). Resolve the
+// instance once and share it across all helpers below.
+let _dbPromise = null;
+const getDb = () => {
+  if (!_dbPromise) _dbPromise = getDatabaseInstance();
+  return _dbPromise;
+};
 
 /**
  * Get current user ID
@@ -66,6 +73,7 @@ const sanitizeEmail = (email) => {
  */
 export const saveUserProfile = async (profileData) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const userRef = ref(database, `users/${userId}/profile`);
 
@@ -86,6 +94,7 @@ export const saveUserProfile = async (profileData) => {
  */
 export const getUserProfile = async () => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const userRef = ref(database, `users/${userId}/profile`);
     const snapshot = await get(userRef);
@@ -103,8 +112,9 @@ export const getUserProfile = async () => {
  * Listen to real-time user profile updates
  * Path: users/{userId}/profile
  */
-export const onUserProfileChange = (callback) => {
+export const onUserProfileChange = async (callback) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const userRef = ref(database, `users/${userId}/profile`);
 
@@ -131,6 +141,7 @@ export const onUserProfileChange = (callback) => {
  */
 export const saveUserSettings = async (settings) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const settingsRef = ref(database, `users/${userId}/settings`);
 
@@ -151,6 +162,7 @@ export const saveUserSettings = async (settings) => {
  */
 export const getUserSettings = async () => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const settingsRef = ref(database, `users/${userId}/settings`);
     const snapshot = await get(settingsRef);
@@ -173,6 +185,7 @@ export const getUserSettings = async () => {
  */
 export const addUserData = async (collectionName, data) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const collectionRef = ref(database, `users/${userId}/${collectionName}`);
     const newDocRef = push(collectionRef);
@@ -197,6 +210,7 @@ export const addUserData = async (collectionName, data) => {
  */
 export const getUserData = async (collectionName) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const collectionRef = ref(database, `users/${userId}/${collectionName}`);
     const snapshot = await get(collectionRef);
@@ -217,6 +231,7 @@ export const getUserData = async (collectionName) => {
  */
 export const getUserDataItem = async (collectionName, docId) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const itemRef = ref(database, `users/${userId}/${collectionName}/${docId}`);
     const snapshot = await get(itemRef);
@@ -237,6 +252,7 @@ export const getUserDataItem = async (collectionName, docId) => {
  */
 export const updateUserData = async (collectionName, docId, updates) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const itemRef = ref(database, `users/${userId}/${collectionName}/${docId}`);
 
@@ -257,6 +273,7 @@ export const updateUserData = async (collectionName, docId, updates) => {
  */
 export const deleteUserData = async (collectionName, docId) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const itemRef = ref(database, `users/${userId}/${collectionName}/${docId}`);
 
@@ -272,8 +289,9 @@ export const deleteUserData = async (collectionName, docId) => {
  * Listen to real-time updates from user collection
  * Path: users/{userId}/{collectionName}
  */
-export const onUserDataChange = (collectionName, callback) => {
+export const onUserDataChange = async (collectionName, callback) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const collectionRef = ref(database, `users/${userId}/${collectionName}`);
 
@@ -300,6 +318,7 @@ export const onUserDataChange = (collectionName, callback) => {
  */
 export const saveUserStats = async (stats) => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const statsRef = ref(database, `users/${userId}/stats`);
 
@@ -320,6 +339,7 @@ export const saveUserStats = async (stats) => {
  */
 export const getUserStats = async () => {
   try {
+    const database = await getDb();
     const userId = getUserId();
     const statsRef = ref(database, `users/${userId}/stats`);
     const snapshot = await get(statsRef);
@@ -368,6 +388,7 @@ Each user has completely isolated data - no cross-user access
  */
 export const saveEmailData = async (collectionName, data) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(
@@ -398,6 +419,7 @@ export const saveEmailData = async (collectionName, data) => {
  */
 export const getEmailData = async (collectionName) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(
@@ -422,6 +444,7 @@ export const getEmailData = async (collectionName) => {
  */
 export const getEmailDataItem = async (collectionName, docId) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const itemRef = ref(
@@ -446,6 +469,7 @@ export const getEmailDataItem = async (collectionName, docId) => {
  */
 export const updateEmailData = async (collectionName, docId, updates) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const itemRef = ref(
@@ -471,6 +495,7 @@ export const updateEmailData = async (collectionName, docId, updates) => {
  */
 export const deleteEmailData = async (collectionName, docId) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const itemRef = ref(
@@ -491,8 +516,9 @@ export const deleteEmailData = async (collectionName, docId) => {
  * Listen to real-time updates for email data
  * Path: emails/{sanitizedEmail}/{collectionName}
  */
-export const onEmailDataChange = (collectionName, callback) => {
+export const onEmailDataChange = async (collectionName, callback) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(
@@ -520,6 +546,7 @@ export const onEmailDataChange = (collectionName, callback) => {
  */
 export const getAllEmailsData = async () => {
   try {
+    const database = await getDb();
     const emailsRef = ref(database, "emails");
     const snapshot = await get(emailsRef);
 
@@ -544,6 +571,7 @@ export const getAllEmailsData = async () => {
  */
 export const initializeNewUserEmail = async (userEmail) => {
   try {
+    const database = await getDb();
     const sanitizedEmail = sanitizeEmail(userEmail);
 
     // Create user profile entry
@@ -569,6 +597,7 @@ export const initializeNewUserEmail = async (userEmail) => {
  */
 export const updateUserLastLogin = async () => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const metadataRef = ref(database, `emails/${sanitizedEmail}/metadata`);
@@ -591,6 +620,7 @@ export const updateUserLastLogin = async () => {
  */
 export const getUserMetadata = async () => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const metadataRef = ref(database, `emails/${sanitizedEmail}/metadata`);
@@ -621,6 +651,7 @@ export const refreshEmailData = async (collectionName) => {
 
     // First, unsubscribe from old listeners (handled by component)
     // Then get fresh data
+    const database = await getDb();
     const emailRef = ref(
       database,
       `emails/${sanitizedEmail}/${collectionName}`,
@@ -646,10 +677,11 @@ export const refreshEmailData = async (collectionName) => {
  * This ensures data is always scoped to current logged-in user
  * Returns unsubscribe function - IMPORTANT: call this on component unmount
  */
-export const setupEmailDataListener = (collectionName, callback) => {
+export const setupEmailDataListener = async (collectionName, callback) => {
   let unsubscribe = null;
 
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(
@@ -698,6 +730,7 @@ export const setupEmailDataListener = (collectionName, callback) => {
  */
 export const emailDataExists = async (collectionName) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(
@@ -719,6 +752,7 @@ export const emailDataExists = async (collectionName) => {
  */
 export const getEmailDataCount = async (collectionName) => {
   try {
+    const database = await getDb();
     const email = getUserEmail();
     const sanitizedEmail = sanitizeEmail(email);
     const emailRef = ref(

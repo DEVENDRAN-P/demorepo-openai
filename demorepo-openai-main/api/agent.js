@@ -27,45 +27,31 @@ const config = require("../lib/config");
 const { checkCompliance, buildForecast, buildMetrics, computeFacts, summarizeBills, GSTIN_REGEX, toNumber } = require("../lib/finance");
 const { createRun, completeRun, addDecision, addAction } = require("../lib/agentRunLogger");
 const { validateCompliance, validateForecast, validateInsights } = require("../lib/schemas");
-const { getPlanForUser } = require("../lib/usage");
-
-// Server-side monthly invoice limits per plan (10 / 500 / 5000).
-const PLAN_INVOICE_LIMITS = { free: 10, pro: 500, business: 5000 };
-
-async function countMonthlyBills(uid) {
-  const db = getDb();
-  const snapshot = await db.collection("users").doc(uid).collection("bills").get();
-  const now = new Date();
-  let count = 0;
-  snapshot.forEach((doc) => {
-    const d = doc.data();
-    const raw = d.invoiceDate || d.createdAt || d.uploadedAt;
-    if (!raw) return;
-    const parsed = raw && typeof raw.toDate === "function" ? raw.toDate() : new Date(raw);
-    if (Number.isNaN(parsed.getTime())) return;
-    if (parsed.getFullYear() === now.getFullYear() && parsed.getMonth() === now.getMonth()) {
-      count += 1;
-    }
-  });
-  return count;
-}
+const { saveBill } = require("../lib/database");
+const { getPlanForUser, checkLimit } = require("../lib/usage");
+const { checkFeatureAccess } = require("../lib/entitlements");
 
 /**
- * Enforce the monthly invoice cap server-side for the invoice_uploaded chain.
- * Returns { status, body } when the limit is exceeded, else null.
+ * Secondary server-side guard for the invoice_uploaded chain.
+ * The authoritative invoiceUploads reservation happens in POST /api/invoices
+ * (lib/usage.reserveUsage — atomic + idempotent). This check mirrors the
+ * same limit from the shared plan config so a chain triggered directly via
+ * POST /api/agent is still bounded.
  */
 async function enforceInvoiceLimit(uid) {
-  const plan = await getPlanForUser(uid);
-  const limit = PLAN_INVOICE_LIMITS[plan] !== undefined ? PLAN_INVOICE_LIMITS[plan] : PLAN_INVOICE_LIMITS.free;
-  const used = await countMonthlyBills(uid);
-  if (used >= limit) {
+  const check = await checkLimit(uid, "invoiceUploads");
+  if (!check.allowed) {
+    const plan = await getPlanForUser(uid);
     return {
       status: 403,
       body: {
         success: false,
-        code: "LIMIT_EXCEEDED",
-        error: `Monthly invoice limit reached (${used}/${limit}). Please upgrade your plan to continue.`,
-        usage: { used, limit, plan },
+        code: check.reason,
+        error:
+          check.reason === "FAIR_USE_LIMIT_REACHED"
+            ? `Fair-use processing threshold reached (${check.used}). Please try again later or contact support.`
+            : `Monthly invoice limit reached (${check.used}/${check.limit}). Please upgrade your plan to continue.`,
+        usage: { used: check.used, limit: check.limit, plan },
       },
     };
   }
@@ -513,9 +499,9 @@ async function runAgentChain(uid, trigger, payload = {}) {
   const results = [];
   let chainFailed = false;
 
-  for (const agentKey of chain) {
-    const agent = AGENT_FNS[agentKey];
-
+  // Run initial invoice agent if present first
+  if (chain.includes("invoice")) {
+    const agent = AGENT_FNS["invoice"];
     const agentRunId = await createRun(uid, {
       agent: agent.name,
       trigger,
@@ -523,13 +509,7 @@ async function runAgentChain(uid, trigger, payload = {}) {
     });
 
     try {
-      let agentResult;
-      if (agentKey === "invoice") {
-        agentResult = await agent.fn(uid, payload.invoice || payload, payload.business, payload.billId);
-      } else {
-        agentResult = await agent.fn(uid, payload.business?.id);
-      }
-
+      const agentResult = await agent.fn(uid, payload.invoice || payload, payload.business, payload.billId);
       await completeRun(uid, agentRunId, {
         status: "completed",
         decisions: agentResult.decisions,
@@ -546,7 +526,6 @@ async function runAgentChain(uid, trigger, payload = {}) {
         result: agentResult.result,
       });
 
-      // Execute actions (write side effects to Firestore)
       for (const action of agentResult.actions) {
         await executeAction(uid, action);
       }
@@ -562,10 +541,62 @@ async function runAgentChain(uid, trigger, payload = {}) {
         runId: agentRunId,
         error: err.message,
       });
-
-      chainFailed = true;
-      break; // stop chain on error
     }
+  }
+
+  // Run remaining downstream agents concurrently in parallel
+  const remainingKeys = chain.filter((k) => k !== "invoice");
+  if (remainingKeys.length > 0) {
+    const agentPromises = remainingKeys.map(async (agentKey) => {
+      const agent = AGENT_FNS[agentKey];
+      const agentRunId = await createRun(uid, {
+        agent: agent.name,
+        trigger,
+        input: payload,
+      });
+
+      try {
+        const agentResult = await agent.fn(uid, payload.business?.id);
+        await completeRun(uid, agentRunId, {
+          status: "completed",
+          decisions: agentResult.decisions,
+          actions: agentResult.actions.map((a) => JSON.stringify(a)),
+          result: agentResult.result,
+        });
+
+        for (const action of agentResult.actions) {
+          await executeAction(uid, action);
+        }
+
+        return {
+          agent: agent.name,
+          status: "completed",
+          runId: agentRunId,
+          decisions: agentResult.decisions,
+          actions: agentResult.actions,
+          result: agentResult.result,
+        };
+      } catch (err) {
+        await completeRun(uid, agentRunId, {
+          status: "error",
+          error: err.message || "Agent execution failed",
+        });
+
+        return {
+          agent: agent.name,
+          status: "error",
+          runId: agentRunId,
+          error: err.message,
+        };
+      }
+    });
+
+    const parallelResults = await Promise.allSettled(agentPromises);
+    parallelResults.forEach((res) => {
+      if (res.status === "fulfilled" && res.value) {
+        results.push(res.value);
+      }
+    });
   }
 
   await completeRun(uid, chainRunId, {
@@ -764,7 +795,12 @@ async function runScheduledAgent() {
 
       if (businessSnapshot.empty) continue;
 
-      // 3. Run compliance + reminder chain for each user
+      // 3. Autonomous scheduled analysis is a Business-tier entitlement
+      //    (AI Operations Agent). Free/Pro users are skipped so autonomous
+      //    workflows never run for plans that do not include them.
+      const autonomyGate = await checkFeatureAccess(uid, "automated_compliance");
+      if (!autonomyGate.allowed) continue;
+
       await db
         .collection("users")
         .doc(uid)
@@ -827,6 +863,154 @@ module.exports = async function agentHandler(req, res) {
   setCorsHeaders(res, req);
 
   try {
+    // -------------------------------------------------------------------
+    // POST /api/invoices — authoritative invoice upload endpoint.
+    // Flow: auth → effective plan → atomic reserve (idempotent by uploadId)
+    //       → server-side bill save → agent chain → response.
+    // -------------------------------------------------------------------
+    if (req.method === "POST" && (req.url.includes("/api/invoices") || req.url.endsWith("/invoices"))) {
+      const { verifyAuth } = require("../lib/admin");
+      const { reserveUsage, releaseUsage, getUsageEvent, finalizeUsage } = require("../lib/usage");
+      const decoded = await verifyAuth(req);
+      const uid = decoded.uid;
+
+      let body = req.body;
+      if (body === undefined) {
+        const chunks = [];
+        for await (const chunk of req) {
+          chunks.push(chunk);
+          if (Buffer.concat(chunks).length > 4 * 1024 * 1024) {
+            res.status(413).json({ success: false, error: "Payload too large", code: "PAYLOAD_TOO_LARGE" });
+            return;
+          }
+        }
+        const bodyStr = Buffer.concat(chunks).toString("utf8");
+        try {
+          body = JSON.parse(bodyStr);
+        } catch {
+          res.status(400).json({ success: false, error: "Invalid JSON", code: "INVALID_JSON" });
+          return;
+        }
+      }
+      if (!body || typeof body !== "object") body = {};
+
+      const uploadId = String(body.uploadId || "").trim();
+      const invoice = body.invoice || {};
+      if (!uploadId) {
+        res.status(400).json({ success: false, error: "Missing uploadId (idempotency key)", code: "MISSING_UPLOAD_ID" });
+        return;
+      }
+      if (!invoice || typeof invoice !== "object" || (!invoice.supplierName && !invoice.invoiceNumber)) {
+        res.status(400).json({ success: false, error: "Invoice data is required (supplierName or invoiceNumber)", code: "INVALID_INVOICE" });
+        return;
+      }
+
+      // 1. Atomically reserve one monthly invoice slot (idempotent).
+      const reserved = await reserveUsage(uid, "invoiceUploads", uploadId, {
+        requiredPlan: null,
+      });
+
+      if (!reserved.allowed) {
+        const plan = await getPlanForUser(uid);
+        const bodyOut = {
+          success: false,
+          code: reserved.reason,
+          error:
+            reserved.reason === "FAIR_USE_LIMIT_REACHED"
+              ? `Fair-use processing threshold reached (${reserved.used}). No further invoices can be processed right now — please try later or contact support.`
+              : `Monthly invoice limit reached (${reserved.used}/${reserved.limit}). Upgrade to Pro for 100 invoice uploads/month, or to Business for higher/fair-use processing.`,
+          usage: { used: reserved.used, limit: reserved.limit, plan },
+          requiredPlan: "pro",
+        };
+        res.status(403).json(bodyOut);
+        return;
+      }
+
+      // Idempotent replay: this uploadId was already accepted. Return the
+      // previously created bill instead of saving a duplicate.
+      if (reserved.alreadyProcessed) {
+        const existingEvent = await getUsageEvent(uid, "invoiceUploads", uploadId).catch(() => null);
+        if (existingEvent && existingEvent.billId) {
+          res.status(200).json({
+            success: true,
+            billId: existingEvent.billId,
+            alreadyProcessed: true,
+            chainStatus: existingEvent.chainStatus || "skipped",
+            usage: {
+              used: reserved.used,
+              limit: reserved.limit,
+              plan: reserved.plan,
+              period: reserved.period,
+              fairUse: reserved.fairUse,
+            },
+          });
+          return;
+        }
+      }
+
+      try {
+        // 2. Persist the invoice server-side (never trusted from the client).
+        const businessId = body.businessId || null;
+        const billId = await saveBill(uid, {
+          ...invoice,
+          businessId,
+        });
+        if (!billId) {
+          throw new Error("Bill could not be saved");
+        }
+
+        // 3. Record the produced bill on the reservation so replays return
+        //    the same billId (no duplicates) instead of re-saving.
+        await finalizeUsage(uid, "invoiceUploads", uploadId, {
+          billId,
+          plan: reserved.plan,
+          period: reserved.period,
+        }).catch(() => {});
+
+        // 4. Trigger the invoice agent chain (same behavior as before) — but
+        //    FIRE-AND-FORGET. The invoice is already persisted; the chain is
+        //    non-fatal and only produces insights/reminders. Blocking the HTTP
+        //    response on 2-4 sequential Gemini calls made uploads feel slow.
+        //    The chain still runs server-side and its results are recorded in
+        //    agentRuns (visible on the AI Agent page).
+        Promise.resolve()
+          .then(() =>
+            runAgentChain(uid, "invoice_uploaded", {
+              invoice,
+              business: body.business || (businessId ? { id: businessId } : {}),
+              billId,
+            })
+          )
+          .catch((chainErr) => {
+            console.warn(`[invoices] Agent chain failed for bill ${billId}:`, chainErr.message);
+          });
+
+        res.status(200).json({
+          success: true,
+          billId,
+          chainStatus: "started",
+          usage: {
+            used: reserved.used,
+            limit: reserved.limit,
+            plan: reserved.plan,
+            period: reserved.period,
+            fairUse: reserved.fairUse,
+          },
+        });
+      } catch (saveErr) {
+        // 5. Refund the reserved slot — the invoice was never accepted, so
+        //    the user's quota must not be consumed.
+        console.error(`[invoices] Save failed for uploadId ${uploadId}:`, saveErr.message);
+        await releaseUsage(uid, "invoiceUploads", uploadId).catch(() => {});
+        res.status(502).json({
+          success: false,
+          error: "Invoice could not be saved. Please try again.",
+          code: "SAVE_FAILED",
+        });
+      }
+      return;
+    }
+
     // Scheduled agent endpoint (called by Vercel Cron)
     // Uses CRON_SECRET for auth instead of Firebase token
     if (req.method === "GET" && req.query.schedule === "true") {
@@ -898,6 +1082,22 @@ module.exports = async function agentHandler(req, res) {
       const limitError = await enforceInvoiceLimit(uid);
       if (limitError) {
         res.status(limitError.status).json(limitError.body);
+        return;
+      }
+    }
+
+    // Autonomous/advanced workflows are Business-only (AI Operations Agent).
+    if (trigger === "run_full_analysis") {
+      const gate = await checkFeatureAccess(uid, "automated_compliance");
+      if (!gate.allowed) {
+        res.status(403).json({
+          success: false,
+          code: "FEATURE_NOT_INCLUDED",
+          error:
+            "Automated compliance workflows are available on the Business plan. Upgrade to unlock continuous monitoring and approved workflows.",
+          requiredPlan: "business",
+          currentPlan: gate.currentPlan,
+        });
         return;
       }
     }

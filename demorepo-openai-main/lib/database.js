@@ -45,13 +45,33 @@ async function getUserSubscription(uid) {
     subscriptionPlan: data.subscriptionPlan || "free",
     subscriptionStatus: data.subscriptionStatus || "active",
     subscriptionProvider: data.subscriptionProvider || null,
-    subscriptionStart: data.subscriptionStart
-      ? data.subscriptionStart.toDate().toISOString()
-      : defaults.subscriptionStart,
-    subscriptionExpiry: data.subscriptionExpiry
-      ? data.subscriptionExpiry.toDate().toISOString()
-      : null,
+    subscriptionStart: toIsoString(data.subscriptionStart) || defaults.subscriptionStart,
+    subscriptionExpiry: toIsoString(data.subscriptionExpiry),
   };
+}
+
+/**
+ * Normalize a Firestore value into an ISO-8601 string, tolerating BOTH
+ * Timestamp objects (current writes) and ISO strings / epoch numbers
+ * (legacy docs written by older versions). Without this tolerance,
+ * `.toDate()` throws on legacy string dates and /api/subscription/status
+ * 500s — which makes the frontend silently fall back to 'free', so a user
+ * who DID subscribe appears stuck on the Free plan.
+ */
+function toIsoString(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value.toDate === "function") {
+    const d = value.toDate();
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
 }
 
 /**
@@ -302,6 +322,63 @@ async function getPaymentHistory(uid) {
   return records;
 }
 
+/**
+ * Server-side invoice (bill) creation.
+ *
+ * The authoritative invoice-upload path (POST /api/invoices) writes bills
+ * through the Admin SDK AFTER the monthly invoiceUploads slot has been
+ * atomically reserved — the client never writes a new invoice directly, so
+ * the usage limit cannot be bypassed from the browser. Returns the new bill
+ * id, or null when no uid/bill data is provided.
+ */
+async function saveBill(uid, billData) {
+  if (!uid || !billData || typeof billData !== "object") return null;
+  const db = getDb();
+  const billRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("bills")
+    .doc();
+  const now = Timestamp.now();
+
+  const sanitized = {
+    invoiceNumber: String(billData.invoiceNumber || ""),
+    invoiceDate: billData.invoiceDate || new Date().toISOString(),
+    supplierName: String(billData.supplierName || ""),
+    gstin: String(billData.gstin || ""),
+    amount: Number(billData.amount) || 0,
+    taxPercent: Number(billData.taxPercent) || 0,
+    taxAmount: Number(billData.taxAmount) || 0,
+    totalAmount: Number(billData.totalAmount) || 0,
+    taxBreakdown: billData.taxBreakdown || { cgst: 0, sgst: 0, igst: 0 },
+    expenseType: String(billData.expenseType || "Others"),
+    category: String(billData.category || ""),
+    gstrDeadline: String(billData.gstrDeadline || ""),
+    gstrForm: String(billData.gstrForm || "GSTR-1"),
+    filed: !!billData.filed,
+    filedDate: billData.filedDate || null,
+    status: String(billData.status || "pending"),
+    notes: String(billData.notes || ""),
+    userId: uid,
+    businessId: billData.businessId || null,
+    extractionConfidence: String(billData.extractionConfidence || "medium"),
+    ocrSource: String(billData.ocrSource || ""),
+    hsn: String(billData.hsn || ""),
+    lineItems: Array.isArray(billData.lineItems) ? billData.lineItems : [],
+    boundingBoxes: billData.boundingBoxes || null,
+    taxAnalysis: billData.taxAnalysis || null,
+    riskAnalysis: billData.riskAnalysis || null,
+    aiSuggestions: Array.isArray(billData.aiSuggestions) ? billData.aiSuggestions : [],
+    gstDocumentType: String(billData.gstDocumentType || "Tax Invoice"),
+    createdAt: billData.createdAt || now,
+    uploadedAt: now,
+    updatedAt: now,
+  };
+
+  await billRef.set(sanitized);
+  return billRef.id;
+}
+
 module.exports = {
   getUserSubscription,
   getPaymentHistory,
@@ -312,4 +389,5 @@ module.exports = {
   activateSubscriptionFromOrder,
   saveFailedPayment,
   downgradeUserToFree,
+  saveBill,
 };

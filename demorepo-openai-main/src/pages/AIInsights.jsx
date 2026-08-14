@@ -33,6 +33,7 @@ function AIInsights({ user }) {
       .catch(e => console.error(e));
   }, [user?.uid, activeBusinessId]);
 
+
   // Deterministic insights — computed ONLY from the user's stored invoices.
   // No hardcoded figures; every number below is derived from real data.
   const pendingCount = bills.filter(b => !b.filed).length;

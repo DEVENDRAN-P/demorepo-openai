@@ -65,6 +65,7 @@ const remindersHandler = require("./api/reminders");
 // Import consolidated Health handler
 const healthHandler = require("./api/health");
 
+
 // Auth helper (Firebase ID token verification) for the local email endpoint.
 const { verifyAuth } = require("./lib/admin");
 
@@ -356,6 +357,31 @@ app.post("/api/payment/webhook", billingHandler); // Cashfree webhook (signature
 app.post("/api/subscription/downgrade", billingHandler);
 app.get("/api/payment/history", billingHandler);
 app.get("/api/subscription/status", billingHandler);
+
+// Usage & entitlement routes (mirror the Vercel rewrites, which pass ?action=)
+app.get("/api/usage", billingHandler);
+app.get("/api/entitlements", billingHandler);
+app.post("/api/usage/reserve", (req, res) => {
+  req.query.action = "usage-reserve";
+  return billingHandler(req, res);
+});
+app.post("/api/usage/release", (req, res) => {
+  req.query.action = "usage-release";
+  return billingHandler(req, res);
+});
+app.post("/api/businesses", (req, res) => {
+  req.query.action = "businesses-create";
+  return billingHandler(req, res);
+});
+app.post("/api/businesses/check", (req, res) => {
+  req.query.action = "businesses-create";
+  return billingHandler(req, res);
+});
+
+// Invoice upload (authoritative, quota-enforced) — handled by the agent
+// orchestrator (reserve → save → agent chain).
+app.post("/api/invoices", agentHandler);
+
 
 // GET diagnostics for the POST-only payment routes — prevents Express's
 // default "Cannot GET ..." HTML when someone opens these URLs in a browser

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   Bot,
@@ -94,166 +95,167 @@ function TiltCard({ children, onClick, className = '' }) {
 // Compliance Suite Main Component
 // ----------------------------------------------------
 export default function EndToEndComplianceSuite() {
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedCard, setSelectedCard] = useState(null);
 
   // Filter Categories
   const categories = [
-    { id: 'All', label: 'All Tools (10)' },
-    { id: 'AI & Automation', label: 'AI & Automation' },
-    { id: 'Filing & Compliance', label: 'Filing & Compliance' },
-    { id: 'Analytics & Risk', label: 'Analytics & Risk' }
+    { id: 'All', label: t('cat_all_tools', 'All Tools (10)') },
+    { id: 'AI & Automation', label: t('cat_ai_automation', 'AI & Automation') },
+    { id: 'Filing & Compliance', label: t('cat_filing_compliance', 'Filing & Compliance') },
+    { id: 'Analytics & Risk', label: t('cat_analytics_risk', 'Analytics & Risk') }
   ];
 
   // 10 Cards Detailed Data
   const toolsData = [
     {
       id: 'ai-accountant',
-      title: 'AI Accountant Agent',
+      title: t('suite_ai_accountant_title', 'AI Accountant Agent'),
       icon: Bot,
-      category: 'AI & Automation',
-      shortDesc: 'Conversational compliance expert trained on latest GST circulars and tax laws.',
+      category: t('cat_ai_automation', 'AI & Automation'),
+      shortDesc: t('suite_ai_accountant_desc', 'Conversational compliance expert trained on latest GST circulars and tax laws.'),
       bullets: [
-        '24/7 instant tax advice',
-        'GSTR-3B tax calculation',
-        'Real-time circular updates'
+        t('suite_ai_acc_bullet1', '24/7 instant tax advice'),
+        t('suite_ai_acc_bullet2', 'GSTR-3B tax calculation'),
+        t('suite_ai_acc_bullet3', 'Real-time circular updates')
       ],
-      badge: '99.4% Query Accuracy',
+      badge: t('suite_ai_acc_badge', '99.4% Query Accuracy'),
       colorClass: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/30 border-indigo-200/50 dark:border-indigo-900/30',
       glowClass: 'from-indigo-500 to-purple-600'
     },
     {
       id: 'invoice-intel',
-      title: 'Invoice Intelligence',
+      title: t('suite_invoice_intel_title', 'Invoice Intelligence'),
       icon: Scan,
-      category: 'AI & Automation',
-      shortDesc: 'Extract supplier name, tax liability, HSN/SAC codes, and line items with 99% accuracy.',
+      category: t('cat_ai_automation', 'AI & Automation'),
+      shortDesc: t('suite_invoice_intel_desc', 'Extract supplier name, tax liability, HSN/SAC codes, and line items with 99% accuracy.'),
       bullets: [
-        'Neural OCR engine',
-        'Batch multi-page processing',
-        'Automatic duplicate detection'
+        t('suite_inv_intel_bullet1', 'Neural OCR engine'),
+        t('suite_inv_intel_bullet2', 'Batch multi-page processing'),
+        t('suite_inv_intel_bullet3', 'Automatic duplicate detection')
       ],
-      badge: '< 200ms Processing',
+      badge: t('suite_inv_intel_badge', '< 200ms Processing'),
       colorClass: 'text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-950/30 border-purple-200/50 dark:border-purple-900/30',
       glowClass: 'from-purple-500 to-pink-600'
     },
     {
       id: 'doc-assistant',
-      title: 'Document Assistant',
+      title: t('suite_doc_assistant_title', 'Document Assistant'),
       icon: FolderLock,
-      category: 'AI & Automation',
-      shortDesc: 'Securely vault, tag, and organize financial files for frictionless tax retrieval.',
+      category: t('cat_ai_automation', 'AI & Automation'),
+      shortDesc: t('suite_doc_assistant_desc', 'Securely vault, tag, and organize financial files for frictionless tax retrieval.'),
       bullets: [
-        '256-bit encrypted storage',
-        'Automatic invoice tagging',
-        'Instant search index'
+        t('suite_doc_ast_bullet1', '256-bit encrypted storage'),
+        t('suite_doc_ast_bullet2', 'Automatic invoice tagging'),
+        t('suite_doc_ast_bullet3', 'Instant search index')
       ],
-      badge: 'ISO 27001 Certified Vault',
+      badge: t('suite_doc_ast_badge', 'ISO 27001 Certified Vault'),
       colorClass: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200/50 dark:border-emerald-900/30',
       glowClass: 'from-emerald-500 to-teal-600'
     },
     {
       id: 'compliance-center',
-      title: 'Compliance Center',
+      title: t('suite_compliance_center_title', 'Compliance Center'),
       icon: ShieldCheck,
-      category: 'Filing & Compliance',
-      shortDesc: 'Always file GSTR-1 & GSTR-3B on schedule with automated reminders and one-click uploads.',
+      category: t('cat_filing_compliance', 'Filing & Compliance'),
+      shortDesc: t('suite_compliance_center_desc', 'Always file GSTR-1 & GSTR-3B on schedule with automated reminders and one-click uploads.'),
       bullets: [
-        'Direct GST portal API sync',
-        'Automated draft generation',
-        'Deadline calendar'
+        t('suite_comp_ctr_bullet1', 'Direct GST portal API sync'),
+        t('suite_comp_ctr_bullet2', 'Automated draft generation'),
+        t('suite_comp_ctr_bullet3', 'Deadline calendar')
       ],
-      badge: '100% On-Time Filing',
+      badge: t('suite_comp_ctr_badge', '100% On-Time Filing'),
       colorClass: 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/30 border-blue-200/50 dark:border-blue-900/30',
       glowClass: 'from-blue-500 to-indigo-600'
     },
     {
       id: 'penalty-prevention',
-      title: 'Penalty Prevention Center',
+      title: t('suite_penalty_prevention_title', 'Penalty Prevention Center'),
       icon: AlertTriangle,
-      category: 'Filing & Compliance',
-      shortDesc: 'Automated mismatch notifications shield your business from late fees and tax notices.',
+      category: t('cat_filing_compliance', 'Filing & Compliance'),
+      shortDesc: t('suite_penalty_prevention_desc', 'Automated mismatch notifications shield your business from late fees and tax notices.'),
       bullets: [
-        'ITC mismatch alerts',
-        'Supplier non-filing warnings',
-        'Audit-risk scoring'
+        t('suite_pen_prev_bullet1', 'ITC mismatch alerts'),
+        t('suite_pen_prev_bullet2', 'Supplier non-filing warnings'),
+        t('suite_pen_prev_bullet3', 'Audit-risk scoring')
       ],
-      badge: 'Zero Late Fee Guarantee',
+      badge: t('suite_pen_prev_badge', 'Zero Late Fee Guarantee'),
       colorClass: 'text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-900/30',
       glowClass: 'from-amber-500 to-orange-600'
     },
     {
       id: 'business-analytics',
-      title: 'Business Analytics',
+      title: t('suite_business_analytics_title', 'Business Analytics'),
       icon: BarChart3,
-      category: 'Analytics & Risk',
-      shortDesc: 'Visual SVG dashboards mapping revenue streams, outlays, and tax trends in real-time.',
+      category: t('cat_analytics_risk', 'Analytics & Risk'),
+      shortDesc: t('suite_business_analytics_desc', 'Visual SVG dashboards mapping revenue streams, outlays, and tax trends in real-time.'),
       bullets: [
-        'Cash flow breakdown',
-        'Taxable vs non-taxable revenue',
-        'Quarterly trend charts'
+        t('suite_biz_anly_bullet1', 'Cash flow breakdown'),
+        t('suite_biz_anly_bullet2', 'Taxable vs non-taxable revenue'),
+        t('suite_biz_anly_bullet3', 'Quarterly trend charts')
       ],
-      badge: 'Real-time Metrics',
+      badge: t('suite_biz_anly_badge', 'Real-time Metrics'),
       colorClass: 'text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/30 border-rose-200/50 dark:border-rose-900/30',
       glowClass: 'from-rose-500 to-red-600'
     },
     {
       id: 'tax-forecasting',
-      title: 'Tax Forecasting Engine',
+      title: t('suite_tax_forecasting_title', 'Tax Forecasting Engine'),
       icon: TrendingUp,
-      category: 'Analytics & Risk',
-      shortDesc: 'Predict future quarterly tax liabilities to optimize cash flow and allocate liquid capital.',
+      category: t('cat_analytics_risk', 'Analytics & Risk'),
+      shortDesc: t('suite_tax_forecasting_desc', 'Predict future quarterly tax liabilities to optimize cash flow and allocate liquid capital.'),
       bullets: [
-        'Predictive tax algorithms',
-        'ITC utilization planning',
-        'Working capital insights'
+        t('suite_tax_fcst_bullet1', 'Predictive tax algorithms'),
+        t('suite_tax_fcst_bullet2', 'ITC utilization planning'),
+        t('suite_tax_fcst_bullet3', 'Working capital insights')
       ],
-      badge: '98% Forecast Precision',
+      badge: t('suite_tax_fcst_badge', '98% Forecast Precision'),
       colorClass: 'text-teal-600 dark:text-teal-400 bg-teal-50/80 dark:bg-teal-950/30 border-teal-200/50 dark:border-teal-900/30',
       glowClass: 'from-teal-500 to-emerald-600'
     },
     {
       id: 'vendor-intel',
-      title: 'Vendor Intelligence',
+      title: t('suite_vendor_intel_title', 'Vendor Intelligence'),
       icon: Users,
-      category: 'Analytics & Risk',
-      shortDesc: 'Track non-filing vendors and block faulty Input Tax Credit (ITC) claims automatically.',
+      category: t('cat_analytics_risk', 'Analytics & Risk'),
+      shortDesc: t('suite_vendor_intel_desc', 'Track non-filing vendors and block faulty Input Tax Credit (ITC) claims automatically.'),
       bullets: [
-        'Automated GSTR-2A/2B matching',
-        'Supplier compliance scoring',
-        'Payment hold triggers'
+        t('suite_vndr_intel_bullet1', 'Automated GSTR-2A/2B matching'),
+        t('suite_vndr_intel_bullet2', 'Supplier compliance scoring'),
+        t('suite_vndr_intel_bullet3', 'Payment hold triggers')
       ],
-      badge: 'ITC Reclaim Boost',
+      badge: t('suite_vndr_intel_badge', 'ITC Reclaim Boost'),
       colorClass: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50/80 dark:bg-cyan-950/30 border-cyan-200/50 dark:border-cyan-900/30',
       glowClass: 'from-cyan-500 to-blue-600'
     },
     {
       id: 'reports-generator',
-      title: 'Custom Reports Generator',
+      title: t('suite_reports_generator_title', 'Custom Reports Generator'),
       icon: FileSpreadsheet,
-      category: 'Analytics & Risk',
-      shortDesc: 'Download auditing statements, multi-format ledger sheets, and executive summary PDFs.',
+      category: t('cat_analytics_risk', 'Analytics & Risk'),
+      shortDesc: t('suite_reports_generator_desc', 'Download auditing statements, multi-format ledger sheets, and executive summary PDFs.'),
       bullets: [
-        'CA-ready Excel workbooks',
-        'Tally-compatible XML exports',
-        'Automated monthly digests'
+        t('suite_rpt_gen_bullet1', 'CA-ready Excel workbooks'),
+        t('suite_rpt_gen_bullet2', 'Tally-compatible XML exports'),
+        t('suite_rpt_gen_bullet3', 'Automated monthly digests')
       ],
-      badge: 'Instant Export',
+      badge: t('suite_rpt_gen_badge', 'Instant Export'),
       colorClass: 'text-violet-600 dark:text-violet-400 bg-violet-50/80 dark:bg-violet-950/30 border-violet-200/50 dark:border-violet-900/30',
       glowClass: 'from-violet-500 to-purple-600'
     },
     {
       id: 'executive-dashboard',
-      title: 'Executive Dashboard',
+      title: t('suite_executive_dashboard_title', 'Executive Dashboard'),
       icon: LayoutDashboard,
-      category: 'Filing & Compliance',
-      shortDesc: 'Single control center to review multi-GSTIN transactions and enterprise branch health.',
+      category: t('cat_filing_compliance', 'Filing & Compliance'),
+      shortDesc: t('suite_executive_dashboard_desc', 'Single control center to review multi-GSTIN transactions and enterprise branch health.'),
       bullets: [
-        'Multi-entity aggregation',
-        'Role-based access control',
-        'Consolidated tax summaries'
+        t('suite_exec_dash_bullet1', 'Multi-entity aggregation'),
+        t('suite_exec_dash_bullet2', 'Role-based access control'),
+        t('suite_exec_dash_bullet3', 'Consolidated tax summaries')
       ],
-      badge: 'Multi-GSTIN Ready',
+      badge: t('suite_exec_dash_badge', 'Multi-GSTIN Ready'),
       colorClass: 'text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-50/80 dark:bg-fuchsia-950/30 border-fuchsia-200/50 dark:border-fuchsia-900/30',
       glowClass: 'from-fuchsia-500 to-indigo-600'
     }
@@ -262,7 +264,7 @@ export default function EndToEndComplianceSuite() {
   // Filtering Logic
   const filteredTools = toolsData.filter(tool => {
     if (activeFilter === 'All') return true;
-    return tool.category === activeFilter;
+    return tool.category === activeFilter || tool.category === t(activeFilter);
   });
 
   // Balanced grid sizing when All categories are visible
@@ -295,7 +297,7 @@ export default function EndToEndComplianceSuite() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-sm mb-6 select-none"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Enterprise Feature Matrix
+          {t('enterprise_feature_matrix', 'Enterprise Feature Matrix')}
         </motion.div>
 
         {/* Title */}
@@ -306,7 +308,7 @@ export default function EndToEndComplianceSuite() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-5 leading-tight select-none bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-white dark:via-indigo-200 dark:to-white bg-clip-text text-transparent"
         >
-          End-to-End Compliance Suite
+          {t('end_to_end_compliance_suite', 'End-to-End Compliance Suite')}
         </motion.h2>
 
         {/* Subtitle */}
@@ -317,7 +319,7 @@ export default function EndToEndComplianceSuite() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-base sm:text-lg text-slate-650 dark:text-slate-300 font-medium max-w-2xl leading-relaxed select-none"
         >
-          10 powerful enterprise tools designed to automate your financial bookkeeping, prevent tax penalties, and streamline GSTR filings.
+          {t('end_to_end_compliance_suite_desc', '10 powerful enterprise tools designed to automate your financial bookkeeping, prevent tax penalties, and streamline GSTR filings.')}
         </motion.p>
 
         {/* ----------------------------------------------------
@@ -423,7 +425,7 @@ export default function EndToEndComplianceSuite() {
 
                     {/* Inspect Button at the bottom */}
                     <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
-                      <span>Inspect Tool</span>
+                      <span>{t('inspect_tool', 'Inspect Tool')}</span>
                       <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 dark:group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
                         <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform duration-300" />
                       </div>

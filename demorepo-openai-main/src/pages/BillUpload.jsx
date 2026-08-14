@@ -1,14 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
-import { saveUserBill, getUserBills, logUserActivity, uploadBillDocument, updateUserBill } from '../services/firebaseDataService';
+import { logUserActivity, uploadBillDocument, updateUserBill } from '../services/firebaseDataService';
 import { auth } from '../config/firebase';
 import { ENABLE_DOCUMENT_STORAGE } from '../config/features';
 import { scrollToTop } from '../utils/scroll';
 import { extractInvoiceData } from '../services/aiService';
-import { processInvoice } from '../services/agentService';
-import { fetchActivePlan } from '../services/subscriptionService';
+import { fetchUsage, generateRequestId } from '../services/usageService';
 import { useTranslation } from 'react-i18next';
+import { useUpload } from '../context/UploadContext';
+
+const dataURLtoFile = (dataurl, filename = 'uploaded_invoice.jpg') => {
+  if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return null;
+  try {
+    const arr = dataurl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  } catch (e) {
+    return null;
+  }
+};
+
+const getApiUrl = (path) => {
+  if (typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+    window.location.port !== '5000') {
+    return `http://localhost:5000${path}`;
+  }
+  return path;
+};
 
 // Configure the PDF.js worker (webpack 5 / CRA 5 compatible).
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -173,16 +201,29 @@ const compressImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
   });
 };
 
+// Session-persistence key for the in-progress upload. Keeping the selected
+// file (name/type/dataURL) + extracted data in sessionStorage means the user
+// can navigate to other pages and come back without losing their upload. It
+// is only removed when the user explicitly clears/resets or the upload is
+// confirmed (tab close clears it automatically since it is session-scoped).
+const UPLOAD_SESSION_KEY = 'billUpload_pending_v1';
+
 function BillUpload() {
   const { t } = useTranslation();
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const navigate = useNavigate();
+  const uploadCtx = useUpload();
+  
+  const file = uploadCtx.billFile;
+  const setFile = uploadCtx.setBillFile;
+  const preview = uploadCtx.billPreview;
+  const setPreview = uploadCtx.setBillPreview;
+  const extractedData = uploadCtx.extractedData;
+  const setExtractedData = uploadCtx.setExtractedData;
+  const clearUpload = uploadCtx.clearBillUpload;
+
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [notification, setNotification] = useState(null);
-
-  // Extracted Invoice Metadata State
-  const [extractedData, setExtractedData] = useState(null);
   const [hoveredField, setHoveredField] = useState(null);
 
   // Camera integration states
@@ -194,13 +235,76 @@ function BillUpload() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const [activePlan, setActivePlan] = useState('free');
+  // Real monthly usage from the backend (GET /api/usage)
+  const [usage, setUsage] = useState(null);
   const [billsCount, setBillsCount] = useState(0);
+  const uploadIdRef = useRef(null);
 
-  // Fetch subscription plan from server on mount (deduplicated via shared service)
+  const activePlan = usage?.plan || 'free';
+  const invoiceLimitInfo = usage?.limits?.invoiceUploads || { limit: Number.MAX_SAFE_INTEGER, display: 'Unlimited', fairUse: false };
+  const rawLimit = invoiceLimitInfo.limit;
+  const limit = invoiceLimitInfo.fairUse || !rawLimit || rawLimit >= Number.MAX_SAFE_INTEGER || String(rawLimit) === '9007199254740991' ? Infinity : Number(rawLimit);
+
+  const extractionLimitInfo = usage?.limits?.aiExtractions || { limit: Number.MAX_SAFE_INTEGER, display: 'Unlimited', fairUse: false };
+  const extractionLimit = extractionLimitInfo.fairUse || !extractionLimitInfo.limit || extractionLimitInfo.limit >= Number.MAX_SAFE_INTEGER || String(extractionLimitInfo.limit) === '9007199254740991' ? Infinity : Number(extractionLimitInfo.limit);
+  const extractionUsed = typeof usage?.counts?.aiExtractions === 'number' ? usage.counts.aiExtractions : 0;
+  const extractionExhausted = extractionUsed >= extractionLimit;
+
+  // True when an AI error is a quota rejection.
+  const isQuotaError = (err) =>
+    err?.code === 'LIMIT_EXCEEDED' ||
+    err?.code === 'PLAN_LIMIT_REACHED' ||
+    err?.code === 'FAIR_USE_LIMIT_REACHED' ||
+    /limit reached/i.test(err?.message || '');
+
+  // Build limit-reached message.
+  const quotaBlockMessage = () => {
+    if (limit !== Infinity && billsCount >= limit) {
+      return `Monthly invoice limit reached. You've used all ${limit} invoice uploads for this month. Upgrade to ${activePlan === 'free' ? 'Pro for 50 invoice uploads/month' : 'Business for higher/fair-use processing'}.`;
+    }
+    if (extractionLimit !== Infinity && extractionExhausted) {
+      return `Monthly AI extraction limit reached. You've used all ${extractionLimit} AI extractions for this month. Upgrade to ${activePlan === 'free' ? 'Pro for 50 AI extractions/month' : 'Business for higher/fair-use processing'}.`;
+    }
+    return null;
+  };
+
+  // Single place to handle a quota rejection: instant dialog to upgrade
+  const handleQuotaBlock = (message) => {
+    setNotification({ message, type: 'warning' });
+    localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
+    const goPricing = window.confirm(`${message}\n\nWould you like to navigate to the pricing page to upgrade your plan?`);
+    if (goPricing) {
+      navigate('/pricing');
+    }
+  };
+
+  const refreshUsage = (force = false) => {
+    return fetchUsage(force).then((u) => {
+      setUsage(u);
+      setBillsCount(typeof u?.counts?.invoiceUploads === 'number' ? u.counts.invoiceUploads : 0);
+      return u;
+    }).catch(() => null);
+  };
+
   useEffect(() => {
-    fetchActivePlan().then((plan) => setActivePlan(plan));
+    refreshUsage();
+    const handlePlanChanged = () => refreshUsage(true);
+    const handleUsageChanged = () => refreshUsage(true);
+    window.addEventListener('planChanged', handlePlanChanged);
+    window.addEventListener('usageChanged', handleUsageChanged);
+    return () => {
+      window.removeEventListener('planChanged', handlePlanChanged);
+      window.removeEventListener('usageChanged', handleUsageChanged);
+    };
   }, []);
+
+  // Sync file restoration from preview dataURL if file object is missing
+  useEffect(() => {
+    if (preview && (!file || typeof file.arrayBuffer !== 'function')) {
+      const restoredFile = dataURLtoFile(preview, file?.name || 'restored_invoice.jpg');
+      if (restoredFile) setFile(restoredFile);
+    }
+  }, [preview, file]);
 
   useEffect(() => {
     if (notification) {
@@ -208,33 +312,18 @@ function BillUpload() {
     }
   }, [notification]);
 
-  useEffect(() => {
-    const fetchBillsCount = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        const fetched = await getUserBills(currentUser.uid);
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const thisMonthBills = fetched.filter(b => {
-          const date = new Date(b.invoiceDate || b.createdAt || Date.now());
-          return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-        });
-        setBillsCount(thisMonthBills.length);
-      } catch (err) {
-        console.error("Error fetching bills count for limits:", err);
-      }
-    };
-    fetchBillsCount();
-  }, [activePlan]);
-
-  // Free: 10 invoices/month (enforced server-side; this is display-only)
-  const limit = activePlan === 'free' ? 10 : activePlan === 'pro' ? 500 : Infinity;
-
-  // File Select Handler
+  // File Select Handler with INSTANT quota pre-check
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
+
+    // Instant limit pre-check BEFORE file upload/AI processing
+    const currentBlockMsg = quotaBlockMessage();
+    if (currentBlockMsg) {
+      handleQuotaBlock(currentBlockMsg);
+      e.target.value = '';
+      return;
+    }
 
     try {
       validateFile(selectedFile);
@@ -248,9 +337,6 @@ function BillUpload() {
     setExtractedData(null);
     setNotification(null);
 
-    // The File stays in browser memory only — it is processed in-memory by
-    // Tesseract OCR / pdf.js and sent to the server-side Gemini endpoint.
-    // No Firebase Storage upload happens here (and none is required).
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result);
@@ -334,12 +420,43 @@ function BillUpload() {
       return;
     }
 
-    // Limit check
-    if (billsCount >= limit) {
-      alert(`⚠️ Scan Limit Reached: You have processed ${billsCount} of ${limit} invoices this month. Please upgrade your subscription to upload more invoices.`);
-      localStorage.setItem('selectedPlan', activePlan === 'free' ? 'pro' : 'business');
-      window.location.href = '/pricing';
-      return;
+    // Pre-upload limit check: never start expensive OCR/AI work when EITHER
+    // monthly quota (invoice uploads OR AI extractions) is exhausted. The
+    // authoritative check still happens server-side on save. Refresh usage
+    // first so the counters are current (no stale 15s cache) — the block is
+    // INSTANT, no Vision/OCR work is started. The fresh usage object is used
+    // directly (state updates are async, so reading state right after await
+    // would still show stale counters).
+    const freshUsage = await refreshUsage(true);
+    if (freshUsage) {
+      const freshInvLimit = freshUsage.limits?.invoiceUploads || {};
+      const freshInvCeiling = freshInvLimit.fairUse || freshInvLimit.limit >= Number.MAX_SAFE_INTEGER ? Infinity : freshInvLimit.limit;
+      const freshInvUsed = typeof freshUsage.counts?.invoiceUploads === 'number' ? freshUsage.counts.invoiceUploads : 0;
+      const freshExtLimit = freshUsage.limits?.aiExtractions || {};
+      const freshExtCeiling = freshExtLimit.fairUse || freshExtLimit.limit >= Number.MAX_SAFE_INTEGER ? Infinity : freshExtLimit.limit;
+      const freshExtUsed = typeof freshUsage.counts?.aiExtractions === 'number' ? freshUsage.counts.aiExtractions : 0;
+
+      if (freshInvUsed >= freshInvCeiling || freshExtUsed >= freshExtCeiling) {
+        const which = freshInvUsed >= freshInvCeiling ? 'invoice' : 'AI extraction';
+        const shown = which === 'invoice' ? (freshInvCeiling === Infinity ? 'your monthly' : `all ${freshInvCeiling}`) : (freshExtCeiling === Infinity ? 'your monthly' : `all ${freshExtCeiling}`);
+        handleQuotaBlock(
+          `Monthly ${which} limit reached. You've used ${shown} ${which === 'invoice' ? 'invoice uploads' : 'AI extractions'} this month. Upgrade to ${activePlan === 'free' ? 'Pro' : 'Business'} for higher limits.`
+        );
+        return;
+      }
+    } else {
+      // Usage fetch failed — fall back to the (possibly stale) state counters.
+      const fallbackMessage = quotaBlockMessage();
+      if (fallbackMessage) {
+        handleQuotaBlock(fallbackMessage);
+        return;
+      }
+    }
+
+    // Reserve the idempotency key for THIS file so a retry after a failed
+    // save never double-counts (Part 7 — the backend counts it once).
+    if (!uploadIdRef.current) {
+      uploadIdRef.current = generateRequestId();
     }
 
     setLoading(true);
@@ -358,6 +475,11 @@ function BillUpload() {
           extractedInfo = await extractDataWithVisionAI(preview);
           if (extractedInfo) extractedInfo.ocrSource = 'vision';
         } catch (visionErr) {
+          // Quota exhaustion means Vision AND every other AI path will fail —
+          // stop immediately instead of burning 30s on an OCR fallback.
+          if (isQuotaError(visionErr)) {
+            throw visionErr;
+          }
           console.warn("[AI] Vision failed, falling back to OCR:", visionErr.message);
         }
       }
@@ -374,6 +496,9 @@ function BillUpload() {
             extractedInfo = await extractDataWithAI(pdfText);
             if (extractedInfo) extractedInfo.ocrSource = 'pdf_text';
           } catch (textErr) {
+            if (isQuotaError(textErr)) {
+              throw textErr;
+            }
             console.warn('[AI] PDF text analysis failed, trying rendered page:', textErr.message);
           }
         }
@@ -383,6 +508,9 @@ function BillUpload() {
             extractedInfo = await extractDataWithVisionAI(dataUrl);
             if (extractedInfo) extractedInfo.ocrSource = 'pdf_vision';
           } catch (visionErr) {
+            if (isQuotaError(visionErr)) {
+              throw visionErr;
+            }
             console.warn('[AI] PDF Vision failed, falling back to OCR:', visionErr.message);
           }
         }
@@ -430,9 +558,10 @@ function BillUpload() {
       setNotification({ message: 'Invoice analyzed successfully! Review the details and confirm.', type: 'success' });
     } catch (error) {
       console.error("[AI] Extraction failed:", error);
-      if (error?.code === 'LIMIT_EXCEEDED') {
-        setNotification({ message: error.message, type: 'warning' });
-        setTimeout(() => { window.location.href = '/pricing'; }, 1200);
+      // Quota rejection: show instantly, ask before going to pricing. This is
+      // the path hit when the aiExtractions quota is exhausted mid-extraction.
+      if (isQuotaError(error)) {
+        handleQuotaBlock(error.message || 'Monthly limit reached. Please upgrade your plan to continue.');
       } else {
         // The uploaded file remains in browser memory for retry — nothing to recover.
         setNotification({ message: mapAiError(error), type: 'error' });
@@ -442,9 +571,22 @@ function BillUpload() {
     }
   };
 
-  // Save to Firebase Handler
+  // Save to Firebase Handler — routed through the backend (POST /api/invoices)
+  // so the monthly invoiceUploads limit is enforced server-side, atomically,
+  // and idempotently (uploadId). The browser can no longer write invoices
+  // directly and bypass the quota.
   const handleConfirm = async () => {
     if (!extractedData) return;
+    // Never POST an empty invoice: the backend validates supplierName /
+    // invoiceNumber. If AI extraction failed, tell the user instead of
+    // sending a doomed request that consumes quota.
+    if (!extractedData.supplierName && !extractedData.invoiceNumber) {
+      setNotification({
+        message: 'AI extraction did not return supplier or invoice details. Please retry the analysis before saving.',
+        type: 'error',
+      });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -452,21 +594,63 @@ function BillUpload() {
       const gstrDeadlineDate = new Date(invoiceDateObj.getFullYear(), invoiceDateObj.getMonth() + 1, 13);
       const businessId = localStorage.getItem('activeBusinessId') || null;
 
-      const saved = await saveUserBill({
-        ...extractedData,
-        businessId,
-        gstrDeadline: gstrDeadlineDate.toISOString().split('T')[0],
-        gstrForm: 'GSTR-1',
-        filed: false,
-        status: 'approved',
-        createdAt: new Date().toISOString()
-      });
-      const savedBillId = saved?.billId || null;
+      const uploadId = uploadIdRef.current || generateRequestId();
+      uploadIdRef.current = uploadId;
 
-      // OPTIONAL document archive (default OFF): when ENABLE_DOCUMENT_STORAGE
-      // is true, persist the original file to the storage bucket. When false
-      // (the default), this is a no-op — the app works with no bucket at all.
-      // Fire-and-forget: it never blocks the Firestore save or the agent chain.
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setNotification({ message: 'Please sign in again to save your invoice.', type: 'error' });
+        return;
+      }
+      const token = await currentUser.getIdToken();
+
+      setNotification({ message: 'Saving invoice and running AI agents...', type: 'info' });
+      const res = await fetch(getApiUrl('/api/invoices'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          uploadId,
+          businessId,
+          business: getBusinessContext(),
+          invoice: {
+            ...extractedData,
+            businessId,
+            gstrDeadline: gstrDeadlineDate.toISOString().split('T')[0],
+            gstrForm: 'GSTR-1',
+            filed: false,
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      // Limit reached — the backend rejected the upload (never 6/5).
+      if (!res.ok && (data.code === 'PLAN_LIMIT_REACHED' || data.code === 'FAIR_USE_LIMIT_REACHED' || res.status === 403)) {
+        const upgradeTarget = data.usage?.plan === 'pro' ? 'business' : 'pro';
+        setNotification({
+          message: data.error || 'Monthly invoice limit reached. Please upgrade your plan to continue.',
+          type: 'warning',
+        });
+        localStorage.setItem('selectedPlan', upgradeTarget);
+        // Ask the user before navigating (never force-redirect).
+        const goPricing = window.confirm('You have reached your monthly invoice upload limit. Would you like to go to the pricing page to upgrade?');
+        if (goPricing) {
+          window.location.href = '/pricing';
+        }
+        return;
+      }
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Invoice could not be saved. Please try again.');
+      }
+
+      const savedBillId = data.billId || null;
+
+      // OPTIONAL document archive (default OFF): fire-and-forget, never blocks.
       if (ENABLE_DOCUMENT_STORAGE && file && savedBillId) {
         uploadBillDocument(file, savedBillId)
           .then((archive) => {
@@ -486,35 +670,29 @@ function BillUpload() {
         details: {
           invoiceNumber: extractedData.invoiceNumber || 'INV-AUTO'
         }
-      });
+      }).catch(() => {});
 
-      // Trigger the AI agent chain
-      setNotification({ message: 'Invoice saved. Running AI agents...', type: 'info' });
-      try {
-        const agentResult = await processInvoice(extractedData, { id: businessId }, savedBillId);
-        const agentCount = agentResult.results?.length || 0;
-        setNotification({
-          message: `Invoice synced! ${agentCount} AI agents executed successfully.`,
-          type: 'success'
-        });
-      } catch (agentErr) {
-        console.warn('Agent chain failed (non-blocking):', agentErr);
-        if (agentErr?.code === 'LIMIT_EXCEEDED') {
-          setNotification({
-            message: 'Invoice saved. Monthly agent-analysis limit reached — upgrade to continue AI monitoring.',
-            type: 'warning'
-          });
-        } else {
-          setNotification({ message: 'Invoice synced to Firebase successfully!', type: 'success' });
-        }
-      }
-
+      uploadIdRef.current = null; // consumed — next upload gets a fresh key
+      sessionStorage.removeItem(UPLOAD_SESSION_KEY);
       setExtractedData(null);
       setFile(null);
       setPreview(null);
+      setNotification({
+        message: data.chainStatus === 'completed'
+          ? 'Invoice synced! AI agents executed successfully.'
+          : 'Invoice synced to your account successfully!',
+        type: 'success',
+      });
+      window.dispatchEvent(new Event('billUpdated'));
+      refreshUsage(true);
     } catch (err) {
-      console.error('Error saving to Firebase:', err);
-      setNotification({ message: 'Error saving invoice details. Please try again.', type: 'error' });
+      console.error('Error saving invoice via backend:', err);
+      // The backend refunds the reserved slot when the save fails, so a
+      // retry with the same uploadId is safe and never double-counts.
+      setNotification({
+        message: err.message || 'Error saving invoice details. Please try again.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -679,7 +857,7 @@ function BillUpload() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={() => { setFile(null); setPreview(null); }} className="btn btn-outline" style={{ flex: 1 }}>{t('billupload_clear')}</button>
+                <button onClick={() => { clearUpload(); }} className="btn btn-outline" style={{ flex: 1 }}>{t('billupload_clear')}</button>
                 <button onClick={handleExtract} disabled={loading} className="btn btn-primary" style={{ flex: 2 }}>
                   {loading ? `${t('billupload_extracting')}... (${progress}%)` : `⚡ ${t('billupload_run_extraction')}`}
                 </button>
@@ -861,7 +1039,7 @@ function BillUpload() {
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                   <button 
-                    onClick={() => { setExtractedData(null); setFile(null); setPreview(null); }} 
+                    onClick={() => { sessionStorage.removeItem(UPLOAD_SESSION_KEY); setExtractedData(null); setFile(null); setPreview(null); }} 
                     className="btn btn-outline" 
                     style={{ flex: 1, padding: '0.5rem' }}
                   >

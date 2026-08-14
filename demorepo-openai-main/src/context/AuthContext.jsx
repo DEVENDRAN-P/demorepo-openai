@@ -81,6 +81,29 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Sanitize URL to strip sensitive API keys / tokens from window.location.search
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        let modified = false;
+        ['apiKey', 'token', 'auth', 'oauth_token'].forEach((p) => {
+          if (params.has(p)) {
+            params.delete(p);
+            modified = true;
+          }
+        });
+        if (modified) {
+          const cleanSearch = params.toString();
+          const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+          window.history.replaceState(null, '', cleanUrl);
+        }
+      } catch (e) {
+        // fail-safe
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {

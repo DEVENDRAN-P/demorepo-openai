@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { auth } from '../config/firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ReminderPanel from '../components/ReminderPanel';
@@ -7,8 +8,17 @@ import PenaltyLateFeeEstimator from '../components/PenaltyLateFeeEstimator';
 import { getUserBills } from '../services/firebaseDataService';
 import { aiChat } from '../services/aiService';
 import { fetchActivePlan } from '../services/subscriptionService';
-
+import { fetchEntitlements, metricCount, displayMetricLimit, invalidateUsageCache } from '../services/usageService';
 import { getUserBusinesses } from '../utils/businessHelper';
+
+const getApiUrl = (path) => {
+  if (typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+    window.location.port !== '5000') {
+    return `http://localhost:5000${path}`;
+  }
+  return path;
+};
 
 // Removed static BUSINESSES list to enforce data isolation
 
@@ -66,6 +76,8 @@ function Dashboard({ user }) {
   const [loadingBills, setLoadingBills] = useState(true);
   const [activePlan, setActivePlan] = useState('free');
   const [userBusinesses, setUserBusinesses] = useState([]);
+  const [entitlements, setEntitlements] = useState(null);
+  const [subStatus, setSubStatus] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -107,7 +119,40 @@ function Dashboard({ user }) {
     fetchActivePlan().then((plan) => {
       if (mounted) setActivePlan(plan);
     });
-    return () => { mounted = false; };
+    // Real usage counters + entitlement snapshot (authoritative backend data).
+    fetchEntitlements().then((snap) => {
+      if (mounted) setEntitlements(snap);
+    }).catch(() => {});
+    // Subscription status (status/expiry) for the card.
+    if (user?.uid && auth.currentUser) {
+      auth.currentUser.getIdToken().then((token) =>
+        fetch(getApiUrl('/api/subscription/status'), {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      ).then((res) => (res.ok ? res.json() : Promise.resolve({})))
+        .then((data) => {
+          if (mounted) setSubStatus(data?.subscription || null);
+        })
+        .catch(() => {});
+    }
+    const handlePlanChanged = () => {
+      invalidateUsageCache();
+      fetchEntitlements().then((snap) => { if (mounted) setEntitlements(snap); }).catch(() => {});
+      if (user?.uid && auth.currentUser) {
+        auth.currentUser.getIdToken().then((token) =>
+          fetch(getApiUrl('/api/subscription/status'), {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ).then((res) => (res.ok ? res.json() : Promise.resolve({})))
+          .then((data) => { if (mounted) setSubStatus(data?.subscription || null); })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('planChanged', handlePlanChanged);
+    return () => {
+      mounted = false;
+      window.removeEventListener('planChanged', handlePlanChanged);
+    };
   }, [user]);
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -570,6 +615,91 @@ function Dashboard({ user }) {
           {/* Sidebar / Logs Panel */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
+            {/* Real Subscription & Usage Card (Part 38) */}
+            <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>{t('subscription_plan', 'Subscription')}</h3>
+                <span style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  padding: '0.25rem 0.6rem',
+                  borderRadius: '9999px',
+                  background: activePlan === 'free' ? 'rgba(100, 116, 139, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                  color: activePlan === 'free' ? '#94a3b8' : '#34d399',
+                }}>
+                  {activePlan === 'free' ? t('free_tier') : activePlan === 'pro' ? t('pro_tier') : t('business_tier')} {t('tier')}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
+                <strong style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+                  {activePlan === 'free' ? '₹0' : activePlan === 'pro' ? '₹199' : '₹499'}
+                  <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)' }}>/month</span>
+                </strong>
+              </div>
+
+              {(() => {
+                const invLimit = entitlements?.limits?.invoiceUploads;
+                const invUsed = metricCount(entitlements?.usage, 'invoiceUploads');
+                const docLimit = entitlements?.limits?.documents;
+                const docUsed = metricCount(entitlements?.usage, 'documents');
+                const insightDisplay = displayMetricLimit(entitlements?.usage, 'aiInsights');
+                const invDisplay = displayMetricLimit(entitlements?.usage, 'invoiceUploads');
+                const invCeiling = invLimit?.fairUse || !invLimit?.limit || invLimit?.limit >= Number.MAX_SAFE_INTEGER || String(invLimit?.limit) === '9007199254740991' ? Infinity : invLimit.limit;
+                const docDisplay = displayMetricLimit(entitlements?.usage, 'documents');
+                const docCeiling = docLimit?.fairUse || !docLimit?.limit || docLimit?.limit >= Number.MAX_SAFE_INTEGER || String(docLimit?.limit) === '9007199254740991' ? Infinity : docLimit.limit;
+
+                const UsageBar = ({ used, ceiling, display }) => (
+                  <div style={{ width: '100%', background: 'var(--bg-tertiary)', height: '5px', borderRadius: '3px', overflow: 'hidden', marginTop: '0.25rem' }}>
+                    <div style={{ width: ceiling === Infinity ? 100 : Math.min(100, (used / ceiling) * 100), background: used >= ceiling ? 'var(--error)' : 'var(--theme-primary)', height: '100%' }}></div>
+                  </div>
+                );
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', fontSize: '0.78rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                        <span>{t('invoice_usage', 'Invoice Usage')}</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{invUsed} / {invDisplay}</strong>
+                      </div>
+                      <UsageBar used={invUsed} ceiling={invCeiling} display={invDisplay} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                        <span>{t('document_usage', 'Documents')}</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{docUsed} / {docDisplay}</strong>
+                      </div>
+                      <UsageBar used={docUsed} ceiling={docCeiling} display={docDisplay} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                      <span>{t('ai_insights_usage', 'AI Insights')}</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{insightDisplay}</strong>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div style={{ marginTop: '1.1rem', paddingTop: '0.9rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('subscription_status', 'Subscription')}</span>
+                  <strong style={{ textTransform: 'capitalize' }}>{subStatus?.subscriptionStatus || 'active'}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('renews_on', 'Renews')}</span>
+                  <strong>{subStatus?.subscriptionExpiry ? new Date(subStatus.subscriptionExpiry).toLocaleDateString() : '—'}</strong>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/pricing')}
+                className="btn btn-outline"
+                style={{ width: '100%', marginTop: '1rem', padding: '0.55rem', fontSize: '0.8rem' }}
+              >
+                {activePlan === 'free' ? t('upgrade_to_pro') : t('manage_subscription', 'Manage Subscription')}
+              </button>
+            </div>
+
             {/* Live AI Activity Timeline */}
             <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>

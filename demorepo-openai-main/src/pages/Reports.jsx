@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserBills } from '../services/firebaseDataService';
+import { reserveUsage, generateRequestId } from '../services/usageService';
 import { useTranslation } from 'react-i18next';
 
 function Reports({ user }) {
@@ -16,6 +17,7 @@ function Reports({ user }) {
 
   const [aiInsights, setAiInsights] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [limitNotice, setLimitNotice] = useState('');
 
   // Sync active business shifts
   useEffect(() => {
@@ -165,7 +167,24 @@ function Reports({ user }) {
   }, [user?.uid, activeBusinessId]);
 
   // Export Executive Summary Report
-  const handleDownloadExecutiveReport = () => {
+  // PDF report exports are quota-limited on the Free plan (2/month) and
+  // unlimited on Pro/Business. The server enforces the cap atomically.
+  const handleDownloadExecutiveReport = async () => {
+    try {
+      const reserved = await reserveUsage('reports', generateRequestId());
+      if (!reserved?.success) {
+        setLimitNotice("Report limit reached. Please upgrade your plan to continue exporting reports.");
+        return;
+      }
+    } catch (err) {
+      if (err?.code === 'PLAN_LIMIT_REACHED') {
+        setLimitNotice(err.message || "Report limit reached. Please upgrade your plan to continue exporting reports.");
+        localStorage.setItem('selectedPlan', 'pro');
+        return;
+      }
+      // Network/other error — allow the export (the report itself is free).
+    }
+    setLimitNotice('');
     const reportText = `GST BUDDY AI - EXECUTIVE FINANCIAL & AUDIT REPORT
 ===================================================
 Entity ID: ${activeBusinessId.toUpperCase()}
@@ -251,6 +270,30 @@ Vetted and certified by GST Buddy Compliance Engine.`;
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> {t('reports_download_executive')}
             </button>
           </div>
+
+          {limitNotice && (
+            <div style={{
+              padding: '0.85rem 1rem',
+              background: 'rgba(245, 158, 11, 0.1)',
+              borderLeft: '4px solid var(--warning)',
+              color: 'var(--warning)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1.25rem',
+              fontSize: '0.825rem',
+              fontWeight: 500,
+            }}>
+              {limitNotice} ·{' '}
+              <button
+                onClick={() => {
+                  localStorage.setItem('selectedPlan', 'pro');
+                  window.location.href = '/pricing';
+                }}
+                style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontSize: '0.825rem' }}
+              >
+                {t('upgrade_to_pro')}
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-4" style={{ gap: '1rem' }}>
             <div className="glass-panel" style={{ textAlign: 'center', padding: '1.25rem', borderLeft: '4px solid var(--theme-secondary-light)' }}>
