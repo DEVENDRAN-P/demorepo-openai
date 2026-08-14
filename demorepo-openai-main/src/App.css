@@ -2412,7 +2412,7 @@ select option {
    MOBILE & TABLET RESPONSIVENESS OVERRIDES
    ========================================================================== */
 
-/* Hamburger menu button in Header */
+/* Hamburger menu button in Header (hidden on desktop, shown on mobile) */
 .header-menu-btn {
   display: none;
   background: transparent;
@@ -2422,6 +2422,19 @@ select option {
   cursor: pointer;
   padding: 0.25rem;
   outline: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Close (×) button shown inside the sidebar drawer on mobile only */
+.sidebar-mobile-close {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  padding: 0.25rem;
   align-items: center;
   justify-content: center;
 }
@@ -2459,6 +2472,30 @@ select option {
     gap: 1.5rem !important;
   }
 
+  /* Hide search bar inside sticky header (use page search/sidebar instead) */
+  .header-search-form {
+    display: none !important;
+  }
+
+  /* Main viewport content margins */
+  main {
+    padding: 1.25rem 1rem !important;
+  }
+}
+
+/* ==========================================================================
+   MOBILE DRAWER (< 768px)
+   The sidebar is hidden by default and slides in from the left as a ~280px
+   drawer over a semi-transparent overlay. Desktop/tablet (>= 768px) keeps
+   the original fixed sidebar — nothing here affects that layout.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling leaks on small screens */
+  html, body, #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
   /* Hamburger trigger icon appearance */
   .header-menu-btn {
     display: flex !important;
@@ -2471,30 +2508,29 @@ select option {
     top: 0;
     bottom: 0;
     height: 100vh !important;
-    transform: translateX(-100%);
     width: 280px !important;
     max-width: 85vw !important;
     z-index: 1000 !important;
     box-shadow: var(--shadow-2xl);
     flex-shrink: 0 !important;
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.3s !important;
   }
 
   .sidebar-aside.mobile-open {
     transform: translateX(0) !important;
+    visibility: visible;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s !important;
   }
 
-  .mobile-sidebar-close-btn {
-    display: flex !important;
-  }
-
-  /* Hide search bar inside sticky header (use page search/sidebar instead) */
-  .header-search-form {
+  .header-search-form,
+  .sidebar-collapse-btn {
     display: none !important;
   }
 
-  /* Main viewport content margins */
-  main {
-    padding: 1.25rem 1rem !important;
+  /* Show the dedicated close (×) button in the drawer header */
+  .sidebar-mobile-close {
+    display: inline-flex !important;
   }
 }
 
